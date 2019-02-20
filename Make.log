@@ -1,0 +1,81 @@
+cd /p/home/wallcraf/hycom/GOMd0.08/src_2.2.110_relo_mpi
+echo /p/home/wallcraf/hycom/GOMd0.08/src_2.2.110_relo_mpi
+/p/home/wallcraf/hycom/GOMd0.08/src_2.2.110_relo_mpi
+unset echo
+cray-mpich(3):ERROR:105: Unable to locate a modulefile for 'cray-mpich/7.0.3'
+Currently Loaded Modulefiles:
+  1) modules/3.2.10.5
+  2) eswrap/1.3.3-1.020200.1280.0
+  3) switch/1.0-1.0502.60522.1.61.ari
+  4) craype-haswell
+  5) craype-network-aries
+  6) craype/2.5.9
+  7) cray-mpich/7.5.3
+  8) pbs
+  9) bct-env/0.1
+ 10) mpscp/1.3a
+ 11) totalview/8.15.4
+ 12) udreg/2.3.2-1.0502.10518.2.17.ari
+ 13) ugni/6.0-1.0502.10863.8.29.ari
+ 14) pmi/5.0.14
+ 15) dmapp/7.0.1-1.0502.11080.8.76.ari
+ 16) gni-headers/4.0-1.0502.10859.7.8.ari
+ 17) xpmem/0.1-2.0502.64982.5.3.ari
+ 18) dvs/2.5_0.9.0-1.0502.2188.1.116.ari
+ 19) alps/5.2.4-2.0502.9774.31.11.ari
+ 20) rca/1.0.0-2.0502.60530.1.62.ari
+ 21) atp/2.1.0
+ 22) PrgEnv-intel/5.2.82
+ 23) cray-netcdf/4.4.1.1
+ 24) cray-hdf5/1.10.0.1
+ 25) cylc/barton
+ 26) anaconda/barton
+ 27) intel/15.0.0.090
+ 28) craype-hugepages2M
+setenv ARCH xc40-intel-relo
+setenv TYPE `echo $cwd | awk -F"_" '{print $NF}'`
+awk -F_ {print $NF}
+echo /p/home/wallcraf/hycom/GOMd0.08/src_2.2.110_relo_mpi
+echo ARCH =  xc40-intel-relo   TYPE =  mpi
+ARCH =  xc40-intel-relo   TYPE =  mpi
+if ( ! -e ./config/xc40-intel-relo_mpi ) then
+setenv OCN_SIG -DEOS_SIG0
+setenv OCN_EOS -DEOS_7T
+setenv OCN_GLB 
+setenv OCN_KAPP 
+setenv OCN_MISC 
+setenv CPP_EXTRAS -DEOS_SIG0 -DEOS_7T   
+make hycom ARCH=xc40-intel-relo TYPE=mpi
+ftn -DIA32 -DREAL8 -DMPI -DENDIAN_IO -DNAN2003 -DTIMER -DRELO -DEOS_SIG0 -DEOS_7T    -traceback -xHost -O3 -fp-model precise -no-fma -ftz -align array64byte -r8 -warn nogeneral -diag-disable 10212 -mcmodel=small -c mod_za.F90
+ftn -DIA32 -DREAL8 -DMPI -DENDIAN_IO -DNAN2003 -DTIMER -DRELO -DEOS_SIG0 -DEOS_7T    -traceback -xHost -O3 -fp-model precise -no-fma -ftz -align array64byte -r8 -warn nogeneral -diag-disable 10212 -mcmodel=small -c mod_stokes.F90
+ftn -DIA32 -DREAL8 -DMPI -DENDIAN_IO -DNAN2003 -DTIMER -DRELO -DEOS_SIG0 -DEOS_7T    -traceback -xHost -O3 -fp-model precise -no-fma -ftz -align array64byte -r8 -warn nogeneral -diag-disable 10212 -mcmodel=small -c mod_pipe.F90
+ftn -DIA32 -DREAL8 -DMPI -DENDIAN_IO -DNAN2003 -DTIMER -DRELO -DEOS_SIG0 -DEOS_7T    -traceback -xHost -O3 -fp-model precise -no-fma -ftz -align array64byte -r8 -warn nogeneral -diag-disable 10212 -mcmodel=small -c mod_incupd.F90
+ftn -DIA32 -DREAL8 -DMPI -DENDIAN_IO -DNAN2003 -DTIMER -DRELO -DEOS_SIG0 -DEOS_7T    -traceback -xHost -O3 -fp-model precise -no-fma -ftz -align array64byte -r8 -warn nogeneral -diag-disable 10212 -mcmodel=small -c mod_floats.F90
+ftn -DIA32 -DREAL8 -DMPI -DENDIAN_IO -DNAN2003 -DTIMER -DRELO -DEOS_SIG0 -DEOS_7T    -traceback -xHost -O3 -fp-model precise -no-fma -ftz -align array64byte -r8 -warn nogeneral -diag-disable 10212 -mcmodel=small -c mod_tides.F90
+ftn -DIA32 -DREAL8 -DMPI -DENDIAN_IO -DNAN2003 -DTIMER -DRELO -DEOS_SIG0 -DEOS_7T    -traceback -xHost -O3 -fp-model precise -no-fma -ftz -align array64byte -r8 -warn nogeneral -diag-disable 10212 -mcmodel=small -c mod_mean.F90
+ftn -DIA32 -DREAL8 -DMPI -DENDIAN_IO -DNAN2003 -DTIMER -DRELO -DEOS_SIG0 -DEOS_7T    -traceback -xHost -O3 -fp-model precise -no-fma -ftz -align array64byte -r8 -warn nogeneral -diag-disable 10212 -mcmodel=small -c mod_archiv.F90
+ftn -DIA32 -DREAL8 -DMPI -DENDIAN_IO -DNAN2003 -DTIMER -DRELO -DEOS_SIG0 -DEOS_7T    -traceback -xHost -O3 -fp-model precise -no-fma -ftz -align array64byte -r8 -warn nogeneral -diag-disable 10212 -mcmodel=small -c mod_tsadvc.F90
+ftn -DIA32 -DREAL8 -DMPI -DENDIAN_IO -DNAN2003 -DTIMER -DRELO -DEOS_SIG0 -DEOS_7T    -traceback -xHost -O3 -fp-model precise -no-fma -ftz -align array64byte -r8 -warn nogeneral -diag-disable 10212 -mcmodel=small -c mod_momtum.F90
+ftn -DIA32 -DREAL8 -DMPI -DENDIAN_IO -DNAN2003 -DTIMER -DRELO -DEOS_SIG0 -DEOS_7T    -traceback -xHost -O3 -fp-model precise -no-fma -ftz -align array64byte -r8 -warn nogeneral -diag-disable 10212 -mcmodel=small -c mod_barotp.F90
+ftn -DIA32 -DREAL8 -DMPI -DENDIAN_IO -DNAN2003 -DTIMER -DRELO -DEOS_SIG0 -DEOS_7T    -traceback -xHost -O3 -fp-model precise -no-fma -ftz -align array64byte -r8 -warn nogeneral -diag-disable 10212 -mcmodel=small -c mod_asselin.F90
+ftn -DIA32 -DREAL8 -DMPI -DENDIAN_IO -DNAN2003 -DTIMER -DRELO -DEOS_SIG0 -DEOS_7T    -traceback -xHost -O3 -fp-model precise -no-fma -ftz -align array64byte -r8 -warn nogeneral -diag-disable 10212 -mcmodel=small -c mod_restart.F90
+ftn -DIA32 -DREAL8 -DMPI -DENDIAN_IO -DNAN2003 -DTIMER -DRELO -DEOS_SIG0 -DEOS_7T    -traceback -xHost -O3 -fp-model precise -no-fma -ftz -align array64byte -r8 -warn nogeneral -diag-disable 10212 -mcmodel=small -c mod_hycom.F90
+ftn -DIA32 -DREAL8 -DMPI -DENDIAN_IO -DNAN2003 -DTIMER -DRELO -DEOS_SIG0 -DEOS_7T    -traceback -xHost -O3 -fp-model precise -no-fma -ftz -align array64byte -r8 -warn nogeneral -diag-disable 10212 -mcmodel=small -c blkdat.F90
+ftn -DIA32 -DREAL8 -DMPI -DENDIAN_IO -DNAN2003 -DTIMER -DRELO -DEOS_SIG0 -DEOS_7T    -traceback -xHost -O3 -fp-model precise -no-fma -ftz -align array64byte -r8 -warn nogeneral -diag-disable 10212 -mcmodel=small -c cnuity.F90
+ftn -DIA32 -DREAL8 -DMPI -DENDIAN_IO -DNAN2003 -DTIMER -DRELO -DEOS_SIG0 -DEOS_7T    -traceback -xHost -O3 -fp-model precise -no-fma -ftz -align array64byte -r8 -warn nogeneral -diag-disable 10212 -mcmodel=small -c diapfl.F90
+ftn -DIA32 -DREAL8 -DMPI -DENDIAN_IO -DNAN2003 -DTIMER -DRELO -DEOS_SIG0 -DEOS_7T    -traceback -xHost -O3 -fp-model precise -no-fma -ftz -align array64byte -r8 -warn nogeneral -diag-disable 10212 -mcmodel=small -c forfun.F90
+ftn -DIA32 -DREAL8 -DMPI -DENDIAN_IO -DNAN2003 -DTIMER -DRELO -DEOS_SIG0 -DEOS_7T    -traceback -xHost -O3 -fp-model precise -no-fma -ftz -align array64byte -r8 -warn nogeneral -diag-disable 10212 -mcmodel=small -c geopar.F90
+ftn -DIA32 -DREAL8 -DMPI -DENDIAN_IO -DNAN2003 -DTIMER -DRELO -DEOS_SIG0 -DEOS_7T    -traceback -xHost -O3 -fp-model precise -no-fma -ftz -align array64byte -r8 -warn nogeneral -diag-disable 10212 -mcmodel=small -c hybgen.F90
+ftn -DIA32 -DREAL8 -DMPI -DENDIAN_IO -DNAN2003 -DTIMER -DRELO -DEOS_SIG0 -DEOS_7T    -traceback -xHost -O3 -fp-model precise -no-fma -ftz -align array64byte -r8 -warn nogeneral -diag-disable 10212 -mcmodel=small -c inicon.F90
+ftn -DIA32 -DREAL8 -DMPI -DENDIAN_IO -DNAN2003 -DTIMER -DRELO -DEOS_SIG0 -DEOS_7T    -traceback -xHost -O3 -fp-model precise -no-fma -ftz -align array64byte -r8 -warn nogeneral -diag-disable 10212 -mcmodel=small -c latbdy.F90
+ftn -DIA32 -DREAL8 -DMPI -DENDIAN_IO -DNAN2003 -DTIMER -DRELO -DEOS_SIG0 -DEOS_7T    -traceback -xHost -O3 -fp-model precise -no-fma -ftz -align array64byte -r8 -warn nogeneral -diag-disable 10212 -mcmodel=small -c mxkprf.F90
+ftn -DIA32 -DREAL8 -DMPI -DENDIAN_IO -DNAN2003 -DTIMER -DRELO -DEOS_SIG0 -DEOS_7T    -traceback -xHost -O3 -fp-model precise -no-fma -ftz -align array64byte -r8 -warn nogeneral -diag-disable 10212 -mcmodel=small -c trcupd.F90
+ftn -DIA32 -DREAL8 -DMPI -DENDIAN_IO -DNAN2003 -DTIMER -DRELO -DEOS_SIG0 -DEOS_7T    -traceback -xHost -O3 -fp-model precise -no-fma -ftz -align array64byte -r8 -warn nogeneral -diag-disable 10212 -mcmodel=small -c hycom.F90
+ftn  -V -traceback -xHost -O3 -fp-model precise -no-fma -ftz -align array64byte -r8 -warn nogeneral -diag-disable 10212 -mcmodel=small -o hycom  hycom.o mod_dimensions.o mod_xc.o mod_za.o mod_cb_arrays.o mod_pipe.o mod_incupd.o mod_floats.o mod_stokes.o mod_tides.o mod_mean.o mod_archiv.o mod_tsadvc.o mod_momtum.o mod_barotp.o mod_asselin.o mod_restart.o mod_hycom.o bigrid.o blkdat.o  cnuity.o convec.o diapfl.o dpthuv.o  dpudpv.o forfun.o  geopar.o hybgen.o icloan.o inicon.o inigiss.o inikpp.o   inimy.o latbdy.o matinv.o mxkprf.o  mxkrt.o  mxkrtm.o  mxpwp.o overtn.o poflat.o  prtmsk.o  psmoo.o thermf.o trcupd.o machine.o  wtime.o machi_c.o  isnan.o s8gefs.o 
+Intel(R) Fortran Intel(R) 64 Compiler XE for applications running on Intel(R) 64, Version 15.0.0.090 Build 20140723
+Copyright (C) 1985-2014 Intel Corporation.  All rights reserved.
+
+GNU ld (GNU Binutils; SUSE Linux Enterprise 11) 2.23.1
+if ( xc40-intel-relo == Asp5 || xc40-intel-relo == sp5 ) then
+if ( xc40-intel-relo == Asp6 || xc40-intel-relo == sp6 ) then
+if ( xc40-intel-relo == Asp6-nofl || xc40-intel-relo == sp6-nofl ) then

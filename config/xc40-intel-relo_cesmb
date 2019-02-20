@@ -1,0 +1,55 @@
+#
+# ---------------------------------------------------------------------
+# common definitions for Intel Linux/IFC, MPI, real*8
+#  on Zeus
+# ---------------------------------------------------------------------
+
+# ---------------------------------------------------------------------
+# # Find the ESMF makefile fragment
+ifneq ($(origin ESMFMKFILE), environment)
+$(error Environment variable ESMFMKFILE was not set.)
+endif
+include $(ESMFMKFILE)
+# ---------------------------------------------------------------------
+
+# MACROS      DESCRIPTIONS:
+#
+# FC:         Fortran 90 compiler.
+# FCFFLAGS:   Fortran 90 compilation flags.
+# CC:         C compiler.
+# CCFLAGS:    C compilation flags.
+# CPP:        cpp preprocessor (may be implied by FC).
+# CPPFLAGS:   cpp -D macro flags.
+# LD:         Loader.
+# LDFLAGS:    Loader flags.
+# EXTRALIBS:  Extra local libraries (if any).
+#
+FC            =	$(ESMF_F90COMPILER)
+#FCFFLAGS      =	-g -convert big_endian -assume byterecl -cm -vec_report0 -w -O3 -tpp7 -xW -r8 -mt_mpi
+#FCFFLAGS      = -g -cm -vec_report0 -w -O3 -tpp7 -xW -r8 -mt_mpi
+#FCFFLAGS      =	-assume byterecl -cm -vec_report0 -w -O0 -g -xSSE4.2 -ip -tpp7 -xW -r8 -lmpi
+FCFFLAGS      = -traceback -xHost -O3 -fp-model precise -no-fma -ftz -align array64byte -r8 -warn nogeneral -diag-disable 10212 -mcmodel=small
+CC            =	gcc
+CCFLAGS       =	-O -g 
+CPP           =	cpp -P
+CPPFLAGS      =	-DUSE_NUOPC_CESMBETA -DREAL8 -DENDIAN_IO -DMPI -DSERIAL_IO  -DTIMER -DRELO $(CPP_EXTRAS) 
+LD            =	$(FC)
+#LDFLAGS       =	$(FCFFLAGS) -Vaxlib -Bstatic
+LDFLAGS       =	$(ESMF_F90LINKOPTS) $(ESMF_F90LINKPATHS) $(ESMF_F90LINKRPATHS) $(FCFFLAGS)
+EXTRALIBS     = $(ESMF_F90ESMFLINKLIBS)
+
+#
+# --- generic make definitions
+#
+SHELL         = /bin/sh
+RM            = \rm -f
+
+#
+# rules.
+#
+
+.c.o:
+	$(CC) $(CPPFLAGS) $(CCFLAGS)  -c $*.c
+
+.F90.o:
+	$(FC) $(CPPFLAGS) $(FCFFLAGS) -c $*.F90

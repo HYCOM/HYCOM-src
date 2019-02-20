@@ -1,0 +1,15 @@
+The OpenMP directives allow HYCOM to run on multiple processors of
+shared memory machines.  They can also be used in conjuction with
+MPI domain decomposition (MPI between multi-processor nodes, OpenMP on 
+each node).  This mode of parallelization is typically best for a 
+relatively modest number of processors (2,3,4,6,8), although more can 
+profitably be used on large grids.
+
+The PARAMETER mxthrd has been added to mod_dimesnions.F90 and dimensions.h.  
+Each outer (i or j) loop is diviuded into mxthrd pieces by OpenMP.  So 
+mxthrd should be a multiple of NOMP (i.e. OMP_NUM_THREADS).  It is often 
+best to set mxthrd larger than NOMP, because that tends to give better 
+land/sea load balance between threads.  For example, mxthrd=16 could 
+be used with 2, 4, 8 or 16 threads.  Other good choices are 12, 24, 32 
+etcetera.  Large values of mxthrd are only likely to be optimal for 
+large idm and jdm.

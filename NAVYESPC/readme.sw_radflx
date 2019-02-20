@@ -1,0 +1,30 @@
+==========================================================
+When the following variables are specified in blkdat.input
+     0      'albflg' = ocean albedo      flag (0=none,1=const,2=L&Y)
+     2      'lwflag' = longwave (SST) flag (0=none,1=clim,2=nwp,-1=lwdn)
+
+HYCOM variables swflx, radflx used in thermf.F are defined as
+ swflx (Qsw): net sw flux, +ve into ocean/ice
+ radflx (Qlw+Qs): net sw+lw flux, +ve into ocean/ice
+
+Note: swflx, and radflx are not the net ocean-only fluxes. Sea ice effect is not accounted.
+
+======================================================
+
+When the following variables are specified in blkdat.input
+     2      'albflg' = ocean albedo      flag (0=none,1=const,2=L&Y)
+    -1      'lwflag' = longwave (SST) flag (0=none,1=clim,2=nwp,-1=lwdn)
+
+
+HYCOM variable swflx is converted in forfun.f from downward to net shorwave to account the sea ice effect.
+HYCOM variable radflx is converted in thermf.f from downward to net longwave to account the sea ice effect.
+
+Eventally HYCOM variables swflx, radflx used in thermf.F are defined as
+ swflx (Qsw): net sw flux, +ve into ocean
+ radflx (Qlw+Qs): net lw flux, +ve into ocean
+
+Note:
+  swflx: Qswdn -> Qsw
+  radflx: Qlwdn -> Qlw + Qsw
+
+  swflx, and radflx are the net ocean-only fluxes. Sea ice effect is accounted.

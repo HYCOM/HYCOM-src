@@ -1,0 +1,53 @@
+If the RELO macro is set, arrays are allocated at run time and the defaults 
+for the small number of user changeable parameters in mod_dimensions.F90 are 
+usually appropriate.  The most commonly edited parameter in mod_dimensions.F90 
+is mxthrd which might need changing when parallelizing with OpenMP (TYPE=omp
+or TYPE=ompi), see README.OpenMP.
+
+-------------------------------------------------------------------------------
+
+If the RELO macro is not set, arrays are allocated at compile time and 
+dimensions.h will need customizing for a new region or a different number 
+of layers or a different TYPE.  The user-tunable parameters are:
+
+   itdm   = total grid dimension in i direction
+   jtdm   = total grid dimension in j direction
+   kdm    =       grid dimension in k direction
+   iqr    = maximum number of tiles in i direction
+   jqr    = maximum number of tiles in j direction
+   idm    = maximum single tile grid dimension in i direction
+   jdm    = maximum single tile grid dimension in j direction
+   mxthrd = maximum number of OpenMP threads 
+   kkwall = grid dimension in k direction for wall relax arrays
+   kknest = grid dimension in k direction for nest relax arrays
+   kkmy25 = grid dimension in k direction for M-Y 2.5 arrays
+
+If memory is plentifull, then kkwall,kknest,kkmy25 can all be set to
+kdm.  However, if memory is in short supply then kwall and/or kknest
+can be set to 1 (if wall or nest relaxation is not being used) and
+if the Mellor-Yamada mixed layer isn't being used kkmy25 can be set 
+to -1.
+
+A new source code directory and executable is always required whenever
+itdm, or jtdm, or kdm change (i.e. whenever the region size or the
+number of layers change).  Note that ../topo/regional.grid.b is used 
+to define the region to setup programs, and needs to be consistent with
+dimensions.h.
+
+A separate source code directory and executable is always required for 
+each parallelization strategy, or TYPE, chosen (TYPE=one, or omp, or ompi, 
+or mpi, or shmem).  The TYPE also effects how dimensions.h is configured.
+There are examples of dimensions.h for each TYPE in ALT_CODE.
+
+When running on a shared memory machine (TYPE=one or omp) set: 
+iqr=jqr=1, idm=itdm, and jdm=jtdm.  Note that the same OpenMP executable
+(TYPE=omp) can be used for a range of processor counts, provided mxthrd
+is chosen appropriately, see README.OpenMP.
+
+When running on a distributed memory machine (TYPE=mpi or ompi or shmem) 
+set: iqr and jqr to the maximum number of processors used in each
+dimension, and idm and jdm to the maximum (worse case) dimensions for 
+any single tile on any targeted number of processors.  Note that the
+same executable can be used for a range of processor counts, provided
+iqr,jqr,idm,jdm are all large enough for each case.  The mxthrd parameter 
+is only important when using OpenMP, see README.OpenMP.

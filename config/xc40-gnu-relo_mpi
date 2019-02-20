@@ -1,0 +1,46 @@
+#
+# ---------------------------------------------------------------------------
+# common definitions for 32-core Cray XC40, MPI,  small memory, real*8
+# GNU Fortran: module switch PrgEnv-cray PrgEnv-GNU
+# -O2 to maintain bit for bit equality for all NMPI values
+# version that uses MPI-2 I/O for HYCOM
+# relocatable version
+# ---------------------------------------------------------------------------
+#
+# MACROS      DESCRIPTIONS:
+#
+# FC:         Fortran 90 compiler.
+# FCFFLAGS:   Fortran 90 compilation flags.
+# CC:         C compiler.
+# CCFLAGS:    C compilation flags.
+# CPP:        cpp preprocessor (may be implied by FC).
+# CPPFLAGS:   cpp -D macro flags.
+# LD:         Loader.
+# LDFLAGS:    Loader flags.
+# EXTRALIBS:  Extra local libraries (if any).
+#
+FC            = ftn
+FCFFLAGS      =	-fPIC -fno-second-underscore -O2 -march=native -mavx -m64 -fdefault-real-8 -fdefault-double-8
+CC            =	cc
+CCFLAGS       =	-O -m64 
+CPP           =	cpp -P
+CPPFLAGS      =	-DIA32 -DREAL8 -DMPI -DENDIAN_IO -DTIMER -DRELO $(CPP_EXTRAS)
+LD            =	$(FC)
+LDFLAGS       =	$(FCFFLAGS) 
+EXTRALIBS     = 
+
+#
+# --- generic make definitions
+#
+SHELL         = /bin/sh
+RM            = \rm -f
+
+#
+# rules.
+#
+
+.c.o:
+	$(CC) $(CPPFLAGS) $(CCFLAGS)  -c $*.c
+
+.F90.o:
+	$(FC) $(CPPFLAGS) $(FCFFLAGS) -c $*.F90

@@ -1,0 +1,50 @@
+#
+# ----------------------------------------------------------------------------
+# common definitions for 32-core Cray XC40, MPI,  small memory, real*8, ARCTIC
+# HYCOM+CICE using ESMF4; see http://www.esmf.ucar.edu/ for ESMF
+# Intel Compiler: module switch PrgEnv-cray PrgEnv-intel
+# -fp-model precise -no-fma maintains bit for bit equality for all NMPI values
+# version that uses MPI-2 I/O for HYCOM
+# relocatable version
+# ----------------------------------------------------------------------------
+#
+# MACROS      DESCRIPTIONS:
+#
+# FC:         Fortran 90 compiler.
+# FCFFLAGS:   Fortran 90 compilation flags.
+# CC:         C compiler.
+# CCFLAGS:    C compilation flags.
+# CPP:        cpp preprocessor (may be implied by FC).
+# CPPFLAGS:   cpp -D macro flags.
+# LD:         Loader.
+# LDFLAGS:    Loader flags.
+# EXTRALIBS:  Extra local libraries (if any).
+#
+
+FC            = ftn
+INCLUDES      = -I${ESMF_DIR}/mod/modO -I${ESMF_DIR}/include -I${CICE_DIR}/esmf/compile
+FCFFLAGS      =	-traceback -xHost -O3 -fp-model precise -no-fma -ftz -align array64byte -r8 -warn nogeneral -diag-disable 10212 -mcmodel=small $(INCLUDES) 
+CC            = cc
+CCFLAGS       =	-traceback -xHost -O -mcmodel=small
+CPP           = cpp -P
+CPPFLAGS      = -DUSE_ESMF4 -DIA32 -DREAL8 -DMPI -DENDIAN_IO -DTIMER -DRELO $(CPP_EXTRAS) 
+LD            = $(FC)
+LDFLAGS       = -V $(FCFFLAGS)
+EXTRALIBS     =
+EXTRALIBS     = -L/p/home/wallcraf/pkgs/netcdf/intel/4.0.1/lib -lnetcdf -L${ESMF_DIR}/lib/libO -lesmf   -lAtpSigHandler -lAtpSigHCommData -lpthread -liomp5 -limf -lm -lpthread -ldl -lsci_intel_mp -liomp5 -limf -lm -lpthread -ldl -lrt -lugni -lpthread -lpmi -limf -lm -ldl -lrt -lugni -lpthread -lpmi -limf -lm -ldl -ldmapp -lmpl -lpmi -lpthread -lalpslli -lpthread -lwlm_detect -lugni -lpthread -lalpsutil -lpthread -lrca -lxpmem -ludreg -limf -lm -lifcore -lifport -lpthread -limf -lsvml -lirng -lm -lipgo -ldecimal -lstdc++ -lgcc -lgcc_eh -lirc -lsvml -lgcc -lgcc_eh -lirc_s -ldl -lrt -ldl
+
+
+# --- generic make definitions
+#
+SHELL         = /bin/sh
+RM            = \rm -f
+
+#
+# rules.
+#
+
+.c.o:
+	$(CC) $(CPPFLAGS) $(CCFLAGS)  -c $*.c
+
+.F90.o:
+	$(FC) $(CPPFLAGS) $(FCFFLAGS) -c $*.F90

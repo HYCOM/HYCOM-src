@@ -1,0 +1,45 @@
+#
+# ---------------------------------------------------------------------------
+# common definitions for HPE SGI,  single processor, real*8
+# Intel Compiler:
+# -fp-model precise -no-fma maintains bit for bit equality with MPI cases
+# relocatable version
+# ---------------------------------------------------------------------------
+#
+# MACROS      DESCRIPTIONS:
+#
+# FC:         Fortran 90 compiler.
+# FCFFLAGS:   Fortran 90 compilation flags.
+# CC:         C compiler.
+# CCFLAGS:    C compilation flags.
+# CPP:        cpp preprocessor (may be implied by FC).
+# CPPFLAGS:   cpp -D macro flags.
+# LD:         Loader.
+# LDFLAGS:    Loader flags.
+# EXTRALIBS:  Extra local libraries (if any).
+#
+FC            = ifort
+FCFFLAGS      =	-traceback -xHost -O3 -fp-model precise -no-fma -ftz -align array64byte -r8 -warn nogeneral -diag-disable 10212 -mcmodel=medium
+CC            = icc
+CCFLAGS       =	-traceback -xHost -O -mcmodel=medium
+CPP           = cpp -P
+CPPFLAGS      = -DIA32 -DREAL8 -DENDIAN_IO -DNAN2003 -DTIMER -DRELO $(CPP_EXTRAS)
+LD            = $(FC)
+LDFLAGS       = -V $(FCFFLAGS)
+EXTRALIBS     =
+
+#
+# --- generic make definitions
+#
+SHELL         = /bin/sh
+RM            = \rm -f
+
+#
+# rules.
+#
+
+.c.o:
+	$(CC) $(CPPFLAGS) $(CCFLAGS)  -c $*.c
+
+.F90.o:
+	$(FC) $(CPPFLAGS) $(FCFFLAGS) -c $*.F90

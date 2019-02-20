@@ -1,0 +1,103 @@
+# SCCS IDENTIFICATION:   $HeadURL$
+# SCCS IDENTIFICATION:   @(#)$Id$
+
+#define CHKFILE
+#$(shell if [ -e $(1) ]; then echo TRUE; fi;)
+#endef
+
+
+#ifeq ($(call CHKFILE,$(ESPC_SYSTEM_TOPDIR)/config/esmfmkfile),TRUE)
+#  TOPDIR = $(ESPC_SYSTEM_TOPDIR)
+#else
+#  TOPDIR := $(shell cd ../ 1>/dev/null 2>&1 && pwd)
+#endif
+##Alex OCNDIR := $(shell cd ../ 1>/dev/null 2>&1 && pwd)
+OCNDIR := $(shell cd ../../ 1>/dev/null 2>&1 && pwd)
+
+include $(OCNDIR)/config/esmfmkfile
+include $(ESMFMKFILE)
+
+
+OBJDIR = $(OCNDIR)/obj/esmf
+FCSDIR = $(OCNDIR)/src
+MODDIR = $(OCNDIR)/obj/src
+
+#ifeq ($(call CHKFILE,$(TOPDIR)/src/share/obj),TRUE)
+# MODDIR2 = $(TOPDIR)/src/share/obj
+#else
+#  MODDIR2 =
+#endif
+MODDIR += $(OCNDIR)/share/obj
+MODDIR += $(OCNDIR)/obj/service
+
+ifdef USE_OCN
+  LIB = $(OCNDIR)/lib/ocn_esmf.a
+else
+  LIB = $(OCNDIR)/lib/hycom_esmf.a
+endif
+
+INCFLAG = $(addprefix -I,$(FCSDIR)) $(INCLDIR)
+MODFLAG = $(addprefix -I,$(OBJDIR)) $(addprefix -I,$(MODDIR)) 
+.SUFFIXES  :   .F90 .f .F 
+
+MAKEFILE = Makefile.NUOPC
+include $(OCNDIR)/config/CONFIG_NUOPC
+
+machine=$(shell hostname)
+NOFMA=
+ifeq ($(findstring conrad,$(machine)),conrad)
+  NOFMA= -no-fma
+endif
+
+ifeq ($(findstring gordon,$(machine)),gordon)
+  NOFMA= -no-fma
+endif
+
+#ifdef USE_COUPLE
+OBJS  = \
+        export_from_hycom_tiled.o hycom_couple.o ReadHycomLatLon.o HYCOM_OceanComp.o
+##      HYCOM_Field.o HYCOM_OceanComp.o HYCOM_OceanOnlyComp.o hycom_couple.o
+#else
+#OBJS  = \
+#       HYCOM_OceanComp.o 
+#endif
+
+OBJS := $(addprefix $(OBJDIR)/,$(OBJS))
+
+ 
+TARGET: build_dirs $(OBJS) modmv
+ 
+%.o $(OBJDIR)/%.o : %.f
+	$(FCMPI) -c  $(FFLAGS_mis) $(NOFMA) $(MODFLAG) $(INCFLAG) $< -o $@
+	$(AR) $(LIB) $@
+
+%.o $(OBJDIR)/%.o : %.F
+	$(FCMPI) -c  $(FFLAGS) $(NOFMA) $(CPPFLAGS) $(CPLFLAG) $(MODFLAG) $(INCFLAG) $< -o $@
+	$(AR) $(LIB) $@
+
+#%.o $(OBJDIR)/%.o : %.F90
+#	$(FCMPI) -c $(ESMF_F90COMPILEOPTS) $(ESMF_F90COMPILEPATHS) $(ESMF_F90COMPILEFREECPP) $(ESMF_F90COMPILECPPFLAGS) $(FFLAGS_esmf) $(CPPFLAGS) $(CPLFLAG) $(MODFLAG) $(INCFLAG) $< -o $@
+#	$(AR) $(LIB) $@
+
+%.o $(OBJDIR)/%.o : %.F90
+	$(ESMF_F90COMPILER) -c $(ESMF_F90COMPILEOPTS) $(ESMF_F90COMPILEPATHS) $(ESMF_F90COMPILEFREECPP) $(ESMF_F90COMPILECPPFLAGS) $(CPPFLAGS) $(CPLFLAG) $(MODFLAG) $(INCFLAG) $< -o $@
+	$(AR) $(LIB) $@
+
+modmv:
+	mods=`ls *.mod 2>/dev/null`; \
+	if [ "$${mods}" != "" ]; then mv $${mods} $(OBJDIR)/.; fi
+
+info:
+	-@echo "CPLFLAG: $(CPLFLAG) "
+	-@echo "OBJDIR: $(OBJDIR) "
+	-@echo "OBJS: $(OBJS) "
+
+build_dirs:
+	-@if [ ! -d $(OBJDIR) ]; then mkdir -p $(OBJDIR); fi
+
+# -----------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
+.PHONY: clean
+clean: info
+	rm -f $(OBJDIR)/*.o $(OBJDIR)/*.mod 
+	rm -f $(LIB)

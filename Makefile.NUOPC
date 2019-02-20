@@ -1,0 +1,86 @@
+#
+# SCCS IDENTIFICATION:   $HeadURL$
+# SCCS IDENTIFICATION:   @(#)$Id$
+
+#include ../../config/use_couple
+
+#TOPDIR := $(shell cd ../../../ 1>/dev/null 2>&1 && pwd)
+OCNDIR := $(shell cd ../ 1>/dev/null 2>&1 && pwd)
+#OCNDIR := $(shell cd ../../ 1>/dev/null 2>&1 && pwd)
+
+OBJDIR = $(OCNDIR)/obj/src
+FCSDIR = $(OCNDIR)/src
+
+ifdef USE_OCN
+  LIB = $(OCNDIR)/lib/ocn.a
+else
+  LIB = $(OCNDIR)/lib/hycom.a
+endif
+
+INCFLAG = $(addprefix -I,$(FCSDIR)) $(INCLDIR)
+MODFLAG = $(addprefix -I,$(OBJDIR))
+.SUFFIXES  :  .c .F90
+
+MAKEFILE = Makefile.NUOPC
+include $(OCNDIR)/config/CONFIG_NUOPC
+
+machine=$(shell hostname)
+NOFMA=
+ifeq ($(findstring conrad,$(machine)),conrad)
+  NOFMA= -no-fma
+endif
+
+ifeq ($(findstring gordon,$(machine)),gordon)
+  NOFMA= -no-fma
+endif
+
+OBJS =  \
+	mod_dimensions.o mod_xc.o mod_za.o mod_cb_arrays.o mod_pipe.o \
+	mod_incupd.o \
+	mod_floats.o mod_stokes.o mod_tides.o mod_mean.o mod_archiv.o \
+	mod_tsadvc.o mod_momtum.o mod_barotp.o mod_asselin.o mod_restart.o\
+	bigrid.o blkdat.o  cnuity.o convec.o \
+	diapfl.o dpthuv.o  dpudpv.o forfun.o  geopar.o hybgen.o \
+	icloan.o inicon.o inigiss.o inikpp.o   inimy.o latbdy.o \
+	matinv.o mxkprf.o  mxkrt.o  mxkrtm.o  mxpwp.o \
+	overtn.o poflat.o  prtmsk.o  psmoo.o  \
+	thermf.o trcupd.o  \
+	machine.o  wtime.o machi_c.o  isnan.o s8gefs.o
+
+OBJS := $(addprefix $(OBJDIR)/,$(OBJS))
+
+
+TARGET: $(OBJS) modmv
+
+
+%.o $(OBJDIR)/%.o : %.F90
+	$(FCMPI) -c $(FFLAGS) $(NOFMA) $(CPPFLAGS) $(CPLFLAG) $(MODFLAG) $(INCFLAG) $< -o $@
+	$(AR) $(LIB) $@
+
+%.o $(OBJDIR)/%.o : %.c
+	$(CC) -c $(CPPFLAGS) $(CCFLAGS)  $< -o $@
+	$(AR) $(LIB) $@
+
+
+archive : $(OBJS)
+	rm -f $(LIB)
+	$(AR) -r $(LIB) $(OBJS)
+
+
+modmv:
+	mods=`ls *.mod 2>/dev/null`; \
+	if [ "$${mods}" != "" ]; then mv $${mods} $(OBJDIR)/.; fi
+
+info:
+	-@echo "OCNDIR: $(OCNDIR) "
+#	-@echo "OBJDIR: $(OBJDIR) "
+#	-@echo "OBJS: $(OBJS) "
+
+# -----------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
+.PHONY: clean 
+
+clean: 
+	rm -f $(OBJDIR)/*.o $(OBJDIR)/*.mod 
+	rm -f $(LIB)
+
