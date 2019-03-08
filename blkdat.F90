@@ -57,10 +57,10 @@
       call blkini(iversn,'iversn')
       call blkini(iexpt, 'iexpt ')
 !
-      if (iversn.lt.22 .or. iversn.gt.22) then
+      if (iversn.lt.23 .or. iversn.gt.23) then
         if (mnproc.eq.1) then
         write(lp,'(/ a,i3,a,i3 /)')  &
-          'error - iversn must be between',22,' and',22
+          'error - iversn must be between',23,' and',23
         call flush(lp)
         endif !1st tile
         call xcstop('(blkdat)')
@@ -2604,3 +2604,4 @@
 !> Dec. 2018 - add /* USE_NUOPC_CESMBETA */ macro for coupled simulation
 !> Dec. 2018 - add yrflag=4 for 365 days no-leap calendar (CESM)
 !> Feb. 2019 - add sshflg=2 for steric Montg. Potential
+!> Mar. 2019 - updated iversn to 23
