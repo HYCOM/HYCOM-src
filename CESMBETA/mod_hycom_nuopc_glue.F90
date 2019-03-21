@@ -94,6 +94,7 @@ module mod_hycom_nuopc_glue
     type(ESMF_DistGridConnection), allocatable :: connectionList(:)
     type(ESMF_DistGrid)   :: dg
     type(ESMF_Array)      :: array_plon, array_plat, array_msk, array_area
+    type(ESMF_Array)      :: array_qlon, array_qlat
     
     real(kind=ESMF_KIND_R8) :: dump_lat(1500,1100)
     real(kind=ESMF_KIND_R8) :: dump_lon(1500,1100)
@@ -230,7 +231,29 @@ module mod_hycom_nuopc_glue
       line=__LINE__, &
       file=__FILE__)) &
       return  ! bail out
-      
+     
+    ! dress up "qlon" array, considering HYCOM memory layout with halo + padding
+    array_qlon = ESMF_ArrayCreate(dg, farray=qlon, &
+      indexflag=ESMF_INDEX_DELOCAL, &
+      computationalLWidth=(/nbdy,nbdy/), computationalUWidth=(/nbdy,nbdy/), &
+      totalLWidth=(/nbdy,nbdy/), & ! lower corner pinned to memory alloc, float upper
+      rc=rc)
+    if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+      line=__LINE__, &
+      file=__FILE__)) &
+      return  ! bail out
+
+    ! dress up "qlat" array, considering HYCOM memory layout with halo + padding
+    array_qlat = ESMF_ArrayCreate(dg, farray=qlat, &
+      indexflag=ESMF_INDEX_DELOCAL, &
+      computationalLWidth=(/nbdy,nbdy/), computationalUWidth=(/nbdy,nbdy/), &
+      totalLWidth=(/nbdy,nbdy/), & ! lower corner pinned to memory alloc, float upper
+      rc=rc)
+    if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+      line=__LINE__, &
+      file=__FILE__)) &
+      return  ! bail out
+ 
     ! dress up "mask" array, considering HYCOM memory layout with halo + padding
     array_msk = ESMF_ArrayCreate(dg, farray=ip, &
       indexflag=ESMF_INDEX_DELOCAL, &
@@ -275,14 +298,14 @@ module mod_hycom_nuopc_glue
       return  ! bail out
     ! set the corner stagger latitude coordinate Array
     call ESMF_GridSetCoord(glue%grid, staggerLoc=ESMF_STAGGERLOC_CORNER, &
-      coordDim=1, array=array_plon, rc=rc)    
+      coordDim=1, array=array_qlon, rc=rc)    
     if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
       line=__LINE__, &
       file=__FILE__)) &
       return  ! bail out
     ! set the center stagger latitude coordinate Array
     call ESMF_GridSetCoord(glue%grid, staggerLoc=ESMF_STAGGERLOC_CORNER, &
-      coordDim=2, array=array_plat, rc=rc)    
+      coordDim=2, array=array_qlat, rc=rc)    
     if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
       line=__LINE__, &
       file=__FILE__)) &
@@ -302,11 +325,11 @@ module mod_hycom_nuopc_glue
       file=__FILE__)) &
       return  ! bail out
     ! attach the center staggered mesh too for later reference
-!!Alex    glue%mesh = ESMF_GridToMesh(glue%grid, ESMF_STAGGERLOC_CENTER, 1, rc=rc)
-!!Alex    if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
-!!Alex      line=__LINE__, &
-!!Alex      file=__FILE__)) &
-!!Alex    return ! bail out
+    glue%mesh = ESMF_GridToMesh(glue%grid, ESMF_STAGGERLOC_CENTER, 1, rc=rc)
+    if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+      line=__LINE__, &
+      file=__FILE__)) &
+    return ! bail out
      
     ! create the import and export FieldBundles
     glue%importFields = ESMF_FieldBundleCreate(rc=rc)
@@ -1081,11 +1104,7 @@ module mod_hycom_nuopc_glue
         covice(i,j) = sic_import(i,j) !Sea Ice Concentration
         si_c  (i,j) = sic_import(i,j) !Sea Ice Concentration
         if (covice(i,j).gt.0.0) then
-!          if (frzh(i,j).gt.0.0) then
-!             flxice(i,j) = frzh(i,j)        !Sea Ice Heat Flux Freezing potential
-!          else
-             flxice(i,j) = sifh_import(i,j) !Sea Ice Heat Flux Melting potential
-!          endif
+          flxice(i,j) = sifh_import(i,j) !Sea Ice Heat Flux Melting potential
           si_tx (i,j) =  sitx_import(i,j) !Sea Ice X-Stress into ocean
           si_ty (i,j) =  sity_import(i,j) !Sea Ice Y-Stress into ocean
           fswice(i,j) =  siqs_import(i,j) !Solar Heat Flux thru Ice to Ocean already in swflx
@@ -1296,8 +1315,8 @@ module mod_hycom_nuopc_glue
       elseif (fieldStdName == "s_surf") then
         do j=1,jja
         do i=1,ii
-          farrayPtr(i,j) = 0.5d0 * (saln(i,j,1,2)+saln(i,j,1,1))
-!!Alex          farrayPtr(i,j) = sml(i,j)
+!!Alex          farrayPtr(i,j) = 0.5d0 * (saln(i,j,1,2)+saln(i,j,1,1))
+          farrayPtr(i,j) = sml(i,j)
 
         enddo
         enddo

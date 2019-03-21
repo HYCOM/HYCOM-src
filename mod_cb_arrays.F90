@@ -153,6 +153,7 @@
        util3,util4,    & ! arrays for temporary storage
        util5,util6,    & ! arrays for temporary storage
        plon, plat,     & ! lon,lat at p pts
+       qlon, qlat,     & ! lon,lat at q pts
        ulon, ulat,     & ! lon,lat at u pts
        vlon, vlat,     & ! lon,lat at v pts
        pang,           & ! angle between xwards and ewards
@@ -1179,6 +1180,8 @@
                util6(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy), &
                 plon(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy), &
                 plat(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy), &
+                qlon(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy), &
+                qlat(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy), &
                 ulon(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy), &
                 ulat(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy), &
                 vlon(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy), &
@@ -1231,7 +1234,7 @@
            tidepg_mn(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy), &
            displd_mn(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy), &
            dispqd_mn(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy) )
-      call mem_stat_add( 60*(idm+2*nbdy)*(jdm+2*nbdy) )
+      call mem_stat_add( 62*(idm+2*nbdy)*(jdm+2*nbdy) )
 #endif
                util1 = r_init
                util2 = r_init
@@ -1241,6 +1244,8 @@
                util6 = r_init
                 plon = r_init
                 plat = r_init
+                qlon = r_init
+                qlat = r_init
                 ulon = r_init
                 ulat = r_init
                 vlon = r_init

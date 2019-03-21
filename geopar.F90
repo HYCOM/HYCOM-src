@@ -108,7 +108,24 @@
               call xcstop('(geopar)')
                      stop '(geopar)'
             endif
+#if defined (USE_NUOPC_CESMBETA)
+!           qlon, qlat
+            j = index(cline,'=')
+            read (cline(j+1:),*) hminb,hmaxb
+            if     (mnproc.eq.1) then
+              write (lp,'(a)') trim(cline)
+            endif
+            call xcsync(flush_lp)
+            call zaiord(util2, ip,.false., hmina,hmaxa, 9)
+            if (i.eq.1) then
+              qlon(:,:)=util2(:,:)
+            else
+              qlat(:,:)=util2(:,:)
+            endif
+#else
+!           skip qlon, qlat
             call zaiosk(9)
+#endif
           enddo
         elseif (k.eq.3) then
           call zaiord(ulon, ip,.false., hmina,hmaxa, 9)
@@ -250,6 +267,10 @@
       vland = 1.0
       call xctilr(plon,  1,1, nbdy,nbdy, halo_ps)
       call xctilr(plat,  1,1, nbdy,nbdy, halo_ps)
+#if defined(USE_NUOPC_CESMBETA)
+      call xctilr(qlon,  1,1, nbdy,nbdy, halo_ps)
+      call xctilr(qlat,  1,1, nbdy,nbdy, halo_ps)
+#endif
 #if defined(ESPC_COUPLE) || defined (USE_NUOPC_CESMBETA)
       call xctilr(pang,  1,1, nbdy,nbdy, halo_ps)
 #endif

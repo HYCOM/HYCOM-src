@@ -15,9 +15,11 @@
     
         private
   
-        ! grid
+        ! grid c-grid staggering
         public plon     ! lon at the p pts
         public plat     ! lat at the p pts
+        public qlon     ! lon at the p pts
+        public qlat     ! lat at the p pts
         public scp2     ! grid cell area at the p pts
         public scux     ! grid cell area at the p pts
         public scvy     ! grid cell area at the p pts
