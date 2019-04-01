@@ -322,8 +322,8 @@
 !
         margin = mbdy - 1
 !
-!$OMP PARALLEL DO PRIVATE(j,l,i,ubp,vbp,d11,d12,d21,d22,q)
-!$OMP   PARALLEL DO PRIVATE(j,l,i) &
+
+!$OMP PARALLEL DO PRIVATE(j,l,i,ubp,vbp,d11,d12,d21,d22,q) &
 !$OMP            SCHEDULE(STATIC,jblk)
          do j=1-margin,jj+margin
            do i=1-margin,ii+margin
@@ -1133,7 +1133,7 @@
             enddo !l
           enddo !i
 !
-!$OMP     PARALLEL DO PRIVATE(j,l,i,dpmin) &
+!$OMP     PARALLEL DO PRIVATE(j,i) &
 !$OMP              SCHEDULE(STATIC,jblk)
           do j=1-margin,jj+margin
             do i=1-margin,ii+margin
