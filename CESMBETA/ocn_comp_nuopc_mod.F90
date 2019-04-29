@@ -2207,10 +2207,12 @@ module ocn_comp_nuopc_mod
     rc = ESMF_SUCCESS
 
     do i = 1, 30
-      hycom2cesm_table(i)%connected = .true.
-      hycom2cesm_table(i)%unit = ''
       cesm2hycom_table(i)%connected = .true.
       cesm2hycom_table(i)%unit = ''
+    enddo
+    do i = 1, 8
+      hycom2cesm_table(i)%connected = .true.
+      hycom2cesm_table(i)%unit = ''
     enddo
 
     cesm2hycom_table(1)%hycom_stdname  = "surface_downward_eastward_stress"
