@@ -1,0 +1,46 @@
+The following are one line descriptions of all public HYCOM communication routines:
+ 
+      xcaget - convert an entire 2-D array from tiled to non-tiled layout.
+      xcaput - convert an entire 2-D array from non-tiled to tiled layout.
+      xcastr - broadcast a 1-D array to all tiles.
+      xceget - find the value of a(ia,ja) on the non-tiled 2-D grid.
+      xceput - fill a single element in the non-tiled 2-D grid.
+      xciget - find the value of a(ia(:),ja(:)) on the non-tiled 2-D grid.
+      xciput - fill a list of elements in the non-tiled 2-D grid.
+      xchalt - emergency stop all processes, called by one process.
+      xclget - extract a line of elements from the non-tiled 2-D grid.
+      xclput - fill a line of elements in the non-tiled 2-D grid.
+      xcmaxr - replace array a with its element-wise maximum over all tiles.
+      xcminr - replace array a with its element-wise minimum over all tiles.
+      xcpipe - copy aa_slave to aa_master (pipe_compare with OCEANS2 only).
+      xcspmd - initialize processor data structures, called once.
+      xcstop - stop all processes, called by all processes.
+      xcsum  - sum     of a 2-D array.
+      xcsumj - row-sum of a 2-D array.
+      xcsync - barrier, no processor exits until all arrive (flush stdout).
+      xctbar - sync with processors ipe1 and ipe2 (internal use only).
+      xctilr - update the tile overlap halo of a 3-D real array.
+
+      xctmri - initialize timers (called in xcspmd).
+      xctmr0 - start timer.
+      xctmr1 - add time since call to xctim0 to timer.
+      xctmrn - register name of timer.
+      xctmrp - print all active timers.
+      xctmrs - set which events to time (default 1st 5000 then every 50th).
+ 
+With the exception of xchalt, All these routines are assumed to be called
+with identical argument lists by all processors when using SPMD message 
+passing.  This is not difficult to arrange, since by default all routines
+are called in this manner in a SPMD run.  Most communication routines
+act as implicit barriers that syncronize processor state, i.e. when a
+processor exits a communication routine at the very least all processors
+that must communicate with it have entered the same subroutine.  In
+addition the subroutine xcsync provided for cases where all processors
+must enter a critical section of code before the first processor exits.  
+
+Two versions of each subroutine are provided, mod_xc_mp.h for message 
+passing, and mod_xc_sm.h for a single processor.  The appropriate version 
+is included in mod_xc.F90 under control of cpp macros.  The routines are 
+configured as a module, and all HYCOM routines should start with  
+use mod_xc  to allow HYCOM communication routines to be invoked when 
+required.

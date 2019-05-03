@@ -1,0 +1,30 @@
+README.src/README.src.newregion:
+
+HYCOM can be handwired at compile time for a particular region, but it is now
+more usual to configure it to allocate memory and run time. i.e. as a relo executable.
+In fact, all the config examples are for relo setups.  When the RELO macro is set, 
+arrays are allocated at run time and the defaults for the small number of user 
+changeable parameters in mod_dimensions.F90 are usually appropriate.  The most 
+commonly edited parameter in mod_dimensions.F90 is mxthrd which might need changing 
+when parallelizing with OpenMP (TYPE=omp or TYPE=ompi), see README.src.OpenMP.
+If you want to use static compile-time arrays, dimensions.h will need customizing -
+see README.src.dimensions for more details.
+
+There is still a compile time distinction between global tripole grids (with a special
+halo exchange on the "north" domain edge), and the equation of state is chosen at
+compile time to improve performance.  If you only have one domain and one equation
+of state you can call your directory anything you like (e.g. src_2.3.00_mpi).  If 
+you have multiple domains, one approach is to compile in the generic RELO and/or 
+RELO_GLB "region" directory and then softlink from the actual region directories:
+
+    hycom/RELO/src_2.3.00-7tsig0_mpi
+    hycom/RELO/src_2.3.00-17tsig2_mpi
+    hycom/GOMb0.08/src_2.3.00-17tsig2_mpi -> ../RELO/src_2.3.00-17tsig2_mpi
+
+    hycom/RELO_GLB/src_2.3.00-17tsig2_mpi
+    hycom/GLBt0.72/src_2.3.00-17tsig2_mpi -> ../RELO_GLB/src_2.3.00-17tsig2_mpi
+
+The actual region source code directores can skip the "-XtsigY" part of the name if
+this never changes for that domain.
+
+Then edit and run Make.csh for your setup, see README.src.newmachine for more details.
