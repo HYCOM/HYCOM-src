@@ -998,8 +998,10 @@
             secpyr=360.00d0*86400.0d0
           elseif (yrflag.lt.3) then
             secpyr=366.00d0*86400.0d0
-          elseif (yrflag.ge.3) then
+          elseif (yrflag.eq.3) then
             secpyr=365.25d0*86400.0d0
+          elseif (yrflag.eq.4) then
+            secpyr=365.00d0*86400.0d0
           endif
           if     (mnproc.eq.1) then
           write (lp,'(i9,a,2f10.3)')  &
