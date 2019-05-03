@@ -1,4 +1,5 @@
       subroutine datefor(wday, iyr,mon,idy,ihr, yrflag)
+      use mod_xc  ! HYCOM communication interface 
       implicit none
 !
       real*8  wday
@@ -6,9 +7,16 @@
 !
 !**********
 !*
-!  1) convert date into 'model day', for yrflag=2,3 only.
+!  1) convert date into 'model day', for yrflag=2,3,4 only.
 !
-!  2) for yrflag==3, the 'model day' is the number of days since 
+!  2) for yrflag==4, all years are 365 days.
+!     for example:
+!      a) iyr=1,mon=1,idy=1 is the 1st day of the run,
+!         so wday would be 1.0.
+!      b) iyr=1,mon=1,idy=2 is the 2nd day of the run,
+!         so wday would be 2.0.
+!  
+!  3) for yrflag==3, the 'model day' is the number of days since 
 !     001/1901 (which is model day 1.0).
 !     for example:
 !      a) iyr=1901,mon=1,idy=1, represents 0000z hrs on 01/01/1901
@@ -18,7 +26,7 @@
 !     year must be no less than 1901.0, and no greater than 2099.0.
 !     note that year 2000 is a leap year (but 1900 and 2100 are not).
 !
-!  3) for yrflag==2, all years are leap years.
+!  4) for yrflag==2, all years are leap years.
 !     for example:
 !      a) iyr=1,mon=1,idy=1 is the 1st day of the run,
 !         so wday would be 1.0.
@@ -33,17 +41,27 @@
       data    month / 0,  31,  59,  90, 120, 151, 181, &
                          212, 243, 273, 304, 334, 365 /
 !
-      if     (yrflag.eq.3) then
+      if     (yrflag.eq.4) then
+        wday = 365.d0*(iyr-1) + month(mon) + idy + ihr/24.0d0
+      elseif (yrflag.eq.3) then
         nleap = (iyr-1901)/4
         wday  = 365.0d0*(iyr-1901) + nleap + month(mon) + idy + ihr/24.0d0
         if     (mod(iyr,4).eq.0 .and. mon.gt.2) then
           wday  = wday + 1.0d0
         endif
-      else !yrflg==2
+      elseif (yrflag.eq.2) then
         wday = 366.d0*(iyr-1) + month(mon) + idy + ihr/24.0d0
         if     (mon.gt.2) then
           wday  = wday + 1.0d0
         endif
+      else 
+        if     (mnproc.eq.1) then
+        write(lp,*)
+        write(lp,*) 'error in datefor - unsupported yrflag value'
+        write(lp,*)
+        endif !1st tile
+        call xcstop('(datefor)')
+               stop '(datefor)'
       endif !yrflag
       return
 !     end of datefor
@@ -145,6 +163,8 @@
         else
           k = 2  !standard year
         endif
+      elseif (yrflag.eq.4) then
+        k = 2  !365-day year
       elseif (yrflag.eq.0) then
         k = 1  !360-day year
       else
@@ -971,7 +991,7 @@
           endif
           i = index(cline,'=')
           read (cline(i+1:),*) dtime1
-          if     (yrflag.eq.2 .or. yrflag.eq.4) then
+          if     (yrflag.eq.2) then
             if     (nrec.eq.1 .and. abs(dtime1-1096.0d0).gt.0.01) then
 !
 ! ---         climatology must start on wind day 1096.0, 01/01/1904.
@@ -987,6 +1007,25 @@
             endif
             dtime1 = (dtime1 - 1096.0d0) +  &
                      wndrep*int((dtime+0.00001d0)/wndrep)  !wndrep=366 or 732
+            if     (nrec.ne.1 .and. dtime1.lt.dtime0) then
+              dtime1 = dtime1 + wndrep
+            endif
+          elseif (yrflag.eq.4) then 
+            if     (nrec.eq.1 .and. abs(dtime1-731.0d0).gt.0.01) then
+!
+! ---         climatology must start on wind day 731.0, 01/01/1903.
+              if     (mnproc.eq.1) then
+              write(lp,'(a)')  cline
+              write(lp,'(/ a,a / a,g15.6 /)') &
+                'error in forfunh - forcing climatology', &
+                ' must start on wind day 731', &
+                'dtime1 = ',dtime1
+              endif !1st tile
+              call xcstop('(forfunh)')
+                     stop '(forfunh)'
+            endif
+            dtime1 = (dtime1 - 731.0d0) +  &
+                     wndrep*int((dtime+0.00001d0)/wndrep)  !wndrep=365 or 731
             if     (nrec.ne.1 .and. dtime1.lt.dtime0) then
               dtime1 = dtime1 + wndrep
             endif
@@ -1052,14 +1091,23 @@
         endif
         dtime1 = huge(dtime1)
         call rdpall(dtime0,dtime1)
-        if     (yrflag.eq.2 .or. yrflag.eq.4) then
+        if     (yrflag.eq.2) then
           dtime1 = (dtime1 - 1096.0d0) +  &
+                   wndrep*int((dtime+0.00001d0)/wndrep)
+        elseif (yrflag.eq.4) then
+          dtime1 = (dtime1 - 731.0d0) +  &
                    wndrep*int((dtime+0.00001d0)/wndrep)
         endif
         call rdpall(dtime0,dtime1)
-        if     (yrflag.eq.2 .or. yrflag.eq.4) then
+        if     (yrflag.eq.2) then
           dtime1 = (dtime1 - 1096.0d0) +  &
                    wndrep*int((dtime+0.00001d0)/wndrep)  !wndrep=366 or 732
+          if     (dtime1.lt.dtime0) then
+            dtime1 = dtime1 + wndrep
+          endif
+        elseif (yrflag.eq.4) then
+          dtime1 = (dtime1 - 731.0d0) +  &
+                   wndrep*int((dtime+0.00001d0)/wndrep)  !wndrep=365 or 731
           if     (dtime1.lt.dtime0) then
             dtime1 = dtime1 + wndrep
           endif
@@ -1126,9 +1174,15 @@
 !           endif !1st tile
 !           call xcsync(flush_lp)
         call rdpall(dtime0,dtime1)
-        if     (yrflag.eq.2 .or. yrflag.eq.4) then
+        if     (yrflag.eq.2) then
           dtime1 = (dtime1 - 1096.0d0) +  &
                    wndrep*int((dtime+0.00001d0)/wndrep)  !wndrep=366 or 732
+          if     (dtime1.lt.dtime0) then
+            dtime1 = dtime1 + wndrep
+          endif
+        elseif (yrflag.eq.4) then
+          dtime1 = (dtime1 - 731.0d0) +  &
+                   wndrep*int((dtime+0.00001d0)/wndrep)  !wndrep=365 or 731
           if     (dtime1.lt.dtime0) then
             dtime1 = dtime1 + wndrep
           endif
@@ -1256,7 +1310,7 @@
           endif
           i = index(cline,'=')
           read (cline(i+1:),*) dtime1
-          if     (yrflag.eq.2 .or. yrflag.eq.4) then
+          if     (yrflag.eq.2) then
             if     (nrec.eq.1 .and. abs(dtime1-1096.0d0).gt.0.01) then
 !
 ! ---         climatology must start on wind day 1096.0, 01/01/1904.
@@ -1272,6 +1326,25 @@
             endif
             dtime1 = (dtime1 - 1096.0d0) +  &
                      wndrep*int((dtime+0.00001d0)/wndrep)  !wndrep=366 or 732
+            if     (nrec.ne.1 .and. dtime1.lt.dtime0) then
+              dtime1 = dtime1 + wndrep
+            endif
+          elseif (yrflag.eq.4) then
+            if     (nrec.eq.1 .and. abs(dtime1-731.0d0).gt.0.01) then
+!
+! ---         climatology must start on wind day 731.0, 01/01/1903.
+              if     (mnproc.eq.1) then
+              write(lp,'(a)')  cline
+              write(lp,'(/ a,a / a,g15.6 /)') &
+                'error in forfunhp - forcing climatology', &
+                ' must start on wind day 731', &
+                'dtime1 = ',dtime1
+              endif !1st tile
+              call xcstop('(forfunhp)')
+                     stop '(forfunhp)'
+            endif
+            dtime1 = (dtime1 - 731.0d0) +  &
+                     wndrep*int((dtime+0.00001d0)/wndrep)  !wndrep=365 or 731
             if     (nrec.ne.1 .and. dtime1.lt.dtime0) then
               dtime1 = dtime1 + wndrep
             endif
@@ -1302,15 +1375,24 @@
         enddo
         dtime0 = huge(dtime1)
         call rdpall1(mslprs,dtime1,899,.true.)
-        if     (yrflag.eq.2 .or. yrflag.eq.4) then
+        if     (yrflag.eq.2) then
           dtime1 = (dtime1 - 1096.0d0) +  &
+                   wndrep*int((dtime+0.00001d0)/wndrep)
+        elseif (yrflag.eq.4) then
+          dtime1 = (dtime1 - 731.0d0) +  &
                    wndrep*int((dtime+0.00001d0)/wndrep)
         endif
         dtime0 = dtime1
         call rdpall1(mslprs,dtime1,899,.true.)
-        if     (yrflag.eq.2 .or. yrflag.eq.4) then
+        if     (yrflag.eq.2) then
           dtime1 = (dtime1 - 1096.0d0) +  &
                    wndrep*int((dtime+0.00001d0)/wndrep)  !wndrep=366 or 732
+          if     (dtime1.lt.dtime0) then
+            dtime1 = dtime1 + wndrep
+          endif
+        elseif (yrflag.eq.4) then
+          dtime1 = (dtime1 - 731.0d0) +  &
+                   wndrep*int((dtime+0.00001d0)/wndrep)  !wndrep=365 or 731
           if     (dtime1.lt.dtime0) then
             dtime1 = dtime1 + wndrep
           endif
@@ -1333,9 +1415,15 @@
 !           call xcsync(flush_lp)
         dtime0 = dtime1
         call rdpall1(mslprs,dtime1,899,.true.)
-        if     (yrflag.eq.2 .or. yrflag.eq.4) then
+        if     (yrflag.eq.2) then
           dtime1 = (dtime1 - 1096.0d0) +  &
                    wndrep*int((dtime+0.00001d0)/wndrep)  !wndrep=366 or 732
+          if     (dtime1.lt.dtime0) then
+            dtime1 = dtime1 + wndrep
+          endif
+        elseif (yrflag.eq.4) then
+          dtime1 = (dtime1 - 731.0d0) +  &
+                   wndrep*int((dtime+0.00001d0)/wndrep)  !wndrep=365 or 731
           if     (dtime1.lt.dtime0) then
             dtime1 = dtime1 + wndrep
           endif
@@ -4703,3 +4791,4 @@
 !> Dec. 2018 - cycle when no ustar
 !> Dec  2018 - add yrflag=4 for 365 days no-leap calendar (CESM)
 !> Feb. 2019 - add sshflg=2 for steric Montg. Potential and montg_c in rdbaro_in
+!> May  2019 - add yrflag=4 logic to datefor and fordate
