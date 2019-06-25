@@ -966,6 +966,9 @@
         call xcsync(flush_lp)
         return
       endif !lcount=1
+
+      if ((lll.eq.0) .or. (n.eq.0)) return
+
 !     
 ! --- 'wellposed' treatment of pressure and normal velocity fields
 ! --- not in fact wellposed with this exterior data
@@ -1819,6 +1822,9 @@
         call xcsync(flush_lp)
         return
       endif
+
+      if (n.eq.0) return
+
 !
 ! --- 'wellposed' treatment of pressure and normal velocity fields
 ! --- not in fact wellposed with this exterior data
@@ -2749,6 +2755,9 @@
         call xcsync(flush_lp)
         return
       endif
+
+      if ((lll.eq.0) .or. (n.eq.0)) return
+
 !
 ! --- nested input only required on first barotropic time step.
 !
@@ -3643,6 +3652,9 @@
         call xcsync(flush_lp)
         return
       endif
+
+      if ((lll.eq.0) .or. (n.eq.0)) return
+
 !
 ! --- nested input only required on first barotropic time step.
 !
