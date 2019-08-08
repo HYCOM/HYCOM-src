@@ -1987,29 +1987,29 @@
             maskn = 0.0
             masks = 0.0
             ! calculate the eastward slope
-            if (srfhgt(i-1,j).ne.0.0) then
+            if (ip(i-1,j).ne.0) then
               ssh_w = (srfhgt(i  ,j) - srfhgt(i-1,j))/(g*scux(i  ,j))
               maskw = 1.0
             endif
-            if (srfhgt(i+1,j).ne.0.0) then
+            if (ip(i+1,j).ne.0) then
               ssh_e = (srfhgt(i+1,j) - srfhgt(i  ,j))/(g*scux(i+1,j))
               maske = 1.0
             endif
 
-            if (ssh_e .ne.0.0 .or. ssh_w.ne.0.0) then
+            if ( maskw .eq.1.0 .or. maske .eq. 1.0 ) then
                 dhdx=(ssh_e+ssh_w)/(maskw+maske) !! on the p-grid
             endif
 
             ! calculate the northward slope
-           if (srfhgt(i,j-1).ne.0.0) then
+           if (ip(i,j-1).ne.0) then
                ssh_s = (srfhgt(i,j  ) - srfhgt(i,j-1))/(g*scvy(i,j  ))
                masks = 1.0
             endif
-            if (srfhgt(i,j+1).ne.0.0) then
+            if (ip(i,j+1).ne.0) then
                ssh_n = (srfhgt(i,j+1) - srfhgt(i,j  ))/(g*scvy(i,j+1))
                maskn = 1.0
             endif
-            if (ssh_n .ne.0.0 .and. ssh_s.ne.0.0) then
+            if (masks .eq. 1.0 .or. maskn .eq. 1.0) then
                dhdy=(ssh_n+ssh_s)/(maskn+masks) !! on the p-grid
             endif
              ! convert to eastward/northward grid
@@ -3715,29 +3715,29 @@
            maskn = 0.0
            masks = 0.0
            ! calculate the eastward slope
-           if (srfhgt(i-1,j).ne.0.0) then
+           if (ip(i-1,j).ne.0) then
              ssh_w = (srfhgt(i  ,j) - srfhgt(i-1,j))/(g*scux(i  ,j))
              maskw = 1.0
            endif
-           if (srfhgt(i+1,j).ne.0.0) then
+           if (ip(i+1,j).ne.0) then
              ssh_e = (srfhgt(i+1,j) - srfhgt(i  ,j))/(g*scux(i+1,j))
              maske = 1.0
            endif
 
-           if (ssh_e .ne.0.0 .or. ssh_w.ne.0.0) then
+           if ( maskw .eq.1.0 .or. maske .eq. 1.0 ) then
               dhdx=(ssh_e+ssh_w)/(maskw+maske) !! on the p-grid
            endif
 
            ! calculate the northward slope
-           if (srfhgt(i,j-1).ne.0.0) then
+           if (ip(i,j-1).ne.0) then
               ssh_s = (srfhgt(i,j  ) - srfhgt(i,j-1))/(g*scvy(i,j  ))
               masks = 1.0
            endif
-           if (srfhgt(i,j+1).ne.0.0) then
+           if (ip(i,j+1).ne.0) then
               ssh_n = (srfhgt(i,j+1) - srfhgt(i,j  ))/(g*scvy(i,j+1))
               maskn = 1.0
            endif
-           if (ssh_n .ne.0.0 .and. ssh_s.ne.0.0) then
+           if (masks .eq. 1.0 .or. maskn .eq. 1.0) then
               dhdy=(ssh_n+ssh_s)/(maskn+masks) !! on the p-grid
            endif
            ! convert to eastward/northward grid
