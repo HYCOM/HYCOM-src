@@ -1303,6 +1303,9 @@
                   varb2d(i1,j1)=dlondy(i,j)*vold2(i,j,k+kold2)
                 enddo
               enddo
+!MHRI BEGIN
+              l=1  ! TODO: l not defined ?????  SOLUTION?? In old HYCOM version, "call intrph" were always called
+!MHRI END
               if (l.eq.1) then
                 call intrph(varb2d,ptlon(1,1,ngrid),ptlat(1,1,ngrid), &
                             xpos0,ypos0,maskpt(1,1,ngrid), &
