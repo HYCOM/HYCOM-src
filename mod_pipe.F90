@@ -1260,7 +1260,7 @@
         smean=0.d0
         rmean=0.d0
         do k=1,kk
-!$OMP     PARALLEL DO PRIVATE(j,k,l,i) &
+!$OMP     PARALLEL DO PRIVATE(j,i) &
 !$OMP              SCHEDULE(STATIC,jblk)
           do j=1,jj
             do i=1,ii
@@ -1307,7 +1307,7 @@
         call flush(lp)
         endif
 !
-!$OMP   PARALLEL DO PRIVATE(j,k,l,i) &
+!$OMP   PARALLEL DO PRIVATE(j,i) &
 !$OMP            SCHEDULE(STATIC,jblk)
         do j=1,jj
           do i=1,ii
