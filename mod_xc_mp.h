@@ -6,7 +6,7 @@
 # define BARRIER call shmem_barrier_all()
 #endif
 
-/* BARRIER_MP    halo synchronization; SHMEM only      */ &
+/* BARRIER_MP    halo synchronization; SHMEM only      */
 /* BARRIER_NP    halo synchronization; SHMEM only      */
 #if defined(RINGB)
 #define BARRIER_MP call xctbar(idproc(mproc-1,nproc),idproc(mproc+1,nproc))
