@@ -28,26 +28,29 @@
       cvmgz(a,b,ic)=cvmgp(a,b,-1.*iabs(ic))
 !
       ncols=nchar/4
-      do 1 n=1,ii/ncols+1
-      i1=ncols*(n-1)+1
-      i2=min0(ncols*n,ii)
-      if (i1.gt.i2) go to 1
-      write (lp,'(/'' Sec.'',i2,'' (cols'',i4,'' -'',i4,'') -- '',a)') &
-         n,i1,i2,title
-!cc      if (i2.lt.i1+5) then
-!cc      write (lp,'('' (Not printed. Too few columns. Save paper.)'')')
-!cc      go to 1
-!cc      end if
-      do 2 j=jj,1,-1
-      do 3 i=i1,i2
- 3    work(i,j)=cvmgz(0.,array(i,j),mask(i,j))
-      do 4 i=i1,i2
- 4    work(i,j)=cvmgz(0.,(work(i,j)-offset)*scale,mask(i,j))
-      write (lp,'(32i4)')        j,(int(work(i,j)),i=i1,i2)
-!cc   write (lp,'(i4,1x,75i1)')  j,(int(work(i,j)),i=i1,i2)
-!cc   write (lp,'(i4,1x,120i1)') j,(int(work(i,j)),i=i1,i2)
- 2    continue
- 1    continue
+      do n=1,ii/ncols+1
+        i1=ncols*(n-1)+1
+        i2=min0(ncols*n,ii)
+        if (i1.gt.i2) exit
+        write &
+          (lp,'(/'' Sec.'',i2,'' (cols'',i4,'' -'',i4,'') -- '',a)') &
+          n,i1,i2,title
+!cc        if (i2.lt.i1+5) then
+!cc        write (lp,'('' (Not printed. Too few columns. Save paper.)'')')
+!cc        exit
+!cc        end if
+        do j=jj,1,-1
+          do i=i1,i2
+            work(i,j)=cvmgz(0.,array(i,j),mask(i,j))
+          enddo
+          do i=i1,i2
+            work(i,j)=cvmgz(0.,(work(i,j)-offset)*scale,mask(i,j))
+          enddo
+          write (lp,'(32i4)')        j,(int(work(i,j)),i=i1,i2)
+!cc       write (lp,'(i4,1x,75i1)')  j,(int(work(i,j)),i=i1,i2)
+!cc       write (lp,'(i4,1x,120i1)') j,(int(work(i,j)),i=i1,i2)
+        enddo
+      enddo
       call flush(lp)
       return
       end
