@@ -599,11 +599,11 @@
       call blkinr(meanfq,'meanfq','(a6," =",f10.4," days")')
       call blkinr(rstrfq,'rstrfq','(a6," =",f10.4," days")')
       call blkinr(bnstfq,'bnstfq','(a6," =",f10.4, &
-                                 " days (-ve mean span)")')
+                                &" days (-ve mean span)")')
       call blkinr(nestfq,'nestfq','(a6," =",f10.4, &
-                                 " days (-ve mean span)")')
+                                &" days (-ve mean span)")')
       call blkinr(cplifq,'cplifq','(a6," =",f10.4, &
-                                 " days (-ve time steps)")')
+                                &" days (-ve time steps)")')
       call blkinr(baclin,'baclin','(a6," =",f10.4," sec")')
       call blkinr(batrop,'batrop','(a6," =",f10.4," sec")')
 !
@@ -626,7 +626,7 @@
         if (natm.lt.4) then
           if (mnproc.eq.1) then
           write(lp,'(/ a /)')  &
-            'error - natm must be 4 for monthly forcing (yrflag==0,1)'
+           &'error - natm must be 4 for monthly forcing (yrflag==0,1)'
           call flush(lp)
           endif !1st tile
           call xcstop('(blkdat)')
@@ -636,7 +636,7 @@
         if (natm.ne.2) then
           if (mnproc.eq.1) then
           write(lp,'(/ a /)')  &
-            'warning - natm can be 2 for this forcing (yrflag!=0,1)'
+           &'warning - natm can be 2 for this forcing (yrflag!=0,1)'
           call flush(lp)
           endif !1st tile
           call xcstop('(blkdat)')
@@ -666,7 +666,7 @@
       if (yrflag.lt.0 .or. yrflag.gt.4) then
         if (mnproc.eq.1) then
         write(lp,'(/ a /)')  &
-          'error - yrflag must be between 0 and 4'
+         &'error - yrflag must be between 0 and 4'
         call flush(lp)
         endif !1st tile
         call xcstop('(blkdat)')
@@ -676,7 +676,7 @@
         if     (abs(nint(86400.0/baclin)-86400.0/baclin).gt.0.01) then
           if (mnproc.eq.1) then
           write(lp,'(/ a /)') &
-            'error - baclin not an integer divisor of 24 hours'
+           &'error - baclin not an integer divisor of 24 hours'
           call flush(lp)
           endif !1st tile
           call xcstop('(blkdat)')
@@ -690,7 +690,7 @@
         if     (abs(nint(21600.0/baclin)-21600.0/baclin).gt.0.01) then
           if (mnproc.eq.1) then
           write(lp,'(/ a /)') &
-            'error - baclin not an integer divisor of 6 hours'
+           &'error - baclin not an integer divisor of 6 hours'
           call flush(lp)
           endif !1st tile
           call xcstop('(blkdat)')
@@ -705,7 +705,7 @@
                        0.5*baclin/batrop  ).gt.0.01) then
         if (mnproc.eq.1) then
         write(lp,'(/ a /)') &
-          'error - batrop not an integer divisor of baclin/2'
+         &'error - batrop not an integer divisor of baclin/2'
         call flush(lp)
         endif !1st tile
         call xcstop('(blkdat)')
@@ -719,8 +719,8 @@
                        (dsurfq*86400.d0)/baclin  ).gt.0.01) then
         if (mnproc.eq.1) then
         write(lp,'(/ a,a /)') &
-          'error - ', &
-          'dsurfq is not a whole number of baroclinic time steps'
+         &'error - ', &
+         &'dsurfq is not a whole number of baroclinic time steps'
         call flush(lp)
         endif !1st tile
         call xcstop('(blkdat)')
@@ -734,8 +734,8 @@
                        (diagfq*86400.d0)/baclin  ).gt.0.01) then
         if (mnproc.eq.1) then
         write(lp,'(/ a,a /)') &
-          'error - ', &
-          'diagfq is not a whole number of baroclinic time steps'
+         &'error - ', &
+         &'diagfq is not a whole number of baroclinic time steps'
         call flush(lp)
         endif !1st tile
         call xcstop('(blkdat)')
@@ -749,8 +749,8 @@
                        (proffq*86400.d0)/baclin  ).gt.0.01) then
         if (mnproc.eq.1) then
         write(lp,'(/ a,a /)') &
-          'error - ', &
-          'proffq is not a whole number of baroclinic time steps'
+         &'error - ', &
+         &'proffq is not a whole number of baroclinic time steps'
         call flush(lp)
         endif !1st tile
         call xcstop('(blkdat)')
@@ -764,8 +764,8 @@
                        (tilefq*86400.d0)/baclin  ).gt.0.01) then
         if (mnproc.eq.1) then
         write(lp,'(/ a,a /)') &
-          'error - ', &
-          'tilefq is not a whole number of baroclinic time steps'
+         &'error - ', &
+         &'tilefq is not a whole number of baroclinic time steps'
         call flush(lp)
         endif !1st tile
         call xcstop('(blkdat)')
@@ -779,8 +779,8 @@
                        (meanfq*86400.d0)/baclin  ).gt.0.01) then
         if (mnproc.eq.1) then
         write(lp,'(/ a,a /)') &
-          'error - ', &
-          'meanfq is not a whole number of baroclinic time steps'
+         &'error - ', &
+         &'meanfq is not a whole number of baroclinic time steps'
         call flush(lp)
         endif !1st tile
         call xcstop('(blkdat)')
@@ -800,7 +800,7 @@
       if (kknest.ne.kdm .and. nestfq.ne.0.0) then
         if (mnproc.eq.1) then
         write(lp,'(/ a /)')  &
-          'error - kknest (dimensions.h) must be kdm when nesting'
+         &'error - kknest (dimensions.h) must be kdm when nesting'
         call flush(lp)
         endif !1st tile
         call xcstop('(blkdat)')
@@ -886,31 +886,31 @@
       call blkini(advtyp,'advtyp')
       call blkini(momtyp,'momtyp')
       call blkinr(slip,  'slip  ', &
-            '(a6," =",f10.4," (-1=no-slip, -1>:>+1=partial, +1=free)")')
+           &'(a6," =",f10.4," (-1=no-slip, -1>:>+1=partial, +1=free)")')
       call blkinr(visco2,'visco2','(a6," =",f10.4," ")')
       call blkinr(visco4,'visco4','(a6," =",f10.4," ")')
       call blkinr(facdf4,'facdf4','(a6," =",f10.4," ")')
       call blkinr(veldf2,'veldf2','(a6," =",f10.4, &
-                                " m/s (-ve if variable)")')
+                               &" m/s (-ve if variable)")')
       call blkinr(veldf4,'veldf4','(a6," =",f10.4, &
-                                " m/s (-ve if variable)")')
+                               &" m/s (-ve if variable)")')
       call blkinr(thkdf2,'thkdf2','(a6," =",f10.4," m/s")')
       call blkinr(thkdf4,'thkdf4','(a6," =",f10.4, &
-                                " m/s (-ve if variable)")')
+                               &" m/s (-ve if variable)")')
       call blkinr(temdf2,'temdf2','(a6," =",f10.4," m/s")')
       call blkinr(temdfc,'temdfc', &
-          '(a6," =",f10.4," (0.0,1.0 conserve dens,temp resp.)")')
+         &'(a6," =",f10.4," (0.0,1.0 conserve dens,temp resp.)")')
       call blkinr(vertmx,'vertmx','(a6," =",f10.4," m/s")')
       call blkinr(cbar,  'cbar  ','(a6," =",f10.4, &
-                                " m/s (-ve if variable)")')
+                               &" m/s (-ve if variable)")')
       call blkinr(cb,    'cb    ','(a6," =",f10.4, &
-                                "     (-ve if variable)")')
+                               &"     (-ve if variable)")')
       call blkinr(drglim,'drglim','(a6," =",f10.4," ")')   
 !
       if (hybrlx.lt.1.0) then
         if (mnproc.eq.1) then
         write(lp,'(/ a /)')  &
-          'error - hybrlx must be at least 1.0'
+         &'error - hybrlx must be at least 1.0'
         call flush(lp)
         endif !1st tile
         call xcstop('(blkdat)')
@@ -921,7 +921,7 @@
       if (btrmas .and. .not.btrlfr) then
         if (mnproc.eq.1) then
         write(lp,'(/ a /)') &
-          'error - btrmas==.true. requires btrlfr==.true.'
+         &'error - btrmas==.true. requires btrlfr==.true.'
         call flush(lp)
         endif !1st tile
         call xcstop('(blkdat)')
@@ -932,8 +932,8 @@
       if (hybmap.lt.0 .or. hybmap.gt.3) then
         if (mnproc.eq.1) then
         write(lp,'(/ a,a /)')  &
-          'error - hybmap must be ', &
-          '0 (PCM) or 1 (PLM) or 2 (PPM) or 3 (WENO-like)'
+         &'error - hybmap must be ', &
+         &'0 (PCM) or 1 (PLM) or 2 (PPM) or 3 (WENO-like)'
         call flush(lp)
         endif !1st tile
         call xcstop('(blkdat)')
@@ -942,7 +942,7 @@
       if (hybflg.lt.0 .or. hybflg.gt.2) then
         if (mnproc.eq.1) then
         write(lp,'(/ a /)')  &
-          'error - hybflg must be 0 (T&S) or 1 (th&S) or 2 (th&T)'
+         &'error - hybflg must be 0 (T&S) or 1 (th&S) or 2 (th&T)'
         call flush(lp)
         endif !1st tile
         call xcstop('(blkdat)')
@@ -951,7 +951,7 @@
       if (hybflg.ne.0 .and. (sigver.eq.5 .or. sigver.eq.6)) then
         if (mnproc.eq.1) then
         write(lp,'(/ a /)')  &
-          'error - hybflg must be 0 (T&S) for 17-term eqn. of state'
+         &'error - hybflg must be 0 (T&S) for 17-term eqn. of state'
         call flush(lp)
         endif !1st tile
         call xcstop('(blkdat)')
@@ -960,7 +960,7 @@
       if (advflg.lt.0 .or. advflg.gt.2) then
         if (mnproc.eq.1) then
         write(lp,'(/ a /)')  &
-          'error - advflg must be 0 (T&S) or 1 (th&S) or 2 (th&T)'
+         &'error - advflg must be 0 (T&S) or 1 (th&S) or 2 (th&T)'
         call flush(lp)
         endif !1st tile
         call xcstop('(blkdat)')
@@ -969,7 +969,7 @@
       if (advflg.ne.0 .and. (sigver.eq.5 .or. sigver.eq.6)) then
         if (mnproc.eq.1) then
         write(lp,'(/ a /)')  &
-          'error - advflg must be 0 (T&S) for 17-term eqn. of state'
+         &'error - advflg must be 0 (T&S) for 17-term eqn. of state'
         call flush(lp)
         endif !1st tile
         call xcstop('(blkdat)')
@@ -978,7 +978,7 @@
       if (advflg.eq.2) then
         if (mnproc.eq.1) then
         write(lp,'(/ a /)')  &
-          'error - advflg==2 (th&T) not yet implemented'
+         &'error - advflg==2 (th&T) not yet implemented'
         call flush(lp)
         endif !1st tile
         call xcstop('(blkdat)')
@@ -988,8 +988,8 @@
           advtyp.ne.2 .and. advtyp.ne.4      ) then
         if (mnproc.eq.1) then
         write(lp,'(/ a,a /)')  &
-         'error - advtyp must be 0,1,2,4', &
-         ' (PCM,MPDATA,FCT2,FCT4)'
+        &'error - advtyp must be 0,1,2,4', &
+        &' (PCM,MPDATA,FCT2,FCT4)'
         call flush(lp)
         endif !1st tile
         call xcstop('(blkdat)')
@@ -998,8 +998,8 @@
       if (btrmas .and. advtyp.ne.2) then
         if (mnproc.eq.1) then
         write(lp,'(/ a,a /)') &
-         'error - advtyp must be 2', &
-         ' (FCT2) when btrmas==.true.'
+        &'error - advtyp must be 2', &
+        &' (FCT2) when btrmas==.true.'
         call flush(lp)
         endif !1st tile
         call xcstop('(blkdat)')
@@ -1008,7 +1008,7 @@
       if (momtyp.lt.2 .or. momtyp.gt.4) then
         if (mnproc.eq.1) then
         write(lp,'(/ a /)') &
-         'error - momtyp must be 2 or 3 or 4'
+        &'error - momtyp must be 2 or 3 or 4'
         call flush(lp)
         endif !1st tile
         call xcstop('(blkdat)')
@@ -1018,7 +1018,7 @@
         if (facdf4.ne.0.0) then
           if (mnproc.eq.1) then
           write(lp,'(/ a /)')  &
-           'error - facdf4 must be 0.0 for montyp==2'
+          &'error - facdf4 must be 0.0 for montyp==2'
           call flush(lp)
           endif !1st tile
           call xcstop('(blkdat)')
@@ -1029,7 +1029,7 @@
         if (abs(facdf4-0.0625).gt.1.e-5) then
           if (mnproc.eq.1) then
           write(lp,'(/ a /)') &
-           'error - facdf4 must be 1/16 for momtyp==3'
+          &'error - facdf4 must be 1/16 for momtyp==3'
           call flush(lp)
           endif !1st tile
           call xcstop('(blkdat)')
@@ -1040,7 +1040,7 @@
         if (facdf4.le.0.0) then
           if (mnproc.eq.1) then
           write(lp,'(/ a /)') &
-           'error - facdf4 must be positive for momtyp==4'
+          &'error - facdf4 must be positive for momtyp==4'
           call flush(lp)
           endif !1st tile
           call xcstop('(blkdat)')
@@ -1050,8 +1050,8 @@
       if (slip.lt.-1.0 .or. slip.gt.1.0) then
         if (mnproc.eq.1) then
         write(lp,'(/ a,a /)')  &
-          'error - slip must be ', &
-          'between -1.0 (no-slip) and +1.0 (free-slip)'
+         &'error - slip must be ', &
+         &'between -1.0 (no-slip) and +1.0 (free-slip)'
         call flush(lp)
         endif !1st tile
         call xcstop('(blkdat)')
@@ -1060,7 +1060,7 @@
       if (thkdf2.ne.0.0 .and. thkdf4.ne.0.0) then
         if (mnproc.eq.1) then
         write(lp,'(/ a /)')  &
-          'error - only one of thkdf2 and thkdf4 can be non-zero'
+         &'error - only one of thkdf2 and thkdf4 can be non-zero'
         call flush(lp)
         endif !1st tile
         call xcstop('(blkdat)')
@@ -1069,7 +1069,7 @@
       if (isopyc .and. temdfc.ne.0.0) then
         if (mnproc.eq.1) then
         write(lp,'(/ a /)')  &
-          'error - isopycnal mode must have temdfc=0.0'
+         &'error - isopycnal mode must have temdfc=0.0'
         call flush(lp)
         endif !1st tile
         call xcstop('(blkdat)')
@@ -1078,7 +1078,7 @@
       if (temdfc.lt.0.0 .or. temdfc.gt.1.0) then
         if (mnproc.eq.1) then
         write(lp,'(/ a /)')  &
-          'error - temdfc must be between 0.0 and 1.0'
+         &'error - temdfc must be between 0.0 and 1.0'
         call flush(lp)
         endif !1st tile
         call xcstop('(blkdat)')
@@ -1087,7 +1087,7 @@
       if (temdfc.ne.1.0 .and. (sigver.eq.5 .or. sigver.eq.6)) then
         if (mnproc.eq.1) then
         write(lp,'(/ a /)')  &
-          'error - temdfc must be 1.0 (all T) for 17-term eqn. of state'
+         &'error - temdfc must be 1.0 (all T) for 17-term eqn. of state'
         call flush(lp)
         endif !1st tile
         call xcstop('(blkdat)')
@@ -1136,7 +1136,7 @@
       call blkinr(sigjmp,'sigjmp','(a6," =",f10.4," kg/m**3")')
       call blkinr(tmljmp,'tmljmp','(a6," =",f10.4," degC")')
       call blkinr(sefold,'sefold','(a6," =",f10.4, &
-                                " days (-ve if variable)")')
+                               & " days (-ve if variable)")')
       call blkinr(thkmls,'thkmls','(a6," =",f10.4," m")')
       call blkinr(thkmlt,'thkmlt','(a6," =",f10.4," m")')
       call blkinr(thkriv,'thkriv','(a6," =",f10.4," m")')
@@ -1144,7 +1144,7 @@
       if (sefold.eq.0.0) then
         if (mnproc.eq.1) then
         write(lp,'(/ a /)') &
-          'error - sefold may be positive or negative, but not 0.0'
+         &'error - sefold may be positive or negative, but not 0.0'
         call flush(lp)
         endif !1st tile
         call xcstop('(blkdat)')
@@ -1177,7 +1177,7 @@
       if (iceflg.lt.0 .or. iceflg.gt.4) then
         if (mnproc.eq.1) then
         write(lp,'(/ a /)')  &
-          'error - iceflg must be between 0 and 4'
+         &'error - iceflg must be between 0 and 4'
         call flush(lp)
         endif !1st tile
         call xcstop('(blkdat)')
@@ -1192,7 +1192,7 @@
       call blkinr(tfrz_0,'tfrz_0','(a6," =",f10.4," degC")')
       call blkinr(tfrz_s,'tfrz_s','(a6," =",f10.4," degC/psu")')
       call blkinr(frzifq,'frzifq','(a6," =",f10.4, &
-                                 " days (-ve time steps)")')
+                                &" days (-ve time steps)")')
       call blkinr(ticegr,'ticegr','(a6," =",f10.4," degC/m")')
       call blkinr(hicemn,'hicemn','(a6," =",f10.4," m")')
       call blkinr(hicemx,'hicemx','(a6," =",f10.4," m")')
@@ -1229,8 +1229,8 @@
       if (ntracr.gt.mxtrcr) then
         if (mnproc.eq.1) then
         write(lp,'(/ a,i3, a /)')  &
-          'error - maximum ntracr is',mxtrcr, &
-          '  (recompile with larger mxtrcr)'
+         &'error - maximum ntracr is',mxtrcr, &
+         &'  (recompile with larger mxtrcr)'
         call flush(lp)
         endif !1st tile
         call xcstop('(blkdat)')
@@ -1251,7 +1251,7 @@
         if     (trcflg(k).gt.3 .and. trcflg(k).lt.9) then !not 0,1,2,3,9
           if (mnproc.eq.1) then
           write(lp,'(/ a,i3 /)')  &
-            'error - unknown tracer type for tracer',k
+           &'error - unknown tracer type for tracer',k
           call flush(lp)
           endif !1st tile
           call xcstop('(blkdat)')
@@ -1333,7 +1333,7 @@
       if (mlflag.lt.0 .or. mlflag.gt.6) then
         if (mnproc.eq.1) then
         write(lp,'(/ a /)')  &
-          'error - mlflag must be between 0 and 6'
+         &'error - mlflag must be between 0 and 6'
         call flush(lp)
         endif !1st tile
         call xcstop('(blkdat)')
@@ -1345,7 +1345,7 @@
       if (isopyc .and. mlflag.ne.2) then
         if (mnproc.eq.1) then
         write(lp,'(/ a /)')  &
-          'error - isopycnal mode requires KT mixed layer (mlflag=2)'
+         &'error - isopycnal mode requires KT mixed layer (mlflag=2)'
         call flush(lp)
         endif !1st tile
         call xcstop('(blkdat)')
@@ -1365,7 +1365,7 @@
       if (isopyc .and. pensol) then
         if (mnproc.eq.1) then
         write(lp,'(/ a /)')  &
-          'error - isopycnal mode not consistent with pensol'
+         &'error - isopycnal mode not consistent with pensol'
         call flush(lp)
         endif !1st tile
         call xcstop('(blkdat)')
@@ -1375,7 +1375,7 @@
       if (dypflg.lt.0 .or. dypflg.gt.2) then
         if (mnproc.eq.1) then
         write(lp,'(/ a /)')  &
-          'error - dypflg must be between 0 and 2'
+         &'error - dypflg must be between 0 and 2'
         call flush(lp)
         endif !1st tile
         call xcstop('(blkdat)')
@@ -1386,7 +1386,7 @@
           dypflg.ne.0 .and. thkriv.gt.0.0) then
         if (mnproc.eq.1) then
         write(lp,'(/ a /)')  &
-          'error - thkriv>0 not consistent with KT unless dypflg=1'
+         &'error - thkriv>0 not consistent with KT unless dypflg=1'
         call flush(lp)
         endif !1st tile
         call xcstop('(blkdat)')
@@ -1400,7 +1400,7 @@
         if (kkmy25.ne.kdm) then
           if (mnproc.eq.1) then
           write(lp,'(/ a /)')  &
-            'error - kkmy25 (dimensions.h) must be kdm when mlflag==5'
+           &'error - kkmy25 (dimensions.h) must be kdm when mlflag==5'
           call flush(lp)
           endif !1st tile
           call xcstop('(blkdat)')
@@ -1410,7 +1410,7 @@
         if     (dypflg.ne.0) then
           if (mnproc.eq.1) then
           write(lp,'(/ a /)')  &
-            'warning - dypflg reset to 0 for M-Y 2.5'
+           &'warning - dypflg reset to 0 for M-Y 2.5'
           call flush(lp)
           endif !1st tile
           dypflg = 0
@@ -1424,7 +1424,7 @@
         if (nlgiss.ne.762) then
           if (mnproc.eq.1) then
           write(lp,'(/ a /)')  &
-            'error - nlgiss (dimensions.h) must be 762 when mlflag==6'
+           &'error - nlgiss (dimensions.h) must be 762 when mlflag==6'
           call flush(lp)
           endif !1st tile
           call xcstop('(blkdat)')
@@ -1434,7 +1434,7 @@
         if     (dypflg.ne.0) then
           if (mnproc.eq.1) then
           write(lp,'(/ a /)')  &
-            'warning - dypflg reset to 0 for GISS'
+           &'warning - dypflg reset to 0 for GISS'
           call flush(lp)
           endif !1st tile
           dypflg = 0
@@ -1451,7 +1451,7 @@
       if (mxlpwp .and. dypflg.ne.2) then
         if (mnproc.eq.1) then
         write(lp,'(/ a /)')  &
-          'warning - dypflg  reset to 2 for PWP mixed layer'
+         &'warning - dypflg  reset to 2 for PWP mixed layer'
         call flush(lp)
         endif !1st tile
         dypflg = 2
@@ -1460,7 +1460,7 @@
       if (mxlpwp .and. thkriv.gt.0.0) then
         if (mnproc.eq.1) then
         write(lp,'(/ a /)')  &
-          'error - thkriv>0 not consistent with PWP mixed layer'
+         &'error - thkriv>0 not consistent with PWP mixed layer'
         call flush(lp)
         endif !1st tile
         call xcstop('(blkdat)')
@@ -1484,9 +1484,9 @@
       call blkinr(difm0 ,'difm0 ','(a6," =",f10.4," m**2/s")')
       call blkinr(difs0 ,'difs0 ','(a6," =",f10.4," m**2/s")')
       call blkinr(difmiw,'difmiw','(a6," =",f10.4, &
-                                " m**2/s (-ve if variable)")')
+                               &" m**2/s (-ve if variable)")')
       call blkinr(difsiw,'difsiw','(a6," =",f10.4, &
-                                " m**2/s (-ve if variable)")')
+                               &" m**2/s (-ve if variable)")')
       call blkinr(dsfmax,'dsfmax','(a6," =",f10.4," m**2/s")')
       call blkinr(rrho0 ,'rrho0 ','(a6," =",f10.4," ")')
       call blkinr(cs    ,'cs    ','(a6," =",f10.4," ")')
@@ -1503,8 +1503,8 @@
       if     (lngblk.ne.0) then
         if (mnproc.eq.1) then
         write(lp,'(/ 2a /)')  &
-          'error - langmr must be =0 unless the macro STOKES', &
-          ' is defined at compile time'
+         &'error - langmr must be =0 unless the macro STOKES', &
+         &' is defined at compile time'
         call flush(lp)
         endif !1st tile
         call xcstop('(blkdat)')
@@ -1514,8 +1514,8 @@
       if (difsiw*difmiw.lt.0.0) then
         if (mnproc.eq.1) then
         write(lp,'(/ 2a /)')  &
-          'error - difmiw and difsiw must either both be positive or', &
-          ' both be negative'
+         &'error - difmiw and difsiw must either both be positive or', &
+         &' both be negative'
         call flush(lp)
         endif !1st tile
         call xcstop('(blkdat)')
@@ -1525,8 +1525,8 @@
       if (hblflg.lt.0 .or. hblflg.gt.2) then
         if (mnproc.eq.1) then
         write(lp,'(/ 2a /)')  &
-          'error - hblflg must be', &
-          ' 0 (constant) or 1 (linear) or 2 (quadratic)'
+         &'error - hblflg must be', &
+         &' 0 (constant) or 1 (linear) or 2 (quadratic)'
         call flush(lp)
         endif !1st tile
         call xcstop('(blkdat)')
@@ -1563,7 +1563,7 @@
           if     (diapyc.le.0.0) then
             if (mnproc.eq.1) then
             write(lp,'(/ a /)')  &
-              'error - diapyc must be positive if [ts]ofset is'
+             &'error - diapyc must be positive if [ts]ofset is'
             call flush(lp)
             endif !1st tile
             call xcstop('(blkdat)')
@@ -1571,7 +1571,7 @@
           elseif (mixfrq.ne.tsofrq) then
             if (mnproc.eq.1) then
             write(lp,'(/ a /)')  &
-              'error - mixfrq and tsofrq must be equal'
+             &'error - mixfrq and tsofrq must be equal'
             call flush(lp)
             endif !1st tile
             call xcstop('(blkdat)')
@@ -1623,10 +1623,10 @@
       call blkini(tidein,    'tidein')
       call blkini(tidcon,    'tidcon')
       call blkinr(tidsal,    'tidsal','(a6," =",f10.4, &
-                                    "  (-ve if variable)")')
+                                   &"  (-ve if variable)")')
       call blkini(tiddrg,    'tiddrg')
       call blkinr(thkdrg,    'thkdrg','(a6," =",f10.4, &
-                                    " m (0 if barotropic)")')
+                                   &" m (0 if barotropic)")')
       call blkinr(drgscl,    'drgscl','(a6," =",f10.4," ")')
       call blkinl(tidgen,    'tidgen')
       call blkinr(ramp_time ,'tidrmp','(a6," =",f10.4," days")')
@@ -1635,7 +1635,7 @@
       if     (tidflg.lt.0 .or. tidflg.gt.3) then
         if     (mnproc.eq.1) then
         write(lp,'(/ a /)') &
-          'error - tidflg must be between 0 and 3'
+         &'error - tidflg must be between 0 and 3'
         call flush(lp)
         endif !1st tile
         call xcstop('(blkdat)')
@@ -1644,7 +1644,7 @@
       if     (tidflg.ge.2 .and. .not.tidgen .and. yrflag.ne.3) then
         if     (mnproc.eq.1) then
         write(lp,'(/ a /)') &
-          'error - tidgen must be .true. for body tide and yrflag.ne.3'
+         &'error - tidgen must be .true. for body tide and yrflag.ne.3'
         call flush(lp)
         endif !1st tile
         call xcstop('(blkdat)')
@@ -1654,7 +1654,7 @@
         if     (abs(nint(3600.0/baclin)-3600.0/baclin).gt.0.01) then
           if (mnproc.eq.1) then                                     
           write(lp,'(/ a /)')                                        &
-            'error - baclin not an integer divisor of 1 hour'
+           &'error - baclin not an integer divisor of 1 hour'
           call flush(lp)                                     
           endif !1st tile                                    
           call xcstop('(blkdat)')
@@ -1668,7 +1668,7 @@
       if     (tidein.lt.0 .or. tidein.gt.2) then
         if     (mnproc.eq.1) then
         write(lp,'(/ a /)') &
-          'error - tidein must be between 0 and 2'
+         &'error - tidein must be between 0 and 2'
         call flush(lp)
         endif !1st tile
         call xcstop('(blkdat)')
@@ -1677,7 +1677,7 @@
       if     (tidein.gt.0 .and. tidflg.lt.2) then
         if     (mnproc.eq.1) then
         write(lp,'(/ a /)') &
-          'error - tidein implies input but there is no body tide'
+         &'error - tidein implies input but there is no body tide'
         call flush(lp)
         endif !1st tile
         call xcstop('(blkdat)')
@@ -1686,7 +1686,7 @@
       if     (tiddrg.lt.0 .or. tiddrg.gt.2) then
         if     (mnproc.eq.1) then
         write(lp,'(/ a /)') &
-          'error - tiddrg must be between 0 and 2'
+         &'error - tiddrg must be between 0 and 2'
         call flush(lp)
         endif !1st tile
         call xcstop('(blkdat)')
@@ -1695,7 +1695,7 @@
       if     (tiddrg.eq.0 .and. drgscl.ne.0.0) then
         if     (mnproc.eq.1) then
         write(lp,'(/ a /)') &
-          'error - tiddrg=0 must have drgscl=0.0'
+         &'error - tiddrg=0 must have drgscl=0.0'
         call flush(lp)
         endif !1st tile
         call xcstop('(blkdat)')
@@ -1704,7 +1704,7 @@
       if     (tiddrg.ne.0 .and. drgscl.le.0.0) then
         if     (mnproc.eq.1) then
         write(lp,'(/ a /)') &
-          'error - tiddrg>0 must have drgscl>0.0'
+         &'error - tiddrg>0 must have drgscl>0.0'
         call flush(lp)
         endif !1st tile
         call xcstop('(blkdat)')
@@ -1714,7 +1714,7 @@
 ! ---   tensor drag only implemented on barotropic velocity
         if     (mnproc.eq.1) then
         write(lp,'(/ a /)') &
-          'error - tiddrg=2 only implemented for thkdrg=0.0'
+         &'error - tiddrg=2 only implemented for thkdrg=0.0'
         call flush(lp)
         endif !1st tile
         call xcstop('(blkdat)')
@@ -1776,7 +1776,7 @@
       if (clmflg.ne.6 .and. clmflg.ne.12) then
         if (mnproc.eq.1) then
         write(lp,'(/ a /)')  &
-          'error - clmflg must be 6 or 12'
+         &'error - clmflg must be 6 or 12'
         call flush(lp)
         endif !1st tile
         call xcstop('(blkdat)')
@@ -1786,7 +1786,7 @@
       if (lbflag.eq.1 .or. lbflag.eq.3) then
         if (mnproc.eq.1) then
         write(lp,'(/ a /)')  &
-          'error - lbflag 1 and 3 not supported with dynamic memory'
+         &'error - lbflag 1 and 3 not supported with dynamic memory'
         call flush(lp)
         endif !1st tile
         call xcstop('(blkdat)')
@@ -1796,7 +1796,7 @@
       if (lbflag.lt.0 .or. lbflag.gt.4) then
         if (mnproc.eq.1) then
         write(lp,'(/ a /)')  &
-          'error - lbflag must be between 0 and 4'
+         &'error - lbflag must be between 0 and 4'
         call flush(lp)
         endif !1st tile
         call xcstop('(blkdat)')
@@ -1805,7 +1805,7 @@
       if (lbflag.ne.2 .and. lbflag.ne.4 .and. bnstfq.ne.0.0) then
         if (mnproc.eq.1) then
         write(lp,'(/ a /)')  &
-          'error - bnstfq must be 0.0 unless lbflag is 2 or 4'
+         &'error - bnstfq must be 0.0 unless lbflag is 2 or 4'
         call flush(lp)
         endif !1st tile
         call xcstop('(blkdat)')
@@ -1814,7 +1814,7 @@
       if (wndflg.lt.0 .or. wndflg.gt.5) then
         if (mnproc.eq.1) then
         write(lp,'(/ a /)')  &
-          'error - wndflg must be between 0 and 5'
+         &'error - wndflg must be between 0 and 5'
         call flush(lp)
         endif !1st tile
         call xcstop('(blkdat)')
@@ -1823,7 +1823,7 @@
       if (ustflg.lt.1 .or. ustflg.gt.4) then
         if (mnproc.eq.1) then
         write(lp,'(/ a /)') &
-          'error - ustflg must be between 1 and 4'
+         &'error - ustflg must be between 1 and 4'
         call flush(lp)
         endif !1st tile
         call xcstop('(blkdat)')
@@ -1832,7 +1832,7 @@
       if (flxflg.lt.0 .or. flxflg.gt.6) then
         if (mnproc.eq.1) then
         write(lp,'(/ a /)')  &
-          'error - flxflg must be between 0 and 6'
+         &'error - flxflg must be between 0 and 6'
         call flush(lp)
         endif !1st tile
         call xcstop('(blkdat)')
@@ -1842,7 +1842,7 @@
           wndflg.eq.0      ) then
         if (mnproc.eq.1) then
         write(lp,'(/ a /)')  &
-          'error - wndflg must be non-zero when flxflg>0'
+         &'error - wndflg must be non-zero when flxflg>0'
         call flush(lp)
         endif !1st tile
         call xcstop('(blkdat)')
@@ -1852,7 +1852,7 @@
           wndflg.ne.4      ) then
         if (mnproc.eq.1) then
         write(lp,'(/ a /)')  &
-          'error - wndflg must be 4 when flxflg==6'
+         &'error - wndflg must be 4 when flxflg==6'
         call flush(lp)
         endif !1st tile
         call xcstop('(blkdat)')
@@ -1863,7 +1863,7 @@
           wndflg.ne.5      ) then
         if (mnproc.eq.1) then
         write(lp,'(/ a /)')  &
-          'error - wndflg must be 5 when flxflg==5'
+         &'error - wndflg must be 5 when flxflg==5'
         call flush(lp)
         endif !1st tile
         call xcstop('(blkdat)')
@@ -1874,7 +1874,7 @@
           ustflg.eq.4      ) then
         if (mnproc.eq.1) then
         write(lp,'(/ a /)') &
-          'error - ustflg must be 1,2,3 when flxflg==3'
+         &'error - ustflg must be 1,2,3 when flxflg==3'
         call flush(lp)
         endif !1st tile
         call xcstop('(blkdat)')
@@ -1883,7 +1883,7 @@
       if (abs(empflg).lt.0 .or. abs(empflg).gt.6) then
         if (mnproc.eq.1) then
         write(lp,'(/ a /)')  &
-          'error - empflg must be between 0 and 6'
+         &'error - empflg must be between 0 and 6'
         call flush(lp)
         endif !1st tile
         call xcstop('(blkdat)')
@@ -1892,7 +1892,7 @@
       if (flxflg.eq.3 .and. (empflg.ne.0 .and. empflg.ne.3)) then
         if (mnproc.eq.1) then
         write(lp,'(/ a /)')  &
-          'error - empflg must be 0 or 3 when flxflg==3'
+         &'error - empflg must be 0 or 3 when flxflg==3'
         call flush(lp)
         endif !1st tile
         call xcstop('(blkdat)')
@@ -1902,7 +1902,7 @@
                                 .and. empflg.ne.3) then
         if (mnproc.eq.1) then
         write(lp,'(/ a /)')  &
-          'error - empflg must be 0 or 3 or +\-flxflg'
+         &'error - empflg must be 0 or 3 or +\-flxflg'
         call flush(lp)
         endif !1st tile
         call xcstop('(blkdat)')
@@ -1911,8 +1911,8 @@
       if (empflg.lt.0 .and. sstflg.lt.2 .and. lwflag.ne.2) then
         if (mnproc.eq.1) then
         write(lp,'(/ a,a /)')  &
-          'error - negative empflg requires sst forcing', &
-          ' (i.e. sstflg=3 or sstflg=2 or lwflag=2)'
+         &'error - negative empflg requires sst forcing', &
+         &' (i.e. sstflg=3 or sstflg=2 or lwflag=2)'
         call flush(lp)
         endif !1st tile
         call xcstop('(blkdat)')
@@ -1922,7 +1922,7 @@
           empflg.ne.0      ) then
         if (mnproc.eq.1) then
         write(lp,'(/ a /)')  &
-          'error - empflg must be 0 when flxflg==0'
+         &'error - empflg must be 0 when flxflg==0'
         call flush(lp)
         endif !1st tile
         call xcstop('(blkdat)')
@@ -1932,7 +1932,7 @@
           dswflg.eq.1      ) then
         if (mnproc.eq.1) then
         write(lp,'(/ a /)') &
-          'error - dswflg must be 0 when flxflg==3'
+         &'error - dswflg must be 0 when flxflg==3'
         call flush(lp)
         endif !1st tile
         call xcstop('(blkdat)')
@@ -1942,7 +1942,7 @@
       if (albflg.gt.0 .and. lwflag.ne.-1) then
         if (mnproc.eq.1) then
         write(lp,'(/ a /)')  &
-          'error - albflg>0 requires lwflag=-1'
+         &'error - albflg>0 requires lwflag=-1'
         call flush(lp)
         endif !1st tile
         call xcstop('(blkdat)')
@@ -1951,7 +1951,7 @@
       if (lwflag.lt.-1 .or. lwflag.gt.2) then
         if (mnproc.eq.1) then
         write(lp,'(/ a /)')  &
-          'error - lwflag must be between -1 and 2'
+         &'error - lwflag must be between -1 and 2'
         call flush(lp)
         endif !1st tile
         call xcstop('(blkdat)')
@@ -1961,7 +1961,7 @@
           flxflg.eq.0      ) then
         if (mnproc.eq.1) then
         write(lp,'(/ a /)')  &
-          'error - flxflg must non-zero when lwflag is non-zero'
+         &'error - flxflg must non-zero when lwflag is non-zero'
         call flush(lp)
         endif !1st tile
         call xcstop('(blkdat)')
@@ -1986,7 +1986,7 @@
       if (icmflg.lt.0 .or. icmflg.gt.3) then
         if (mnproc.eq.1) then
         write(lp,'(/ a /)')  &
-          'error - icmflg must be between 0 and 3'
+         &'error - icmflg must be between 0 and 3'
         call flush(lp)
         endif !1st tile
         call xcstop('(blkdat)')
@@ -1994,7 +1994,7 @@
       elseif (icmflg.eq.1) then
         if (mnproc.eq.1) then
         write(lp,'(/ a /)') &
-          'error - icmflg 1 not yet implemented'
+         &'error - icmflg 1 not yet implemented'
         call flush(lp)
         endif !1st tile
         call xcstop('(blkdat)')
@@ -2002,7 +2002,7 @@
       elseif (icmflg.eq.3 .and. iceflg.eq.1) then
         if (mnproc.eq.1) then
         write(lp,'(/ a /)') &
-          'error - icmflg 3 not yet implemented for iceflg==1'
+         &'error - icmflg 3 not yet implemented for iceflg==1'
         call flush(lp)
         endif !1st tile
         call xcstop('(blkdat)')
@@ -2012,7 +2012,7 @@
       if (icmflg.eq.3 .and. icefrq.lt.icpfrq) then
         if (mnproc.eq.1) then
         write(lp,'(/ a /)')  &
-          'error - icefrq (frzifq) smaller than icpfrq (cplifq)'
+         &'error - icefrq (frzifq) smaller than icpfrq (cplifq)'
         call flush(lp)
         endif !1st tile
         call xcstop('(blkdat)')
@@ -2022,7 +2022,7 @@
       if (sstflg.lt.0 .or. sstflg.gt.3) then
         if (mnproc.eq.1) then
         write(lp,'(/ a /)')  &
-          'error - sstflg must be between 0 and 3'
+         &'error - sstflg must be between 0 and 3'
         call flush(lp)
         endif !1st tile
         call xcstop('(blkdat)')
@@ -2032,8 +2032,8 @@
           yrflag.lt.2      ) then
         if (mnproc.eq.1) then
         write(lp,'(/ a,a /)')  &
-          'error - yrflag must be >1 (high frequency forcing)', &
-          ' when sstflg>1'
+         &'error - yrflag must be >1 (high frequency forcing)', &
+         &' when sstflg>1'
         call flush(lp)
         endif !1st tile
         call xcstop('(blkdat)')
@@ -2043,7 +2043,7 @@
       if (sssflg.lt.-1 .or. sssflg.gt.2) then
         if (mnproc.eq.1) then
         write(lp,'(/ a /)')  &
-          'error - sssflg must be 0 or 1 or -1'
+         &'error - sssflg must be 0 or 1 or -1'
         call flush(lp)
         endif !1st tile
         call xcstop('(blkdat)')
@@ -2087,7 +2087,7 @@
       if     (priver .and. .not.thermo) then
         if (mnproc.eq.1) then
         write(lp,'(/ a /)')  &
-          'error - priver must be .false. for flxflg=0'
+         &'error - priver must be .false. for flxflg=0'
         call flush(lp)
         endif !1st tile
         call xcstop('(blkdat)')
@@ -2097,7 +2097,7 @@
       if     (epmass .and. .not.thermo) then
         if (mnproc.eq.1) then
         write(lp,'(/ a /)')  &
-          'error - epmass must be .false. for flxflg=0'
+         &'error - epmass must be .false. for flxflg=0'
         call flush(lp)
         endif !1st tile
         call xcstop('(blkdat)')
@@ -2122,8 +2122,8 @@
       elseif (mxlkta) then
         if (mnproc.eq.1) then
         write(lp,'(/ a / a /)')  &
-          'error - KT mixed layer needs thermal forcing, i.e.', &
-          '        mlflag=2 needs max(sstflg,sstflg,flxflg)>0'
+         &'error - KT mixed layer needs thermal forcing, i.e.', &
+         &'        mlflag=2 needs max(sstflg,sstflg,flxflg)>0'
         call flush(lp)
         endif !1st tile
         call xcstop('(blkdat)')
@@ -2164,7 +2164,7 @@
       if (nsdzi .lt.0) then
         if (mnproc.eq.1) then
         write(lp,'(/ a /)')  &
-        'error - nsdzi  must be 0 (no Stokes drift) or positive'
+       &'error - nsdzi  must be 0 (no Stokes drift) or positive'
         call flush(lp)
         endif !1st tile
         call xcstop('(blkdat)')
@@ -2173,7 +2173,7 @@
       if (nsdzi .eq.0 .and. stdflg) then
         if (mnproc.eq.1) then
         write(lp,'(/ a /)')  &
-        'error - nsdzi  must be > 0 with stdflg'
+       &'error - nsdzi  must be > 0 with stdflg'
         call flush(lp)
         endif !1st tile
         call xcstop('(blkdat)')
@@ -2182,7 +2182,7 @@
       if (nsdzi .eq.0 .and. stdbot) then
         if (mnproc.eq.1) then
         write(lp,'(/ a /)')  &
-        'error - nsdzi  must be > 0 with stdbot'
+       &'error - nsdzi  must be > 0 with stdbot'
         call flush(lp)
         endif !1st tile
         call xcstop('(blkdat)')
@@ -2191,7 +2191,7 @@
       if (nsdzi .eq.0 .and. langmr.ne.0) then
         if (mnproc.eq.1) then
         write(lp,'(/ a /)')  &
-        'error - nsdzi  must be > 0 with langmr >0'
+       &'error - nsdzi  must be > 0 with langmr >0'
         call flush(lp)
         endif !1st tile
         call xcstop('(blkdat)')
@@ -2232,7 +2232,7 @@
       if (kkwall.ne.kdm .and. relaxf .and. .not. relaxs) then
         if (mnproc.eq.1) then
         write(lp,'(/ a /)')  &
-          'error - kkwall (dimensions.h) must be kdm for 3-d clim'
+         &'error - kkwall (dimensions.h) must be kdm for 3-d clim'
         call flush(lp)
         endif !1st tile
         call xcstop('(blkdat)')
@@ -2328,7 +2328,7 @@
         if (mnproc.eq.1) then
         write(lp,*) 
         write(lp,*) 'error in blkinr - input ',cvarin, &
-                             ' but should be ',cvar
+                            &' but should be ',cvar
         write(lp,*) 
         call flush(lp)
         endif !1st tile
@@ -2368,7 +2368,7 @@
         if (mnproc.eq.1) then
         write(lp,*)
         write(lp,*) 'error in blkinr2 - input ',cvarin, &
-                            ' but should be ',cvar1,' or ',cvar2
+                           &' but should be ',cvar1,' or ',cvar2
         write(lp,*)
         call flush(lp)
         endif !1st tile
@@ -2399,7 +2399,7 @@
         if (mnproc.eq.1) then
         write(lp,*) 
         write(lp,*) 'error in blkin8 - input ',cvarin, &
-                             ' but should be ',cvar
+                            &' but should be ',cvar
         write(lp,*) 
         call flush(lp)
         endif !1st tile
@@ -2430,7 +2430,7 @@
         if (mnproc.eq.1) then
         write(lp,*) 
         write(lp,*) 'error in blkini - input ',cvarin, &
-                             ' but should be ',cvar
+                            &' but should be ',cvar
         write(lp,*) 
         call flush(lp)
         endif !1st tile
@@ -2465,7 +2465,7 @@
         if (mnproc.eq.1) then
         write(lp,*) 
         write(lp,*) 'error in blkinl - input ',cvarin, &
-                             ' but should be ',cvar
+                            &' but should be ',cvar
         write(lp,*) 
         call flush(lp)
         endif !1st tile
