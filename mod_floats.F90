@@ -1303,12 +1303,10 @@
                   varb2d(i1,j1)=dlondy(i,j)*vold2(i,j,k+kold2)
                 enddo
               enddo
-              if (l.eq.1) then
-                call intrph(varb2d,ptlon(1,1,ngrid),ptlat(1,1,ngrid), &
-                            xpos0,ypos0,maskpt(1,1,ngrid), &
-                            ngood(ngrid),ngrid,intpfl,radian,ufltm,ier)
-                uflt1=uflt1+ufltm
-              endif
+              call intrph(varb2d,ptlon(1,1,ngrid),ptlat(1,1,ngrid), &
+                          xpos0,ypos0,maskpt(1,1,ngrid), &
+                          ngood(ngrid),ngrid,intpfl,radian,ufltm,ier)
+              uflt1=uflt1+ufltm
 !
 ! --- terminate float because it has run aground
               if (ier.eq.999) then
