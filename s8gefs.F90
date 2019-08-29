@@ -142,7 +142,7 @@
 !     IF SINGULAR MATRIX, IND=-4, TERMINAL XERRWV MESSAGE
   104 IND=-4
       CALL X8ERRWV( 'SGEFS ERROR (IND=-4) -- SINGULAR MATRIX A - NO SOLUT &
-      ION',55,-4,1,0,0,0,0,0.0,0.0)
+     &ION',55,-4,1,0,0,0,0,0.0,0.0)
       RETURN
 !
       END
@@ -871,8 +871,9 @@
    60    CONTINUE
          IF (NMESSG.LT.0) RETURN
 !        CLEAR THE ERROR TABLES
-         DO 70 I=1,10
-   70       KOUNT(I) = 0
+         DO I=1,10
+            KOUNT(I) = 0
+         enddo
          KOUNTX = 0
          RETURN
    80 CONTINUE
@@ -1927,7 +1928,16 @@
       REAL SX(*),SY(*),SA
 !***FIRST EXECUTABLE STATEMENT  S8AXPY
       IF(N.LE.0.OR.SA.EQ.0.E0) RETURN
-      IF(INCX.EQ.INCY) IF(INCX-1) 5,20,60
+!MHRI      IF(INCX.EQ.INCY) IF(INCX-1) 5,20,60
+      IF (INCX.EQ.INCY) then
+        if ((INCX-1)<0) then
+          goto 5
+        else if ((INCX-1)==0) then
+          goto 20
+        else 
+          goto 60
+        endif
+      endif
     5 CONTINUE
 !
 !        CODE FOR NONEQUAL OR NONPOSITIVE INCREMENTS.
@@ -2016,7 +2026,16 @@
 !***FIRST EXECUTABLE STATEMENT  S8DOT
       S8DOT = 0.0E0
       IF(N.LE.0)RETURN
-      IF(INCX.EQ.INCY) IF(INCX-1)5,20,60
+!MHRI      IF(INCX.EQ.INCY) IF(INCX-1)5,20,60
+      IF (INCX.EQ.INCY) then
+        if ((INCX-1)<0.) then
+          goto 5
+        else if ((INCX-1)==0.) then
+          goto 20
+        else 
+          goto 60
+        endif
+      endif
     5 CONTINUE
 !
 !        CODE FOR UNEQUAL INCREMENTS OR NONPOSITIVE INCREMENTS.

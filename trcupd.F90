@@ -329,7 +329,7 @@
         if     (trcflg(ktr).eq.0) then
           if (trcrlx) then
 ! ---       tracer always trwall, when non-zero, at surface
-!$OMP       PARALLEL DO PRIVATE(j,k,i,ktr,q) &
+!$OMP       PARALLEL DO PRIVATE(j,k,i,q) &
 !$OMP                SCHEDULE(STATIC,jblk)
             do j=1,jj
               do i=1,ii
@@ -348,7 +348,7 @@
 !$OMP       END PARALLEL DO
           elseif (.not. trcrlx) then
 ! ---       tracer always 10.0 at surface
-!$OMP       PARALLEL DO PRIVATE(j,k,i,ktr) &
+!$OMP       PARALLEL DO PRIVATE(j,k,i) &
 !$OMP                SCHEDULE(STATIC,jblk)
             do j=1,jj
               do i=1,ii
@@ -362,7 +362,7 @@
         elseif (trcflg(ktr).eq.1) then
 ! ---     psudo-silicate, half-life of 30 days in euphotic zone
           q = 1.0-delt1/(30.0*86400.0)
-!$OMP     PARALLEL DO PRIVATE(j,k,i,ktr,chl,pij,swfrac) &
+!$OMP     PARALLEL DO PRIVATE(j,k,i,chl,pij,swfrac) &
 !$OMP              SCHEDULE(STATIC,jblk)
           do j=1,jj
             do i=1,ii
