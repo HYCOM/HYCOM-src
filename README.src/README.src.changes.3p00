@@ -1,0 +1,49 @@
+README.src/README.src.changes.3p00
+
+Significant changes since 2.2.98:
+
+a) Freeform Fortran 90.
+
+b) Move the config directory (Make fragments) inside the HYCOM-src directory.
+
+c) CESM-BETA and NAVYESPC NUOPC cap examples.  These are provided as examples
+of how to add a "cap" for coupling.  Neither one is suitable for general use.
+
+d) Equation of state is chosen at compile time through new Macros: EOS_SIG0 / 
+EOS_SIG2 and EOS_7T / EOS_9T / EOS_12T / EOS_17T.  See README.src.make.
+
+e) New macro for thermobaricity correction: set KAPPAF_CENTERED to use layer centered 
+pressure in converting sigma to sigma-star instead of upper interface pressure.
+
+f) E-P-R is now always treated as a water flux (previously a salt flux), and wtrflx
+is in the archive files.  SSS relaxation is always a salt flux, and E-P-R is still
+applied as a virtual salt flux if epmass is not set true.  Four new blkdat variables:
+     empbal: E-P balance flag   (0=none,1=offset,2=scale)
+     emptgt: E-P balance target (mm/week, into ocean)
+     sefold: e-folding time for SSS relaxation (days, -ve to input)
+     sssbal: SSS rlx balance flag (0=none,1=offset,2=scale)
+Use sefold=30.0 and sssbal=0 to recover the previous SSS relaxation bahaviour.
+
+g) epmass now applies E-P-R freshwater flux to the top layer, so epmass=true gives
+a natural (mass flux) surface freshwater flux.
+
+h) btrmas=true makes HYCOM exactly mass conserving, but this makes the model more 
+costly to run.  Normally (btrmas=false) it is approximately mass conserving.  When 
+mass conserving, epmass=true will exactly conserve salt although there is salt 
+exchange with sea ice to account for.  The archive field thknss is always dp', where
+sum(dp') = bathymetry, but now new archives contain oneta where dp = dp' * oneta so
+that dp can be calculated if needed.  HYCOM now always uses dp (not dp') for 
+layer-based region-wide sums and time means.  To confuse matters, dp in the 
+HYCOM source code is actualy dp' (and so should have been called dpp).
+
+i) New Steric SSH option (sshflg=2) to make montg1 steric SSH.  This is probably
+a better approach than sshflg=1, since then pbavg (bottom pressure anomaly) is 
+non-steric SSH.  As with sshflg=1, the split between steric and non-steric SSH
+*assumes* that the long term mean SSH is entitrely steric.  So you need to read
+in the long term mean in relax.montg1.[ab].
+
+j) Addition of a 365 days no leap calendar (yrflag=4).
+
+k) Energy loan model has bug corrections and the lwflg.eq.-1 logic.
+
+l) The Asselin filter is now applied near the end of the time step.

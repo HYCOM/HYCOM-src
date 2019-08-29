@@ -1102,11 +1102,22 @@
 ! --- Crude fix to avoid mysterious problem which occurred 
 ! --- with a close but not too close guess.
       if(abs(val).lt.1.e-12) val =0.
-      if(val) 1,7,1                                      
+!MHRI: The arithmetic IF statement is a deleted feature from the Fortran 2015 standard.
+!MHRI      if(val) 1,7,1                                      
+      if (val==0.) then
+        goto 7
+      else
+        goto 1
+      endif
 !
 ! --- equation is not satisfied by x                    
  1    b=b/val-1.                                       
-      if(b) 2,8,2                                     
+!MHRI      if(b) 2,8,2                                     
+      if (b==0.) then
+        goto 8
+      else
+        goto 2
+      endif
 !
 ! --- iteration is possible                          
  2    a=a/b                                         
@@ -1118,10 +1129,25 @@
 ! --- test on satisfactory accuracy            
       tol=eeps                                 
       d=abs(xx)                               
-      if(d-1.) 4,4,3                        
+!MHRI      if(d-1.) 4,4,3                        
+      if ((d-1.)<=0.) then
+        goto 4
+      else
+        goto 3
+      endif
  3    tol=tol*d                            
- 4    if(abs(a)-tol) 5,5,6                
- 5    if(abs(val)-10.*tol) 7,7,6         
+!MHRI 4    if(abs(a)-tol) 5,5,6                
+ 4    if ((abs(a)-tol)<=0.) then
+        goto 5                
+      else
+        goto 6
+      endif
+!MHRI 5    if(abs(val)-10.*tol) 7,7,6         
+ 5    if((abs(val)-10.*tol)<=0.) then
+        goto 7
+      else
+        goto 6
+      endif
  6    continue                          
 !
 ! --- end of iteration loop                                           

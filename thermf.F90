@@ -880,7 +880,7 @@
           if     (d1.gt.-d3) then
 ! ---       scale up the negative values
             q = min(-d1/d3, 5.0 )  ! >1
-!$OMP       PARALLEL DO PRIVATE(j,k,l,i, q) &
+!$OMP       PARALLEL DO PRIVATE(j,k,l,i) &
 !$OMP                SCHEDULE(STATIC,jblk)
             do j=1,jj
               do i=1,ii
@@ -899,7 +899,7 @@
           else !d1.lt.-d3
 ! ---       scale up the positive values
             q = min(-d3/d1, 5.0 )  ! >1
-!$OMP       PARALLEL DO PRIVATE(j,k,l,i, q) &
+!$OMP       PARALLEL DO PRIVATE(j,k,l,i) &
 !$OMP                SCHEDULE(STATIC,jblk)
             do j=1,jj
               do i=1,ii
@@ -998,8 +998,10 @@
             secpyr=360.00d0*86400.0d0
           elseif (yrflag.lt.3) then
             secpyr=366.00d0*86400.0d0
-          elseif (yrflag.ge.3) then
+          elseif (yrflag.eq.3) then
             secpyr=365.25d0*86400.0d0
+          elseif (yrflag.eq.4) then
+            secpyr=365.00d0*86400.0d0
           endif
           if     (mnproc.eq.1) then
           write (lp,'(i9,a,2f10.3)')  &
@@ -1177,7 +1179,9 @@
       real, parameter :: cpcore=1000.5      !specific heat of air (j/kg/deg)
 !
       real satvpr,qsatur6,qsatur,qsatur5,t6,p6,f6,qra
-# include "stmt_fns.h"  !declares t
+# include "stmt_fns.h"
+!  !t declared within "stmt_fns.h"
+
 !
 ! --- saturation vapor pressure (Pa),
 ! --- from a polynominal approximation (lowe, j.appl.met., 16, 100-103, 1976)

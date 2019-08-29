@@ -167,12 +167,12 @@
       p(i,j,k+1)=p(i,j,k)+dp(i,j,k,n)
  12   continue
 !
-      do 6 iter=1,itmax
+      do iter=1,itmax
 !
       klist(i,j)=1
       util1(i,j)=dp(i,j,1,n)
 !
-      do 6 k=2,kk
+      do k=2,kk
       k1=k-1
 !
       ks=klist(i,j)
@@ -284,7 +284,8 @@
         klist(i,j)=k
         util1(i,j)=dp(i,j,k,n)
       end if
- 6    continue
+      enddo  ! k
+      enddo  ! iter
 !
 !cc      do k=1,kk
 !cc      colout(i)=colout(i)+temp(i,j,k,n)*dp(i,j,k,n)

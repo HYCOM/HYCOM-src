@@ -2,7 +2,7 @@ If the RELO macro is set, arrays are allocated at run time and the defaults
 for the small number of user changeable parameters in mod_dimensions.F90 are 
 usually appropriate.  The most commonly edited parameter in mod_dimensions.F90 
 is mxthrd which might need changing when parallelizing with OpenMP (TYPE=omp
-or TYPE=ompi), see README.OpenMP.
+or TYPE=ompi), see README.src.OpenMP.
 
 -------------------------------------------------------------------------------
 
@@ -42,7 +42,7 @@ There are examples of dimensions.h for each TYPE in ALT_CODE.
 When running on a shared memory machine (TYPE=one or omp) set: 
 iqr=jqr=1, idm=itdm, and jdm=jtdm.  Note that the same OpenMP executable
 (TYPE=omp) can be used for a range of processor counts, provided mxthrd
-is chosen appropriately, see README.OpenMP.
+is chosen appropriately, see README.src.OpenMP.
 
 When running on a distributed memory machine (TYPE=mpi or ompi or shmem) 
 set: iqr and jqr to the maximum number of processors used in each
@@ -50,4 +50,4 @@ dimension, and idm and jdm to the maximum (worse case) dimensions for
 any single tile on any targeted number of processors.  Note that the
 same executable can be used for a range of processor counts, provided
 iqr,jqr,idm,jdm are all large enough for each case.  The mxthrd parameter 
-is only important when using OpenMP, see README.OpenMP.
+is only important when using OpenMP, see README.src.OpenMP.

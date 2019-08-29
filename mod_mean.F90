@@ -473,7 +473,7 @@
       call zaiowr(oneta_m,ip,.true., &
                   xmin,xmax, nopa, .false.)
       if     (mnproc.eq.1) then
-      write (nop,117) 'oneta   ',nmean,time_max,0,coord,xmin,xmax
+      write (nop,117) 'oneta   ',nmean,time_ave,0,coord,xmin,xmax
       call flush(nop)
       endif !1st tile
 !

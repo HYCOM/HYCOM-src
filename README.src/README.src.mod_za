@@ -1,0 +1,60 @@
+The following are one line descriptions of all public HYCOM I/O routines:
+ 
+      zagetc  - get (read) one line from a text file
+
+      zaiost  - initialize all array i/o.
+      zaiopn  - open a file for array i/o, filename from array i/o unit.
+      zaiope  - open a file for array i/o, filename from environment variable.
+      zaiopf  - open a file for array i/o, filename provided.
+      zaiopi  - is an array i/o unit open?
+      zaiocl  - close  an array i/o unit.
+      zaiofl  - flush  an array i/o unit.
+      zaioiq  - query  an array i/o unit.
+      zaiorw  - rewind an array i/o unit.
+      zaiord3 - read   an array (3-D).
+      zaiord  - read   an array.
+      zaiordg - read   an array, return non-tiled (global) real*4 array.                                                                                                           
+      zaiosk  - skip   an array read.
+      zaiowr3 - write  an array (3-D).
+      zaiowr  - write  an array.
+ 
+All these routines are assumed to be called with identical argument lists 
+by all processors when using SPMD message passing.  This is not difficult 
+to arrange, since by default all routines are called in this manner in a 
+SPMD run.  The zaio routines are used to process HYCOM ".a" files, which
+contain array data only (see below).  The zagetc routine is used to
+process HYCOM ".b" plain text files.  These are only opened on the
+first processor, so under MPI zagetc reads a line on the first MPI task
+and then broadcasts it to all other tasks.
+ 
+Three versions of each subroutine are provided, mod_za_mp.h for message 
+passing with I/O from the first MPI task in each row, mod_za_mp1.h for 
+message passing with I/O from the first MPI task, and mod_za_sm.h for a 
+single processor (and OpenMP).  The appropriate version is included in 
+mod_za.F90 under control of cpp macros.  For MPI the default is "mp", 
+set the SERIAL_IO macro for "mp1".  The routines are configured as a
+module, and all HYCOM routines should start with  use mod_za  to allow 
+HYCOM communication routines to be invoked when required.
+
+A special version of mod_za.F is also used in HYCOM-tools (single
+processor) and HYCOM-tools/MPI (one MPI task per row).
+
+A related API with "za" replaced by "zb" is in HYCOM-tools/*/src/mod_zb.F.
+It is only used when reading in the full domain (via zaiord), but 
+writing out a sub-domain (via zbiowr).
+
+HYCOM ".a" files contain idm*jdm 32-bit IEEE real values for each array, 
+in standard fortran element order, followed by padding to a multiple of 
+4096 32-bit words (16K bytes), but otherwise with no control bytes/words, 
+and input values of 2.0**100 indicating a data void.  Each record is
+padded to 16K bytes to potentially improve I/O performance on some machines
+by aligning record boundaries on disk block boundaries.
+
+The associated HYCOM ".b" files are plain text and typically contain a 
+5-line header followed by one line for each 2-D array in the ".a" file.  
+The format of the per-array line varies, but it typically use "=" to 
+separate an array description from trailing numeric values.  The latter 
+always include the minimum and maximum value of the array as returned 
+by zaiowr or zaiowr3 (which should be checked against the min/max of 
+the actual array on input, returned by zaiord or zaiord3, to confirm 
+that the .a and .b files are in fact associated with each other).

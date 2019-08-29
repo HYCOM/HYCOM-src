@@ -1,0 +1,58 @@
+Macros that may be used in config/$(ARCH)_$(TYPE)
+
+AIX		IBM AIX
+ALPHA		Compaq Alpha (Linux or OSF)
+HPEI		HPE with Intel Fortran
+IA32		IA32 Linux (x86 or x86_64, Intel or AMD)
+SGI		SGI IRIX64
+SUN		SUN Solaris
+T3E		Cray T3E
+YMP		Cray YMP/C90/T90/SV1
+X1 		Cray X1
+
+NAGFOR 		NAG   Fortran compiler
+IFC 		Intel Fortran compiler
+
+STOP2003	Replace STOP with exit(0)
+NAN2003		Use ieee_arithmetic intrinsic module, and intitalize arrays to NaN
+
+RELO		Allocate most arrays at run-time
+
+SERIAL_IO	Serialize array I/O (MPI, SHMEM)
+ENDIAN_IO	Swap endian-ness as part of array I/O
+
+TIMER		Turn on the subroutine-level wall clock timer
+TIMER_ALLOUT	Print timers for all MPI tasks
+
+DEBUG_ALL	Sets all DEBUG_* (mod_xc) macros
+DEBUG_TIMER_ALL	Printout every time the timer is called
+DEBUG_TIMER	Printout every time the timer is called for a user routine
+
+MPI		MPI message passing (see MPISR, NOMPIR8, SERIAL_IO, SSEND)
+SSEND		Use MPI_SSEND and MPI_ISSEND (vs MPI_SEND and MPI_ISEND)
+MPISR		Use MPI_SENDRECV (vs non-blocking pt2pt calls)
+NOMPIR8		This MPI does not implement mpi_real8
+REAL4		REAL is REAL*4 (never  used in practice)
+REAL8		REAL is REAL*8 (always used in practice)
+SHMEM		SHMEM put/get version (see RINGB, SERIAL_IO)
+RINGB		Use local syncronization for SHMEM
+
+------------------------------------------------------------------------------
+
+Macros that may be included in CPP_EXTRAS by the Make script:
+
+EOS_SIG2 	## Sigma-2
+EOS_SIG0 	## Sigma-0
+
+EOS_7T  	## EOS  7-term
+EOS_9T  	## EOS  9-term
+EOS_12T 	## EOS 12-term
+EOS_17T 	## EOS 17-term
+
+ARCTIC		## global tripole region
+
+KAPPAF_CENTERED	## Thermobaricity correction centered
+
+STOKES		## Stokes drift
+
+OCEANS2		## master and slave HYCOM in same executable
