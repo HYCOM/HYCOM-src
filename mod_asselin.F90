@@ -102,13 +102,6 @@
 !
       margin = 0  !at end of time step
 !
-!MHRI BEGIN
-      k=0    ! TODO: k not defined !!!  SUGGEST k as input ???
-!MHRI END
-      latemp =  k.le.nhybrd .and. advflg.eq.0       ! advect temp
-      lath3d = (k.le.nhybrd .and. advflg.eq.1) .or. &
-               (k.eq.1      .and. isopyc     )      ! advect th3d
-!
       if     (ldebug_asselin) then
         ssum(1:4) = 0.0d0
       endif !debug
@@ -124,6 +117,9 @@
           endif !ip
         enddo !i
         do k= 1,kk
+          latemp =  k.le.nhybrd .and. advflg.eq.0       ! advect temp
+          lath3d = (k.le.nhybrd .and. advflg.eq.1) .or. &
+                   (k.eq.1      .and. isopyc     )      ! advect th3d
           do i=1-margin,ii+margin
             if (SEA_P) then
 !
