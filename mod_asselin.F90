@@ -48,10 +48,12 @@
 !$OMP PARALLEL DO PRIVATE(j,i,k,ktr)
       do j=1,jj
         do i=1,ii
+          if (SEA_P) then
           oneta( i,j,n) = 1.0 + pbavg(i,j,n)/pbot(i,j)  !t-1
           oneta( i,j,m) = 1.0 + pbavg(i,j,m)/pbot(i,j)  !t
           onetao(i,j,n) = oneta( i,j,n)
           onetao(i,j,m) = oneta( i,j,m)
+          endif
         enddo !i
         do k= 1,kk
           do i=1,ii
