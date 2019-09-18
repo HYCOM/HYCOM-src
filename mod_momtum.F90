@@ -30,10 +30,12 @@
 #endif
         stress,stresx,stresy,dpmx,thkbop, &
         defor1, defor2, & ! deformation components
-        uflux1,vflux1   ! mass fluxes
+        uflux1,vflux1,  &  ! mass fluxes
+        potvor          ! potential vorticity 
+
       contains
 
-      subroutine momtum_init
+      subroutine momtum_init()
 ! Initialization of arrays for momentum equation
       implicit none
 #if defined(RELO)
@@ -42,14 +44,15 @@
               defor2(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy), &
               uflux1(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy), &
               vflux1(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy), &
+              potvor(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy), &
               stress(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy), &
               stresx(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy), &
               stresy(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy), &
               dpmx(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy), &
               thkbop(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy) )
-        call mem_stat_add( 9*(idm+2*nbdy)*(jdm+2*nbdy) )
+        call mem_stat_add( 10*(idm+2*nbdy)*(jdm+2*nbdy) )
 #endif
-        stress = r_init
+        stress = 0. !r_init
         stresx = r_init
         stresy = r_init
         dpmx = r_init
@@ -59,6 +62,7 @@
         defor2 = 0.
         uflux1 = 0.
         vflux1 = 0.
+        potvor = 0.
 
       end  subroutine momtum_init
 
@@ -101,7 +105,6 @@
 !     real*8    wtime1(10),wtime2(20,kdm),wtimes
 !
 # include "stmt_fns.h"
-# include "internal_kappaf.h"
 
 !
 !
@@ -548,6 +551,12 @@
         call xctilr(surty,1,1, 6,6, halo_pv)
       endif !windf
 !
+      return
+!
+      contains
+
+      include 'internal_kappaf.h'
+
       end subroutine momtum_hs
 !
       real function cd_coare(wind,vpmx,airt,sst)
