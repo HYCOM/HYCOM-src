@@ -29,7 +29,8 @@
       real, save, dimension(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy) :: &
 #endif
         stress,stresx,stresy,dpmx,thkbop, &
-        defor1, defor2 ! deformation components
+        defor1, defor2, & ! deformation components
+        uflux1,vflux1   ! mass fluxes
       contains
 
       subroutine momtum_init
@@ -38,21 +39,26 @@
 #if defined(RELO)
       allocate( &
               defor1(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy), &
-              defor2(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy)
+              defor2(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy), &
+              uflux1(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy), &
+              vflux1(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy), &
               stress(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy), &
               stresx(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy), &
               stresy(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy), &
-                dpmx(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy), &
+              dpmx(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy), &
               thkbop(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy) )
-        call mem_stat_add( 7*(idm+2*nbdy)*(jdm+2*nbdy) )
+        call mem_stat_add( 9*(idm+2*nbdy)*(jdm+2*nbdy) )
 #endif
         stress = r_init
         stresx = r_init
         stresy = r_init
         dpmx = r_init
         thkbop = r_init
+! All of these should be zero on land.
         defor1 = 0. 
         defor2 = 0.
+        uflux1 = 0.
+        vflux1 = 0.
 
       end  subroutine momtum_init
 
@@ -3087,7 +3093,7 @@
       logical, parameter :: lpipe_momtum=.false.  !usually .false.
 !
       logical, parameter :: momtum4_orig=.false.  !usually .false.
-      logical, parameter :: momtum4_cfl =.true.   !usually .false.
+      logical, parameter :: momtum4_cfl =.false.   !usually .false.
 !
 #if defined(RELO)
       real, save, allocatable, dimension(:,:) :: &
