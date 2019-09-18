@@ -21,16 +21,40 @@
 ! --- module for momtum and related routines
 !
       private !! default is private
-      public  :: momtum_hs, momtum, momtum4
+      public  :: momtum_hs, momtum, momtum4, momtum_init
 !
 #if defined(RELO)
       real, save, allocatable, dimension(:,:) :: &
 #else
       real, save, dimension(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy) :: &
 #endif
-        stress,stresx,stresy,dpmx,thkbop
-
+        stress,stresx,stresy,dpmx,thkbop, &
+        defor1, defor2 ! deformation components
       contains
+
+      subroutine momtum_init
+! Initialization of arrays for momentum equation
+      implicit none
+#if defined(RELO)
+      allocate( &
+              defor1(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy), &
+              defor2(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy)
+              stress(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy), &
+              stresx(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy), &
+              stresy(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy), &
+                dpmx(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy), &
+              thkbop(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy) )
+        call mem_stat_add( 7*(idm+2*nbdy)*(jdm+2*nbdy) )
+#endif
+        stress = r_init
+        stresx = r_init
+        stresy = r_init
+        dpmx = r_init
+        thkbop = r_init
+        defor1 = 0. 
+        defor2 = 0.
+
+      end  subroutine momtum_init
 
       subroutine momtum_hs(m,n)
       use mod_xc         ! HYCOM communication interface
@@ -71,23 +95,9 @@
 !     real*8    wtime1(10),wtime2(20,kdm),wtimes
 !
 # include "stmt_fns.h"
+# include "internal_kappaf.h"
+
 !
-#if defined(RELO)
-      if     (.not.allocated(stress)) then
-        allocate( &
-                stress(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy), &
-                stresx(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy), &
-                stresy(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy), &
-                  dpmx(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy), &
-                thkbop(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy) )
-        call mem_stat_add( 5*(idm+2*nbdy)*(jdm+2*nbdy) )
-                stress = r_init
-                stresx = r_init
-                stresy = r_init
-                  dpmx = r_init
-                thkbop = r_init
-      endif
-#endif
 !
       mbdy = 6
 !
@@ -532,12 +542,6 @@
         call xctilr(surty,1,1, 6,6, halo_pv)
       endif !windf
 !
-      return
-!
-      contains
-
-      include 'internal_kappaf.h'
-
       end subroutine momtum_hs
 !
       real function cd_coare(wind,vpmx,airt,sst)
@@ -3238,8 +3242,6 @@
             pu(i,j,1)   = 0.0
             pv(i,j,1)   = 0.0
 !
-            defor1(i,j) = 0.0
-            defor2(i,j) = 0.0
             visc2p(i,j) = 0.0
             visc2q(i,j) = 0.0
             visc4p(i,j) = 0.0
