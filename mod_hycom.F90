@@ -1973,8 +1973,8 @@
 !!Alex  calculation of seas surface slope for export to CICE (NUOPC)
 !$OMP     PARALLEL DO PRIVATE(j,i) &
 !$OMP             SCHEDULE(STATIC,jblk)
-      do j=1-nbdy,jj+nbdy
-        do i=1-nbdy,ii+nbdy
+      do j=1,jj
+        do i=1,ii
           if (SEA_P) then
             ssh_e = 0.0
             ssh_w = 0.0
@@ -2022,8 +2022,8 @@
 !!Alex calculation of u and v surf for export to CICE
 !$OMP     PARALLEL DO PRIVATE(j,i) &
 !$OMP             SCHEDULE(STATIC,jblk)
-      do j=1-nbdy,jj+nbdy
-        do i=1-nbdy,ii+nbdy
+      do j=1,jj
+        do i=1,ii
           if (SEA_P) then
 ! ---       average currents over top thkcdw meters
             thksur = onem*min( thkcdw, depths(i,j) )
@@ -3701,8 +3701,8 @@
 !Alex  calculation of seas surface slope for export to CICE (NUOPC)
 !$OMP     PARALLEL DO PRIVATE(j,i) &
 !$OMP             SCHEDULE(STATIC,jblk)
-        do j=1-nbdy,jj+nbdy
-          do i=1-nbdy,ii+nbdy
+        do j=1,jj
+          do i=1,ii
           if (SEA_P) then
            ssh_e = 0.0
            ssh_w = 0.0
