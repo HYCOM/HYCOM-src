@@ -51,6 +51,8 @@
 !
       real    q,pbudel,pbvdel,utndcy,vtndcy,wblpf
       real    d11,d12,d21,d22,ubp,vbp,z1
+      real    xmin(2)
+      real    sminny(jdm,2)
       real*8  sump
       integer i,j,l,lll,ml,nl,mn,lstep1,margin,mbdy,k,icof
 !	 & ,iffstep
@@ -960,8 +962,8 @@
       do j=1-margin,jj+margin
         do i=1-margin,ii+margin
           if (SEA_P) then
-            oneta(i,j,n)  = 1.0 + pbavg(i,j,n)/pbot(i,j)  !t+1
-            oneta(i,j,m)  = 1.0 + pbavg(i,j,m)/pbot(i,j)  !t&RA
+            oneta(i,j,n)  = max( oneta0, 1.0 + pbavg(i,j,n)/pbot(i,j) )  !t+1
+            oneta(i,j,m)  = max( oneta0, 1.0 + pbavg(i,j,m)/pbot(i,j) )  !t&RA
           endif 
         enddo !i
       enddo !j
@@ -1189,6 +1191,56 @@
 !
       endif  !btrmas
 !
+! --- check for clipped oneta
+!
+      if     (mod(nstep,3).eq.0 .or. diagno) then
+!$OMP   PARALLEL DO PRIVATE(j,i) &
+!$OMP            SCHEDULE(STATIC,jblk) !NOCSD
+        do j=1,jj
+          sminny(j,1)= 999.  !simplifies OpenMP parallelization
+          sminny(j,2)= 999.  !simplifies OpenMP parallelization
+!DIR$     PREFERVECTOR
+          do i=1,ii
+            if (SEA_P) then
+              sminny(j,1)=min(sminny(j,1),oneta(i,j,1))
+              sminny(j,2)=min(sminny(j,2),oneta(i,j,2))
+            endif !ip
+          enddo !i
+        enddo !j
+!$OMP   END PARALLEL DO !NOCSD
+        xmin(1) = minval(sminny(1:jj,1))
+        xmin(2) = minval(sminny(1:jj,2))
+        call xcminr(xmin(1:2))
+!
+        do mn= 1,2
+          if     (xmin(mn).eq.oneta0) then
+           do j=1,jj
+              do i=1,ii
+                if (SEA_P) then
+                  if (oneta(i,j,mn).le.oneta0) then
+                    write (lp,'(i9,a,2i5,i3,a,f9.6)')  &
+                      nstep,' i,j,mn =',i+i0,j+j0,mn, &
+                      ' clipped oneta after barotp call ', &
+                      oneta(i,j,mn)
+                  endif !oneta0
+                endif !ip
+              enddo !i
+            enddo !j
+            call xcsync(flush_lp)
+          endif !oneta0
+        enddo !mn
+!
+        if (diagno) then
+          if     (mnproc.eq.1) then
+            write (lp,'(i9,a,f9.6)') &
+              nstep, &
+              ' min of oneta after barotp:',min(xmin(1),xmin(2))
+            call flush(lp)
+          endif
+        endif !diagno
+
+      endif !every 3 time steps or diagno
+!
       return
       end subroutine barotp
 
@@ -1272,3 +1324,4 @@
 !> Apr. 2015 - added tidal body forcing
 !> Aug. 2018 - added btrmas and barotp_init, converted to a module
 !> Feb. 2019 - replaced onetai by 1.0
+!> Sep. 2019 - added oneta0, and oneta diagnostic test

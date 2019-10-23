@@ -339,8 +339,8 @@
               pbaold   = pbavg(i,j,n)
               pbanew   = pbavg(i,j,n) - delt1*emnp*onem  !emnp mass = rho0*vol
               pbanew   = max(pbanew, -pbot(i,j))
-              onetaold = 1.0 + pbaold/pbot(i,j)
-              onetanew = 1.0 + pbanew/pbot(i,j)
+              onetaold = max( oneta0, 1.0 + pbaold/pbot(i,j) )
+              onetanew = max( oneta0, 1.0 + pbanew/pbot(i,j) )
 !
 !             if     (i.eq.itest.and.j.eq.jtest) then
 !               s1(1) = dp(i,j,1,n)*onetaold*saln(i,j,1,n)
@@ -351,11 +351,11 @@
 !             endif !test
 !
               pbavg(i,j,n) = pbanew
-              oneta(i,j,n) = 1.0 + pbavg(i,j,n)/pbot(i,j)
+              oneta(i,j,n) = max(oneta0, 1.0 + pbavg(i,j,n)/pbot(i,j))
               if     (delt1.ne.baclin) then
 ! ---           Robert-Asselin time filter correction
                 pbavg(i,j,m) = pbavg(i,j,m)+0.5*ra2fac*(pbanew-pbaold)
-                oneta(i,j,m) = 1.0 + pbavg(i,j,m)/pbot(i,j)
+                oneta(i,j,m) = max(oneta0,1.0 + pbavg(i,j,m)/pbot(i,j))
               endif
 ! ---         treat E-P as a layer above layer 1, merged into layer 1
 ! ---         E-P salinity is 0 psu, E-P temperature is SST (T.1 is unchanged)
@@ -544,7 +544,7 @@
           endif  !ip.eq.1 .and. rmunp.ne.0.0
 !
           if (iu(i,j).eq.1) then
-            q  =max(rmunv(i,j),rmunv(i-1,j))
+            q  =rmunvu(i,j)
             if     (q.ne.0.0) then
               do k= 1,kk
                 pwl=u(i,j,k,n)
@@ -552,11 +552,11 @@
                    (unest(i,j,k,ln0)*wn0+unest(i,j,k,ln1)*wn1) )/ &
                            (1.0+delt1*q)
               enddo  !k
-            endif !rmunv.ne.0.0
+            endif !rmunvu.ne.0.0
           endif  !iu.eq.1
 !
           if (iv(i,j).eq.1) then
-            q  =max(rmunv(i,j),rmunv(i,j-1))
+            q  =rmunvv(i,j)
             if     (q.ne.0.0) then
               do k= 1,kk
                 pwl=v(i,j,k,n)
@@ -564,7 +564,7 @@
                    (vnest(i,j,k,ln0)*wn0+vnest(i,j,k,ln1)*wn1) )/ &
                            (1.0+delt1*q)
               enddo  !k
-            endif  !rmunv.ne.0.0
+            endif  !rmunvv.ne.0.0
           endif  !iv.eq.1
         enddo  !i
       enddo  !j
@@ -751,8 +751,8 @@
         do j=1,jj
           do i=1,ii
             if (iu(i,j).eq.1 .and. &
-                max(rmunv(i,j),rmunv(i-1,j), &
-                    rmu(  i,j),rmu(  i-1,j) ).ne.0.0) then
+                max(rmunvu(i,j), &
+                    rmu(   i,j),rmu(i-1,j) ).ne.0.0) then
               utotij = 0.0                                     
               do k=1,kk                                        
                 utotij = utotij + u(i,j,k,n)*dpu(i,j,k,n)
@@ -764,8 +764,8 @@
             endif  !rebalance u
 !
             if (iv(i,j).eq.1 .and. &
-                max(rmunv(i,j),rmunv(i,j-1), &
-                    rmu(  i,j),rmu(  i,j-1) ).ne.0.0) then
+                max(rmunvv(i,j), &
+                    rmu(   i,j),rmu(i,j-1) ).ne.0.0) then
               vtotij = 0.0
               do k=1,kk
                 vtotij = vtotij + v(i,j,k,n)*dpv(i,j,k,n)
@@ -949,7 +949,7 @@
             do i=1,ii
               if (SEA_P) then
 ! ---           always use mass-conserving diagnostics
-                oneta(i,j,nm)= 1.0 + pbavg(i,j,nm)/pbot(i,j)
+                oneta(i,j,nm)= max(oneta0,1.0 + pbavg(i,j,nm)/pbot(i,j))
                 q=oneta(i,j,nm)*dp(i,j,k,nm)*scp2(i,j)
                 util1(i,j)=q
                 util2(i,j)=q*temp(i,j,k,nm)
@@ -1178,10 +1178,8 @@
       real, parameter :: vonkar=0.4         !Von Karmann constant
       real, parameter :: cpcore=1000.5      !specific heat of air (j/kg/deg)
 !
-      real satvpr,qsatur6,qsatur,qsatur5,t6,p6,f6,qra
+      real satvpr,qsatur6,qsatur,qsatur5,t6,p6,f6,qra !t declared in stmt_fns.h
 # include "stmt_fns.h"
-!  !t declared within "stmt_fns.h"
-
 !
 ! --- saturation vapor pressure (Pa),
 ! --- from a polynominal approximation (lowe, j.appl.met., 16, 100-103, 1976)
@@ -2396,3 +2394,5 @@
 !> Nov. 2018 - added emptgt
 !> Dec. 2018 - add /* USE_NUOPC_CESMBETA */ macros for coupled simulation
 !> Feb. 2019 - replaced onetai by 1.0
+!> Sep. 2019 - added oneta0
+!> Oct. 2019 - rmunv replaced with rmunvu and rmunvv

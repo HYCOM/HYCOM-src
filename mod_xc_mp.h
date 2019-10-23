@@ -2001,7 +2001,8 @@
             endif !.ne.mnp
           enddo
           BARRIER
-        elseif (mnflg.eq.0) then
+        endif
+        if     (mnflg.eq.0) then
 !         get global maximum from 1st processor
           BARRIER
           call SHMEM_GETR(c,c,nn, idproc1(mnp))
@@ -2176,7 +2177,8 @@
             endif !.ne.mnp
           enddo
           BARRIER
-        elseif (mnflg.eq.0) then
+        endif
+        if     (mnflg.eq.0) then
 !         get global minimum from 1st processor
           BARRIER
           call SHMEM_GETR(c,c,nn, idproc1(mnp))
@@ -3681,6 +3683,133 @@
 #endif
       return
       end subroutine xcsumj
+
+      subroutine xcsumr_0(a, mnflg)
+      implicit none
+!
+      real,    intent(inout) :: a
+      integer, intent(in)    :: mnflg
+!
+!**********
+!*
+!  1) replace scalar a with its element-wise sum over all tiles.
+!
+!  2) mnflg selects which nodes must return the sum 
+!        = 0; all nodes
+!        = n; node number n (mnproc=n)
+!
+!  3) parameters:
+!       name            type         usage            description
+!    ----------      ----------     -------  ----------------------------
+!    a               real           in/out    target variable
+!    mnflg           integer        input     node return flag
+!*
+!**********
+!
+      real a1(1)
+!
+      a1(1) = a
+      call xcsumr_1(a1, mnflg)
+      a = a1(1)
+      return
+      end subroutine xcsumr_0
+
+      subroutine xcsumr_1(a, mnflg)
+      implicit none
+!
+      real,    intent(inout) :: a(:)
+      integer, intent(in)    :: mnflg
+!
+!**********
+!*
+!  1) replace array a with its element-wise sum over all tiles.
+!
+!  2) mnflg selects which nodes must return the sum 
+!        = 0; all nodes
+!        = n; node number n (mnproc=n)
+!
+!  2) parameters:
+!       name            type         usage            description
+!    ----------      ----------     -------  ----------------------------
+!    a               real           in/out    target array
+!    mnflg           integer        input     node return flag
+!*
+!**********
+!
+#if defined(MPI)
+      include 'mpif.h'
+      integer mpierr
+#endif
+!
+      integer i,is0,isl,mn,mnp,n,nn
+#if defined(TIMER)
+!
+      if     (nxc.eq.0) then
+        call xctmr0(10)
+        nxc = 10
+      endif
+#endif
+!
+!     stripmine a.
+!
+      n = size(a)
+!
+      do is0= 0,n-1,nmax
+        isl = min(is0+nmax,n)
+        nn = isl - is0
+        do i= 1,nn
+          b(i) = a(is0+i)
+        enddo
+!
+#if defined(MPI)
+        if     (mnflg.eq.0) then
+          call mpi_allreduce(b,c,nn,MTYPER,mpi_sum, &
+                             mpi_comm_hycom,mpierr)
+        else
+          call mpi_reduce(   b,c,nn,MTYPER,mpi_sum, &
+                             idproc1(mnflg), &
+                             mpi_comm_hycom,mpierr)
+        endif
+#elif defined(SHMEM)
+        BARRIER
+        mnp = max(1,mnflg)
+        if     (mnproc.eq.mnp) then
+!         form global sum on one processor
+          do i= 1,nn
+            c(i) = b(i)
+          enddo
+          do mn= 1,ijpr
+            if     (mn.ne.mnp) then
+              call SHMEM_GETR(b,b,nn, idproc1(mn))
+              do i= 1,nn
+                c(i) = c(i) + b(i)
+              enddo
+            endif !.ne.mnp
+          enddo
+          BARRIER
+        endif
+        if     (mnflg.eq.0) then
+!         get global sum from 1st processor
+          BARRIER
+          call SHMEM_GETR(c,c,nn, idproc1(mnp))
+        endif
+        ! no barrier needed here because using two buffers (b and c)
+#endif
+        if     (mnflg.eq.0 .or. mnflg.eq.mnproc) then
+          do i= 1,nn
+            a(is0+i) = c(i)
+          enddo
+        endif
+      enddo
+#if defined(TIMER)
+!
+      if     (nxc.eq.10) then
+        call xctmr1(10)
+        nxc = 0
+      endif
+#endif
+      return
+      end subroutine xcsumr_1
 
       subroutine xcsync(lflush)
       implicit none
@@ -5315,3 +5444,5 @@
 !> Dec. 2016 - added nca and nci
 !> July 2017 - added xcgput4
 !> Dec. 2018 - mpi_comm_vm now an optional argument to xcspmd
+!> Oct. 2019 - bugfix to xcmaxr and xcminr for SHMEM
+!> Oct. 2019 - added xcsumr

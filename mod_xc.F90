@@ -61,6 +61,11 @@
          module procedure xcminr_0o ! rank 0 array, old interface
          module procedure xcminr_1o ! rank 1 array, old interface
       end interface
+
+      interface xcsumr
+         module procedure xcsumr_0  ! rank 0 array (i.e. scalar)
+         module procedure xcsumr_1  ! rank 1 array
+      end interface
 #if defined(USE_ESMF4) || defined(ESPC_COUPLE)
 !
 ! --- public data structures for ESMF, see xcspmd
@@ -142,7 +147,7 @@
 #endif
       integer, private, parameter :: nmax=1024
       real,   save, private, dimension(nmax) :: &
-        b,c    ! xcastr, xcmaxr, xcminr
+        b,c    ! xcastr, xcmaxr, xcminr, xcsumr
 #endif
 !
 ! --- actual module subroutines

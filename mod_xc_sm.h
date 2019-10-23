@@ -1013,6 +1013,76 @@
       return
       end subroutine xcsumj
 
+      subroutine xcsumr_0(a, mnflg)
+      implicit none
+!
+      real,    intent(inout) :: a
+      integer, intent(in)    :: mnflg
+!
+!**********
+!*
+!  1) replace scalar a with its element-wise sum over all tiles.
+!
+!  2) mnflg selects which nodes must return the sum 
+!        = 0; all nodes
+!        = n; node number n (mnproc=n)
+!
+!  3) parameters:
+!       name            type         usage            description
+!    ----------      ----------     -------  ----------------------------
+!    a               real           in/out    target variable
+!    mnflg           integer        input     node return flag
+!*
+!**********
+!
+#if defined(TIMER)
+!
+      call xctmr0(10)
+#endif
+!
+!     single node version - do nothing.
+#if defined(TIMER)
+!
+      call xctmr1(10)
+#endif
+      return
+      end subroutine xcsumr_0
+
+      subroutine xcsumr_1(a, mnflg)
+      implicit none
+!
+      real,    intent(inout) :: a(:)
+      integer, intent(in)    :: mnflg
+!
+!**********
+!*
+!  1) replace array a with its element-wise sum over all tiles.
+!
+!  2) mnflg selects which nodes must return the sum 
+!        = 0; all nodes
+!        = n; node number n (mnproc=n)
+!
+!  3) parameters:
+!       name            type         usage            description
+!    ----------      ----------     -------  ----------------------------
+!    a               real           in/out    target array
+!    mnflg           integer        input     node return flag
+!*
+!**********
+!
+#if defined(TIMER)
+!
+      call xctmr0(10)
+#endif
+!
+!     single node version - do nothing.
+#if defined(TIMER)
+!
+      call xctmr1(10)
+#endif
+      return
+      end subroutine xcsumr_1
+
       subroutine xcsync(lflush)
       implicit none
 !
@@ -1556,3 +1626,4 @@
 !> Mar. 2012 - added optional mnflg to xclput
 !> Apr. 2012 - added optional mnflg to xceget and xceput
 !> Apr. 2012 - added xciget and xciput
+!> Oct. 2019 - added xcsumr

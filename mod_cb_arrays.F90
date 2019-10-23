@@ -308,6 +308,7 @@
 ! --- priver      use river precip bogas
 ! --- rivera      annual-only river precip bogas
 ! --- kparan      annual-only kpar or chl
+! --- lbmont      use sshflg=2 correction on lateral baro. bndy
 ! --- relax       activate lateral boundary T/S/p  climatological nudging
 ! --- srelax      activate surface salinity        climatological nudging
 ! ---              (sssflg==1 or -1)
@@ -349,7 +350,7 @@
 !
       logical, save :: &
                     btrlfr,btrmas,diagno,thermo,windf,mslprf, &
-                    pcipf,epmass,priver,rivera,kparan, &
+                    pcipf,epmass,priver,rivera,kparan,lbmont, &
                     relax,srelax,trelax,trcrlx,relaxf,relaxs,relaxt, &
                     locsig,vsigma,hybrid,isopyc,icegln,hybraf,isopcm, &
                     mxl_no,mxlkta,mxlktb,mxlkrt,pensol, &
@@ -444,6 +445,12 @@
        tnest,          & ! temp.    b.c. at nestwalls
        unest,          & ! u-vel.   b.c. at nestwalls
        vnest             ! v-vel.   b.c. at nestwalls
+
+      real, save, dimension(2) ::  &
+       un1min,          & ! u-vel.   b.c. at nestwalls, minimum layer 1
+       un1max,          & ! u-vel.   b.c. at nestwalls, maximum layer 1
+       vn1min,          & ! v-vel.   b.c. at nestwalls, minimum layer 1
+       vn1max             ! v-vel.   b.c. at nestwalls, maximum layer 1
  
 #if defined(RELO)
       real, save, allocatable, dimension(:,:,:) ::  &
@@ -464,6 +471,8 @@
        rmu,            & ! weights for   s.w.b.c. relax
        rmunp,          & ! weights for p.n.w.b.c. relax
        rmunv,          & ! weights for v.n.w.b.c. relax
+       rmunvu,         & ! weights for u.n.w.b.c. relax (u-grid, masked)
+       rmunvv,         & ! weights for v.n.w.b.c. relax (v-grid, masked)
        rmutra,         & ! weights for tracr.b.c. relax (maximum of all tracers)
        rmus              ! weights for        sss relax !!Alex
 
@@ -708,6 +717,7 @@
 ! --- 'ds00f'  = shallow z-level spacing stretching factor (1.0=const.z)
 ! --- 'dp00i'  = deep iso-pycnal spacing minimum thickness (m)
 ! --- 'isotop' = shallowest depth for isopycnal layers     (m), <0 from file
+! --- 'oneta0' = minimum 1+eta, must be > 0.0
 ! --- 'nhybrd' = number of hybrid levels (0=all isopycnal)
 ! --- 'nsigma' = number of sigma  levels (nhybrd-nsigma z-levels)
 ! --- 'hybmap' = HYBGEN:  remapper  flag (0=PCM,1=PLM,2=PPM,-ve:isoPCM)
@@ -730,7 +740,7 @@
 ! ---             (port: 1=Browning-Kreiss,3=Flather)
 ! --- 'mapflg' = map flag (0=mercator,2=uniform,3=beta-plane,4=input)
 ! --- 'yrflag' = days in year flag   (0=360,1=366,2=366Jan1,3=actual)
-! --- 'sshflg' = diagnostic SSH flag (0=SSH,1=SSH&stericSSH)
+! --- 'sshflg' = diagnostic SSH flag (0=SSH,1=SSH&stericSSH,2=SSH&stericMONTG)
 ! --- 'iversn' = hycom version number x10
 ! --- 'iexpt'  = experiment number x10
 ! --- 'jerlv0' = initial jerlov water type (1 to 5; 0 for kpar, -1 for chl)
@@ -772,7 +782,7 @@
                      thkmls,thkmlt,thkriv,thkmin,bldmin,bldmax,thkbot, &
                      thkcdw,thkfrz,tfrz_0,tfrz_s,ticegr,hicemn,hicemx, &
                      dp00,dp00f,dp00x,ds00,ds00f,ds00x,dp00i,isotop, &
-                     sigjmp,tmljmp,prsbas,emptgt
+                     oneta0,sigjmp,tmljmp,prsbas,emptgt
 !
       integer, save :: &
                      tsofrq,mixfrq,icefrq,icpfrq,nhybrd,nsigma, &
@@ -1561,13 +1571,17 @@
                 rmu(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy), &
               rmunp(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy), &
               rmunv(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy), &
+             rmunvu(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy), &
+             rmunvv(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy), &
              rmutra(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy), &
                rmus(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy) )
-      call mem_stat_add( 6*(idm+2*nbdy)*(jdm+2*nbdy) )
+      call mem_stat_add( 7*(idm+2*nbdy)*(jdm+2*nbdy) )
 #endif
                 rmu = r_init
               rmunp = r_init
               rmunv = r_init
+             rmunvv = r_init
+             rmutra = r_init
              rmutra = r_init
                rmus = r_init  !!Alex
 !
@@ -1861,3 +1875,7 @@
 !> Dec. 2018 - added /* USE_NUOPC_GENERIC */ and /* ESPC_COUPLE */ macros
 !> Feb. 2019 - added montg_c
 !> Feb. 2019 - removed onetai 
+!> Sep. 2019 - five arrays moved to momtum_init
+!> Sep. 2019 - added oneta0
+!> Oct. 2019 - added lbmont
+!> Oct. 2019 - added rmunvu and rmunvv, and layer 1 nested velocity ranges

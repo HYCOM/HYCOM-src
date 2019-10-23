@@ -397,6 +397,7 @@
         endif !error
       endif !dp00 used
 !
+! --- 'oneta0' = minimum 1+eta, must be > 0.0
 ! --- 'saln0'  = initial salinity value (psu), only used for iniflg<2
 ! --- 'locsig' = locally-referenced potential density for stability (0=F,1=T)
 ! --- 'kapref' = thermobaric reference state (-1=input,0=none,1,2,3=constant)
@@ -406,6 +407,7 @@
       if (mnproc.eq.1) then
       write(lp,*)
       endif !1st tile
+      call blkinr(oneta0,'oneta0','(a6," =",f10.4," ")')
       call blkinr(saln0, 'saln0 ','(a6," =",f10.4," psu")')
       call blkinl(locsig,'locsig')
       call blkini(kapref,'kapref')
@@ -417,6 +419,15 @@
         kapnum=2
       endif
 !
+      if     (oneta0.le.0.0 .or. oneta0.ge.1.0) then
+        if (mnproc.eq.1) then
+        write(lp,'(/ a /)') &
+          'error - oneta0 must be above 0.0 and below 1.0'
+        call flush(lp)
+        endif !1st tile
+        call xcstop('(blkdat)')
+               stop '(blkdat)'
+      endif !oneta0 error
       if     (kapref.lt.-1 .or. kapref.gt.3) then
         if (mnproc.eq.1) then
         write(lp,'(/ a,i1 /)') &
@@ -1603,6 +1614,8 @@
 !
 ! --- 'lbflag' = lateral baro. bndy flag (0=none;nest:2=B-K,4=Flather)
 ! ---             (port: 1=Browning-Kreiss,3=Flather)
+! --- 'lbmont' = baro nesting archives have sshflg=2
+! ---             sshflg=2 is always ok, but is required if lbmont is set
 ! --- 'tidflg' = TIDES: tidal forcing flag    (0=no;1=bdy;2=body;3=bdy&body)
 ! --- 'tidein' = TIDES: tide field input flag (0=no;1=yes;2=sal)
 ! --- 'tidcon' = TIDES: 1 digit per constituent (Q1K2P1N2O1K1S2M2), 0=off,1=on
@@ -1619,6 +1632,7 @@
       write(lp,*)
       endif !1st tile
       call blkini(lbflag,    'lbflag')
+      call blkinl(lbmont,    'lbmont')
       call blkini(tidflg,    'tidflg')
       call blkini(tidein,    'tidein')
       call blkini(tidcon,    'tidcon')
@@ -1806,6 +1820,15 @@
         if (mnproc.eq.1) then
         write(lp,'(/ a /)')  &
          &'error - bnstfq must be 0.0 unless lbflag is 2 or 4'
+        call flush(lp)
+        endif !1st tile
+        call xcstop('(blkdat)')
+               stop '(blkdat)'
+      endif
+      if (lbmont .and. sshflg.ne.2) then
+        if (mnproc.eq.1) then
+        write(lp,'(/ a /)')  &
+          'error - sshflg must be 2 if baro nesting archives have this'
         call flush(lp)
         endif !1st tile
         call xcstop('(blkdat)')
@@ -2605,3 +2628,5 @@
 !> Dec. 2018 - add yrflag=4 for 365 days no-leap calendar (CESM)
 !> Feb. 2019 - add sshflg=2 for steric Montg. Potential
 !> Mar. 2019 - updated iversn to 23
+!> Sep. 2019 - added oneta0
+!> Oct. 2019 - added lbmont

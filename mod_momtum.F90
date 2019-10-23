@@ -29,15 +29,19 @@
       real, save, dimension(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy) :: &
 #endif
         stress,stresx,stresy,dpmx,thkbop, &
-        defor1, defor2, & ! deformation components
+        defor1, defor2, &  ! deformation components
         uflux1,vflux1,  &  ! mass fluxes
-        potvor          ! potential vorticity 
+        potvor             ! potential vorticity 
 
       contains
 
       subroutine momtum_init()
-! Initialization of arrays for momentum equation
       implicit none
+!
+! --- ----------------------------------------------
+! --- Initialization of arrays for momentum equation
+! --- ----------------------------------------------
+!
 #if defined(RELO)
       allocate( &
               defor1(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy), &
@@ -50,20 +54,20 @@
               stresy(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy), &
               dpmx(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy), &
               thkbop(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy) )
-        call mem_stat_add( 10*(idm+2*nbdy)*(jdm+2*nbdy) )
+      call mem_stat_add( 10*(idm+2*nbdy)*(jdm+2*nbdy) )
 #endif
-        stress = 0. !r_init
-        stresx = r_init
-        stresy = r_init
-        dpmx = r_init
-        thkbop = r_init
-! All of these should be zero on land.
-        defor1 = 0. 
-        defor2 = 0.
-        uflux1 = 0.
-        vflux1 = 0.
-        potvor = 0.
-
+      stress = 0.0
+      stresx = r_init
+      stresy = r_init
+      dpmx   = r_init
+      thkbop = r_init
+! --- all of these should be zero on land.
+      defor1 = 0.0
+      defor2 = 0.0
+      uflux1 = 0.0
+      vflux1 = 0.0
+      potvor = 0.0
+      return
       end  subroutine momtum_init
 
       subroutine momtum_hs(m,n)
@@ -5586,3 +5590,4 @@
 !> Dec  2018 - add /* USE_NUOPC_CESMBETA */ macro for coupled simulation
 !> Dec  2018 - use max (not average) to map drag from p to u and v grids
 !> Feb. 2019 - added montg_c correction to psikk (sshflg.eq.2)
+!> Sep. 2019 - added momtum_init
