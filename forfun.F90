@@ -4064,6 +4064,15 @@
       do j=1,jj
         do i=1,ii
           if     (ip(i,j).eq.1) then
+            if     (sshflg.eq.2 .and. .not.lbmont) then
+!             apply montgomery correction to input pb
+              pbnest(i,j,lslot) = (util2(i,j)-util1(i,j)-montg_c(i,j)) &
+                                  *rhoref
+            else
+!             montgomery correction either not needed (sshflg<2)
+!                                  or already applied (lbmont)
+              pbnest(i,j,lslot) = (util2(i,j)-util1(i,j))*rhoref
+            endif
             hqpbot = 0.5/pbot(i,j)
             pbnest(i,j,lslot) = (util2(i,j)-util1(i,j)-montg_c(i,j))*rhoref
             ubpnst(i,j,lslot) = (ubnest(i,  j,lslot)*depthu(i,  j)+ &
@@ -4792,3 +4801,4 @@
 !> Dec  2018 - add yrflag=4 for 365 days no-leap calendar (CESM)
 !> Feb. 2019 - add sshflg=2 for steric Montg. Potential and montg_c in rdbaro_in
 !> May  2019 - add yrflag=4 logic to datefor and fordate
+!> Oct  2019 - added lbmont

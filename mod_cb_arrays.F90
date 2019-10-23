@@ -308,6 +308,7 @@
 ! --- priver      use river precip bogas
 ! --- rivera      annual-only river precip bogas
 ! --- kparan      annual-only kpar or chl
+! --- lbmont      use sshflg=2 correction on lateral baro. bndy
 ! --- relax       activate lateral boundary T/S/p  climatological nudging
 ! --- srelax      activate surface salinity        climatological nudging
 ! ---              (sssflg==1 or -1)
@@ -349,7 +350,7 @@
 !
       logical, save :: &
                     btrlfr,btrmas,diagno,thermo,windf,mslprf, &
-                    pcipf,epmass,priver,rivera,kparan, &
+                    pcipf,epmass,priver,rivera,kparan,lbmont, &
                     relax,srelax,trelax,trcrlx,relaxf,relaxs,relaxt, &
                     locsig,vsigma,hybrid,isopyc,icegln,hybraf,isopcm, &
                     mxl_no,mxlkta,mxlktb,mxlkrt,pensol, &
@@ -1864,3 +1865,4 @@
 !> Feb. 2019 - removed onetai 
 !> Sep. 2019 - five arrays moved to momtum_init
 !> Sep. 2019 - added oneta0
+!> Oct. 2019 - added lbmont
