@@ -4064,17 +4064,16 @@
       do j=1,jj
         do i=1,ii
           if     (ip(i,j).eq.1) then
+            hqpbot = 0.5/pbot(i,j)
             if     (sshflg.eq.2 .and. .not.lbmont) then
 !             apply montgomery correction to input pb
               pbnest(i,j,lslot) = (util2(i,j)-util1(i,j)-montg_c(i,j)) &
                                   *rhoref
             else
-!             montgomery correction either not needed (sshflg<2)
+!             montgomery correction either not needed (sshflg<2) 
 !                                  or already applied (lbmont)
               pbnest(i,j,lslot) = (util2(i,j)-util1(i,j))*rhoref
             endif
-            hqpbot = 0.5/pbot(i,j)
-            pbnest(i,j,lslot) = (util2(i,j)-util1(i,j)-montg_c(i,j))*rhoref
             ubpnst(i,j,lslot) = (ubnest(i,  j,lslot)*depthu(i,  j)+ &
                                  ubnest(i+1,j,lslot)*depthu(i+1,j) ) &
                                 *hqpbot
@@ -4100,6 +4099,13 @@
              pbnest(itest,jtest,lslot), &
              ubpnst(itest,jtest,lslot), &
              vbpnst(itest,jtest,lslot)
+          write(lp,'(i5,i4,a,1p5e13.5)') &
+             itest+1+i0,jtest+j0,' rdbaro: ub,vb,pb,ubp,vbp = ', &
+             ubnest(itest+1,jtest,lslot), &
+             vbnest(itest+1,jtest,lslot), &
+             pbnest(itest+1,jtest,lslot), &
+             ubpnst(itest+1,jtest,lslot), &
+             vbpnst(itest+1,jtest,lslot)
           write(lp,'(i5,i4,a,1p5e13.5)') &
              itest+i0,jtest+1+j0,' rdbaro: ub,vb,pb,ubp,vbp = ', &
              ubnest(itest,jtest+1,lslot), &
@@ -4179,6 +4185,15 @@
         close (unit=uoff+915)
         endif !1st tile
         call zaiocl(915)
+!
+! ---   rmunv[uv] may get masked in rdnest
+!
+        do j= 1,jj
+          do i= 1,ii
+            rmunvu(i,j) = max(rmunv(i,j),rmunv(i-1,j))
+            rmunvv(i,j) = max(rmunv(i,j),rmunv(i,j-1))
+          enddo
+        enddo
 !
         dnestf = abs(nestfq)
         if     (dnestf.lt.1.0) then
@@ -4263,6 +4278,10 @@
             enddo
           enddo
         enddo
+        un1min(1) = un1min(2)
+        un1max(1) = un1max(2)
+        vn1min(1) = vn1min(2)
+        vn1max(1) = vn1max(2)
         if     (lmonth) then
           dtime0 = dtime1
           call fordate(dtime1,yrflag, iyr,mon,idy,ihr)
@@ -4316,13 +4335,14 @@
 ! --- filenames  nest/arch[vm].????_???_??.[ab]
 ! --- I/O and array I/O unit 920 is reserved for the entire run.
 !
-      logical    ldebug_rdnest
-      parameter (ldebug_rdnest=.false.)
+      logical, parameter :: ldebug_rdnest = .false.  !usually .false.
+      logical, parameter :: lmask_rdnest  = .false.  !mask velocity outliers
 !
       character flnm*22, cline*80, cvarin*6, cfield*8
       integer   i,idmtst,ios,j,jdmtst,k,layer
-      integer   iyear,iday,ihour
+      integer   iyear,iday,ihour,nucnt,nvcnt
       logical   meanar,nodens
+      real      sumn(2)
 !
       call forday(dtime, yrflag, iyear,iday,ihour)
 !
@@ -4498,7 +4518,16 @@
 ! --- 3-d fields.
 !
       do k=1,kk
-        call rd_archive(unest(1-nbdy,1-nbdy,k,lslot), cfield,layer, 920)
+        if     (k.eq.1) then
+          call rd_archive_rng(unest(1-nbdy,1-nbdy,k,lslot), &
+                              un1min(lslot),un1max(lslot), &
+                              cfield,layer, 920)
+          un1min(lslot) = un1min(lslot) - 0.1
+          un1max(lslot) = un1max(lslot) + 0.1
+        else
+          call rd_archive(    unest(1-nbdy,1-nbdy,k,lslot), &
+                                           cfield,layer, 920)
+        endif !k==1:else
         if     (cfield.ne.'u-vel.  ') then
           if     (mnproc.eq.1) then
           write(lp,'(/ a / a,a /)') cfield, &
@@ -4507,7 +4536,16 @@
           call xcstop('(rdnest_in)')
                  stop '(rdnest_in)'
         endif
-        call rd_archive(vnest(1-nbdy,1-nbdy,k,lslot), cfield,layer, 920)
+        if     (k.eq.1) then
+          call rd_archive_rng(vnest(1-nbdy,1-nbdy,k,lslot), &
+                              vn1min(lslot),vn1max(lslot), &
+                              cfield,layer, 920)
+          vn1min(lslot) = vn1min(lslot) - 0.1
+          vn1max(lslot) = vn1max(lslot) + 0.1
+        else
+          call rd_archive(    vnest(1-nbdy,1-nbdy,k,lslot), &
+                                           cfield,layer, 920)
+        endif
         if     (cfield.ne.'v-vel.  ') then
           if     (mnproc.eq.1) then
           write(lp,'(/ a / a,a /)') cfield, &
@@ -4574,9 +4612,47 @@
         call xctilr(pnest(1-nbdy,1-nbdy,1,lslot),1,kk, 1,1, halo_ps)
       endif
 !
+      nucnt = 0
+      nvcnt = 0
 !$OMP PARALLEL DO PRIVATE(j,i,k) &
 !$OMP          SCHEDULE(STATIC,jblk)
       do j=1,jj
+        if     (lmask_rdnest) then
+! ---     mask rmunv[uv] where velocities exceed near-surface range
+          do i=1,ii
+            if     (iu(i,j).eq.1) then
+              rmunvu(i,j) = max(rmunv(i,j),rmunv(i-1,j))
+              if    (rmunvu(i,j).gt.0.0) then
+                do k= 2,kk
+                  if     (unest(i,j,k,1).lt.un1min(1) .or. &
+                          unest(i,j,k,1).gt.un1max(1) .or. &
+                          unest(i,j,k,2).lt.un1min(2) .or. &
+                          unest(i,j,k,2).gt.un1max(2)     ) then
+                    rmunvu(i,j) = 0.0  !mask
+                    nucnt = nucnt + 1
+                    exit !k
+                  endif
+                enddo !k
+              endif !rmunvu
+            endif !iu
+            if     (iv(i,j).eq.1) then
+              rmunvv(i,j) = max(rmunv(i,j),rmunv(i,j-1))
+              if    (rmunvv(i,j).gt.0.0) then
+                do k= 2,kk
+                  if     (vnest(i,j,k,1).lt.vn1min(1) .or. &
+                          vnest(i,j,k,1).gt.vn1max(1) .or. &
+                          vnest(i,j,k,2).lt.vn1min(2) .or. &
+                          vnest(i,j,k,2).gt.vn1max(2)     ) then
+                    rmunvv(i,j) = 0.0  !mask
+                    nvcnt = nvcnt + 1
+                    exit !k
+                  endif
+                enddo !k
+              endif !rmunvv
+            endif !iv
+          enddo !i
+        endif !lmask_rdnest
+!
         if     (meanar) then  !mean archive
 !         for thin layers, take baroclinic velocity from above
 !         otherwise, convert from total to baroclinic velocity
@@ -4610,6 +4686,16 @@
           enddo !k
         enddo !i
       enddo !j
+!
+      if     (lmask_rdnest) then
+        sumn(1) = nucnt
+        sumn(2) = nvcnt
+        call xcsumr(sumn, 1)
+        if     (sumn(1)+sumn(2).gt.0.0 .and. mnproc.eq.1) then
+          write(lp,'(f12.5,a,2i9)') &
+            dtime,'  nest mask counts =',int(sumn(1)),int(sumn(2))
+        endif 
+      endif !lmask_rdnest
 !
       if     (ldebug_rdnest .and. ittest.ne.-1 .and. jttest.ne.-1) then
         call xcsync(flush_lp)
@@ -4703,6 +4789,70 @@
 !nostop          stop '(rd_archive)'
         endif
       endif
+      return
+      end
+!
+!
+      subroutine rd_archive_rng(field,fmin,fmax, cfield,layer, iunit)
+      use mod_xc         ! HYCOM communication interface
+      use mod_cb_arrays  ! HYCOM saved arrays
+      use mod_za         ! HYCOM I/O interface
+      implicit none
+!
+      character cfield*8
+      integer   layer,iunit
+      real      fmin,fmax
+      real, dimension (1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy) :: &
+                field
+!
+! --- read a single archive array field from unit iunit.
+! --- return its range in fmin,fmax
+!
+      integer   i,ios,nnstep
+      real      hmina,hminb,hmaxa,hmaxb,timein,thet
+      character cline*80
+!
+      call zagetc(cline,ios, uoff+iunit)
+      if     (ios.ne.0) then
+        if     (mnproc.eq.1) then
+          write(lp,*)
+          write(lp,*) 'error in rd_archive - hit end of input'
+          write(lp,*) 'iunit,ios = ',iunit,ios
+          write(lp,*)
+        endif !1st tile
+        call xcstop('(rd_archive)')
+               stop '(rd_archive)'
+      endif
+!     if     (mnproc.eq.1) then
+!     write(lp,'(a)') cline
+!     endif !1st tile
+!
+      cfield = cline(1:8)
+!
+      i = index(cline,'=')
+      read(cline(i+1:),*) nnstep,timein,layer,thet,hminb,hmaxb
+!
+      if     (hminb.eq.hmaxb) then  !constant field
+        field(:,:) = hminb
+        call zaiosk(iunit)
+      else
+        call zaiord(field,ip,.false., hmina,hmaxa, &
+                    iunit)
+!
+        if     (abs(hmina-hminb).gt.abs(hminb)*1.e-4 .or. &
+                abs(hmaxa-hmaxb).gt.abs(hmaxb)*1.e-4     ) then
+          if     (mnproc.eq.1) then
+          write(lp,'(/ a / a,1p3e14.6 / a,1p3e14.6 /)') &
+            'error - .a and .b files not consistent:', &
+            '.a,.b min = ',hmina,hminb,hmina-hminb, &
+            '.a,.b max = ',hmaxa,hmaxb,hmaxa-hmaxb
+          endif !1st tile
+!nostop   call xcstop('(rd_archive)')
+!nostop          stop '(rd_archive)'
+        endif
+      endif
+      fmin = hminb
+      fmax = hmaxb
       return
       end
 !
@@ -4803,3 +4953,4 @@
 !> May  2019 - add yrflag=4 logic to datefor and fordate
 !> Oct  2019 - added lbmont
 !> Oct  2019 - bugfix in datefor for yrflag=2,4
+!> Oct  2019 - optionally mask nest velocities if outside near-surface range

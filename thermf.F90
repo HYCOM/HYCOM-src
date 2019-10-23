@@ -544,7 +544,7 @@
           endif  !ip.eq.1 .and. rmunp.ne.0.0
 !
           if (iu(i,j).eq.1) then
-            q  =max(rmunv(i,j),rmunv(i-1,j))
+            q  =rmunvu(i,j)
             if     (q.ne.0.0) then
               do k= 1,kk
                 pwl=u(i,j,k,n)
@@ -552,11 +552,11 @@
                    (unest(i,j,k,ln0)*wn0+unest(i,j,k,ln1)*wn1) )/ &
                            (1.0+delt1*q)
               enddo  !k
-            endif !rmunv.ne.0.0
+            endif !rmunvu.ne.0.0
           endif  !iu.eq.1
 !
           if (iv(i,j).eq.1) then
-            q  =max(rmunv(i,j),rmunv(i,j-1))
+            q  =rmunvv(i,j)
             if     (q.ne.0.0) then
               do k= 1,kk
                 pwl=v(i,j,k,n)
@@ -564,7 +564,7 @@
                    (vnest(i,j,k,ln0)*wn0+vnest(i,j,k,ln1)*wn1) )/ &
                            (1.0+delt1*q)
               enddo  !k
-            endif  !rmunv.ne.0.0
+            endif  !rmunvv.ne.0.0
           endif  !iv.eq.1
         enddo  !i
       enddo  !j
@@ -751,8 +751,8 @@
         do j=1,jj
           do i=1,ii
             if (iu(i,j).eq.1 .and. &
-                max(rmunv(i,j),rmunv(i-1,j), &
-                    rmu(  i,j),rmu(  i-1,j) ).ne.0.0) then
+                max(rmunvu(i,j), &
+                    rmu(   i,j),rmu(i-1,j) ).ne.0.0) then
               utotij = 0.0                                     
               do k=1,kk                                        
                 utotij = utotij + u(i,j,k,n)*dpu(i,j,k,n)
@@ -764,8 +764,8 @@
             endif  !rebalance u
 !
             if (iv(i,j).eq.1 .and. &
-                max(rmunv(i,j),rmunv(i,j-1), &
-                    rmu(  i,j),rmu(  i,j-1) ).ne.0.0) then
+                max(rmunvv(i,j), &
+                    rmu(   i,j),rmu(i,j-1) ).ne.0.0) then
               vtotij = 0.0
               do k=1,kk
                 vtotij = vtotij + v(i,j,k,n)*dpv(i,j,k,n)
@@ -1178,10 +1178,8 @@
       real, parameter :: vonkar=0.4         !Von Karmann constant
       real, parameter :: cpcore=1000.5      !specific heat of air (j/kg/deg)
 !
-      real satvpr,qsatur6,qsatur,qsatur5,t6,p6,f6,qra
+      real satvpr,qsatur6,qsatur,qsatur5,t6,p6,f6,qra !t declared in stmt_fns.h
 # include "stmt_fns.h"
-!  !t declared within "stmt_fns.h"
-
 !
 ! --- saturation vapor pressure (Pa),
 ! --- from a polynominal approximation (lowe, j.appl.met., 16, 100-103, 1976)
@@ -2397,3 +2395,4 @@
 !> Dec. 2018 - add /* USE_NUOPC_CESMBETA */ macros for coupled simulation
 !> Feb. 2019 - replaced onetai by 1.0
 !> Sep. 2019 - added oneta0
+!> Oct. 2019 - rmunv replaced with rmunvu and rmunvv

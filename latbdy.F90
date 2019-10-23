@@ -967,7 +967,7 @@
         return
       endif !lcount=1
 
-      if ((lll.eq.0) .or. (n.eq.0)) return
+      if ((lll.eq.0) .or. (n.eq.0)) return   !called from dpthuv
 
 !     
 ! --- 'wellposed' treatment of pressure and normal velocity fields
@@ -1823,7 +1823,7 @@
         return
       endif
 
-      if (n.eq.0) return
+      if (n.eq.0) return   !called from dpthuv
 
 !
 ! --- 'wellposed' treatment of pressure and normal velocity fields
@@ -2059,36 +2059,50 @@
 ! --- Dan Moore,          QNA,  August 2011 (tidal components).
 !
       logical, parameter :: ldebug_latbdt=.false.  !usually .false.
+      logical, parameter :: ltrans_latbdt=.false.  !usually .false.
 !
       integer, parameter :: mnp=1       !mnflg for xciegt and xciput
                                         !0 == all tasks; 1 == task 1;
+      integer, parameter :: npline=1    !update pline every npline time steps
+                                        !odd, can be 1
       integer, parameter :: nchar=120
 !
       logical     lfatal,lfatalp
-      integer     i,j,k,isec,ifrst,ilast,l,np
+      integer     i,im1,ip1,j,jm1,jp1,k,isec,ifrst,ilast,l,np
       real        aline(nchar)
-      real        crs,fin,fatal
+      real        fatal,sb0,sb1
       character*3 char3
 !
       integer, save ::  &
             nportpts, &
-              nports
+              nptest, &
+              nports     !number of ports
+      real,    save :: &
+              sports     !scale factor for nested velocity
       integer, save, allocatable :: &
             nxport(:), &
             kdport(:), &
             ifport(:),ilport(:), &
             jfport(:),jlport(:),lnport(:)
+      real*8,  save, allocatable :: &
+            trport(:), &
+            trporp(:), &
+            trnest(:)
 !
       integer       jline_start,jline,jtide_start,jtide,tidcon1
 !
-      integer, save, allocatable  :: iaub(:),iavb(:),jaub(:),javb(:), &
-                                     iaui(:),iavi(:),jaui(:),javi(:), &
-                                     iau2(:),iav2(:),jau2(:),jav2(:), &
-                                     iapi(:),iapr(:),japi(:),japr(:)
+      integer, save, allocatable  :: &
+        iaub(:),iavb(:),jaub(:),javb(:), &  !boundary vel-point
+        iaui(:),iavi(:),jaui(:),javi(:), &  !1st sea  vel-point inside boundary
+        iau2(:),iav2(:),jau2(:),jav2(:), &  !2nd sea  vel-point inside boundary
+        iapi(:),        japi(:),         &  !1st sea    p-point
+        ndup(:)                             !1st sea    p-point, duplicates
       real,    save, allocatable  :: pspeed(:),rspeed(:), &
+                                     utrans(:),vtrans(:), &  !velocity to transport
                                      pline(:),uline(:),vline(:), &
                                               ulin2(:),vlin2(:), &
-                                     plnst(:),ulnst(:),vlnst(:)
+                                     plnst(:),ulnst(:),vlnst(:), &
+                                       crs(:),  fin(:)
 !
       real,    save, allocatable  :: z_R(:,:,:),z_I(:,:,:),z_A(:)
       real,    save, allocatable  :: port_tide(:,:)
@@ -2106,12 +2120,27 @@
 !
 ! --- the first call just initializes data structures.
 !
-      if     (lcount.eq.1) then
+      if     (lcount.eq.1) then !call at start of dpthuv
+        if     (mnproc.eq.1) then
+          write(lp,'(/a,i3/a)') &
+            'Browning and Kreiss barotropic nesting, npline =',npline, &
+            '  now processing ports.input ...'
+        endif !1st tile
+        call xcsync(flush_lp)
 !
         open(unit=uoff+99,file=trim(flnminp)//'ports.input')
 !
+! ---   'sports' = scale factor for nested velocity (optional, default 1.0)
 ! ---   'nports' = number of boundary port sections.
-        call blkini(nports,'nports')
+        call blkinr2(sports,i, &
+                              'sports','(a6," =",f10.4," ")', &
+                              'nports','(a6," =",f11.0)')  !treat nports as real
+        if     (i.eq.1) then !sports
+          call blkini(nports,'nports')
+        else  !nports
+          nports = sports
+          sports = 1.0  !default
+        endif
         if     (mnproc.eq.1) then
         write(lp,*)
         endif
@@ -2143,6 +2172,10 @@
             jfport(nports), &
             jlport(nports), &
             lnport(nports) )
+        allocate( &
+            trport(nports), &
+            trporp(nports), &
+            trnest(nports) )
 !
 ! ---   read in the ports one at a time
 !
@@ -2422,94 +2455,6 @@
           enddo
         enddo
 !
-! ---   define the nested boundary input mask.
-!
-        do j= 1,jj
-          do i= 1,ii
-            maskbc(i,j) = 0
-          enddo
-        enddo
-!
-        do l= 1,nports
-          if     (kdport(l).eq.4) then
-!
-!           western port
-!
-            i = ifport(l)
-            do j= jfport(l),jlport(l)
-              if     (i.le.i0 .or. i.gt.i0+ii .or. &
-                      j.le.j0 .or. j.gt.j0+jj     ) then
-                cycle  ! not on this tile.
-              else
-                maskbc(i-i0,j-j0) = 1
-              endif
-            enddo
-          elseif (kdport(l).eq.3) then
-!
-!           eastern port
-!
-            i = ifport(l)-1
-            do j= jfport(l),jlport(l)
-              if     (i.le.i0 .or. i.gt.i0+ii .or. &
-                      j.le.j0 .or. j.gt.j0+jj     ) then
-                cycle  ! not on this tile.
-              else
-                maskbc(i-i0,j-j0) = 1
-              endif
-            enddo
-          elseif (kdport(l).eq.1) then
-!
-!           northern port
-!
-            j = jfport(l)-1
-            do i= ifport(l),ilport(l)
-              if     (i.le.i0 .or. i.gt.i0+ii .or. &
-                      j.le.j0 .or. j.gt.j0+jj     ) then
-                cycle  ! not on this tile.
-              else
-                maskbc(i-i0,j-j0) = 1
-              endif
-            enddo
-          elseif (kdport(l).eq.2) then
-!
-!           southern port
-!
-            j = jfport(l)
-            do i= ifport(l),ilport(l)
-              if     (i.le.i0 .or. i.gt.i0+ii .or. &
-                      j.le.j0 .or. j.gt.j0+jj     ) then
-                cycle  ! not on this tile.
-              else
-                maskbc(i-i0,j-j0) = 1
-              endif
-            enddo
-          endif
-        enddo  !l=1,nports
-!
-        if     (ldebug_latbdt) then
-          util1(1:ii,1:jj) = maskbc(1:ii,1:jj)  ! xclget is for real arrays
-          isec=(itdm-1)/nchar
-          do ifrst=0,nchar*isec,nchar
-            ilast=min(itdm,ifrst+nchar)
-            write (char3,'(i3)') ilast-ifrst
-            fmt(8:10)=char3
-            if     (mnproc.eq.1) then
-            write (lp,'(a,i5,a,i5)') &
-              'bc array, cols',ifrst+1,' --',ilast
-            endif !1st tile
-            do j= jtdm,1,-1
-              call xclget(aline,ilast-ifrst, util1,ifrst+1,j,1,0, 1)
-              if     (mnproc.eq.1) then
-              write (lp,fmt) j,(nint(aline(i)),i=1,ilast-ifrst)
-              endif !1st tile
-            enddo
-          enddo
-          if     (mnproc.eq.1) then
-          write (lp,*)
-          endif
-          call xcsync(flush_lp)
-        endif !ldebug_latbdt
-!
 ! ---   initialize the ports
 !
         allocate(iaub(nportpts),jaub(nportpts), &
@@ -2519,12 +2464,15 @@
                  iau2(nportpts),jau2(nportpts), &
                  iav2(nportpts),jav2(nportpts), &
                  iapi(nportpts),japi(nportpts),  &
-                 iapr(nportpts),japr(nportpts) )
+                 ndup(nportpts) )
 !
         do l= 1,nports
           if     (kdport(l).eq.4) then  !western port
             np  = nxport(l)-jfport(l)
             i   = ifport(l)
+            if     (l.eq.1) then
+              nptest = np+jlport(l)
+            endif
             do j= jfport(l),jlport(l)
               iapi(np+j) = i
               japi(np+j) = j
@@ -2542,14 +2490,21 @@
               javi(np+j) = j
               iav2(np+j) = i  !not active
               jav2(np+j) = j  !not active
-                if     (ldebug_latbdt .and. mnproc.eq.1) then
-                  write(lp,'(a,5i5)') 'n,ia,ja w:',np+j, &
-                    iaub(np+j),jaub(np+j),iaui(np+j),jaui(np+j)
-                endif !ldebug_latbdt
+              if     (l.eq.1 .and. j.eq.jttest) then
+                nptest = np+j
+              endif
+              if     (ldebug_latbdt .and. np+j.eq.nptest &
+                                    .and. mnproc.eq.1) then
+                write(lp,'(a,5i5)') 'n,ia,ja w:',np+j, &
+                  iaub(np+j),jaub(np+j),iaui(np+j),jaui(np+j)
+              endif !ldebug_latbdt
             enddo !j
           elseif (kdport(l).eq.3) then  !eastern port
             np  = nxport(l)-jfport(l)
             i   = ifport(l)-1
+            if     (l.eq.1) then
+              nptest = np+jlport(l)
+            endif
             do j= jfport(l),jlport(l)
               iapi(np+j) = i
               japi(np+j) = j
@@ -2567,14 +2522,21 @@
               javi(np+j) = j
               iav2(np+j) = i  !not active
               jav2(np+j) = j  !not active
-                if     (ldebug_latbdt .and. mnproc.eq.1) then
-                  write(lp,'(a,5i5)') 'n,ia,ja e:',np+j, &
-                    iaub(np+j),jaub(np+j),iaui(np+j),jaui(np+j)
-                endif !ldebug_latbdt
+              if     (l.eq.1 .and. j.eq.jttest) then
+                nptest = np+j
+              endif
+              if     (ldebug_latbdt .and. np+j.eq.nptest &
+                                    .and. mnproc.eq.1) then
+                write(lp,'(a,5i5)') 'n,ia,ja e:',np+j, &
+                  iaub(np+j),jaub(np+j),iaui(np+j),jaui(np+j)
+              endif !ldebug_latbdt
             enddo !j
           elseif (kdport(l).eq.1) then  !northern port
             np  = nxport(l)-ifport(l)
             j   = jfport(l)-1
+            if     (l.eq.1) then
+              nptest = np+ilport(l)
+            endif
             do i= ifport(l),ilport(l)
               iapi(np+i) = i
               japi(np+i) = j
@@ -2592,14 +2554,21 @@
               jaui(np+i) = j
               iau2(np+i) = i  !not active
               jau2(np+i) = j  !not active
-                if     (ldebug_latbdt .and. mnproc.eq.1) then
-                  write(lp,'(a,5i5)') 'n,ia,ja n:',np+i, &
-                    iavb(np+i),javb(np+i),iavi(np+i),javi(np+i)
-                endif !ldebug_latbdt
+              if     (l.eq.1 .and. i.eq.ittest) then
+                nptest = np+i
+              endif
+              if     (ldebug_latbdt .and. np+i.eq.nptest &
+                                    .and. mnproc.eq.1) then
+                write(lp,'(a,5i5)') 'n,ia,ja n:',np+i, &
+                  iavb(np+i),javb(np+i),iavi(np+i),javi(np+i)
+              endif !ldebug_latbdt
             enddo !i
           elseif (kdport(l).eq.2) then  !southern port
             np  = nxport(l)-ifport(l)
             j   = jfport(l)
+            if     (l.eq.1) then
+              nptest = np+ilport(l)
+            endif
             do i= ifport(l),ilport(l)
               iapi(np+i) = i
               japi(np+i) = j
@@ -2617,18 +2586,31 @@
               jaui(np+i) = j
               iau2(np+i) = i  !not active
               jau2(np+i) = j  !not active
-                if     (ldebug_latbdt .and. mnproc.eq.1) then
-                  write(lp,'(a,5i5)') 'n,ia,ja n:',np+i, &
-                    iavb(np+i),javb(np+i),iavi(np+i),javi(np+i)
-                endif !ldebug_latbdt
+              if     (l.eq.1 .and. i.eq.ittest) then
+                nptest = np+i
+              endif
+              if     (ldebug_latbdt .and. np+i.eq.nptest &
+                                    .and. mnproc.eq.1) then
+                write(lp,'(a,5i5)') 'n,ia,ja n:',np+i, &
+                  iavb(np+i),javb(np+i),iavi(np+i),javi(np+i)
+              endif !ldebug_latbdt
             enddo !i
           endif !kdport
         enddo  !l=1,nports
-!
         do i= 1,nportpts
-          iapr(i) = iapi(nportpts+1-i)
-          japr(i) = japi(nportpts+1-i)
-        enddo
+! ---     find p-point duplicates, if any
+          ndup(i) = 0
+          do j= 1,nportpts
+            if     (i.ne.j .and. iapi(i).eq.iapi(j) &
+                           .and. japi(i).eq.japi(j)  ) then
+              ndup(i) = j
+              if     (ldebug_latbdt .and. mnproc.eq.1) then
+                write(lp,'(a,4i5)') 'n,ndup,ia,ja', &
+                                    i,j,iapi(i),japi(i)
+              endif !ldebug_latbdt
+            endif
+          enddo !j
+        enddo !i
 !
         allocate(pspeed(nportpts), &
                  rspeed(nportpts), &
@@ -2639,7 +2621,12 @@
                   vlin2(nportpts), &
                   plnst(nportpts), &
                   ulnst(nportpts), &
-                  vlnst(nportpts) )
+                  vlnst(nportpts), &
+                    crs(nportpts), &
+                    fin(nportpts) )
+!
+! ---   Note that 'speed' is in fact qonem*SQRT(g/H).
+! ---   The qonem allows for the use of pressure fields.
 !
         call xciget(pline,nportpts,depths,iapi,japi,0)
 !
@@ -2653,9 +2640,10 @@
             do j= jfport(l),jlport(l)
               pspeed(np+j) = qonem*sqrt(g/pline(np+j))
               rspeed(np+j) = 1.0/pspeed(np+j)
-              if     (ldebug_latbdt .and. mnproc.eq.1) then
-              write(lp,'(a,i2,4i5,1pe13.5)')  &
-                'w port: ',l,i,j,iapi(np+j),japi(np+j),pspeed(np+j)
+              if     (ldebug_latbdt .and. np+j.eq.nptest &
+                                    .and. mnproc.eq.1) then
+                write(lp,'(a,i2,4i5,1pe13.5)')  &
+                  'w port: ',l,i,j,iapi(np+j),japi(np+j),pspeed(np+j)
               endif !ldebug_latbdt
 !
               if     (i.ge.i0+ 1-nbdy .and. &
@@ -2675,9 +2663,10 @@
             do j= jfport(l),jlport(l)
               pspeed(np+j) = qonem*sqrt(g/pline(np+j))
               rspeed(np+j) = 1.0/pspeed(np+j)
-              if     (ldebug_latbdt .and. mnproc.eq.1) then
-              write(lp,'(a,i2,4i5,1pe13.5)')  &
-                'e port: ',l,i,j,iapi(np+j),japi(np+j),pspeed(np+j)
+              if     (ldebug_latbdt .and. np+j.eq.nptest &
+                                    .and. mnproc.eq.1) then
+                write(lp,'(a,i2,4i5,1pe13.5)')  &
+                  'e port: ',l,i,j,iapi(np+j),japi(np+j),pspeed(np+j)
               endif !ldebug_latbdt
 !
               if     (i+1.ge.i0+ 1-nbdy .and. &
@@ -2697,9 +2686,10 @@
             do i= ifport(l),ilport(l)
               pspeed(np+i) = qonem*sqrt(g/pline(np+i))
               rspeed(np+i) = 1.0/pspeed(np+i)
-              if     (ldebug_latbdt .and. mnproc.eq.1) then
-              write(lp,'(a,i2,4i5,1pe13.5)')  &
-                'n port: ',l,i,j,iapi(np+i),japi(np+i),pspeed(np+i)
+              if     (ldebug_latbdt .and. np+i.eq.nptest &
+                                    .and. mnproc.eq.1) then
+                write(lp,'(a,i2,4i5,1pe13.5)')  &
+                  'n port: ',l,i,j,iapi(np+i),japi(np+i),pspeed(np+i)
               endif !ldebug_latbdt
 !
               if     (i  .ge.i0+ 1-nbdy .and. &
@@ -2719,9 +2709,10 @@
             do i= ifport(l),ilport(l)
               pspeed(np+i) = qonem*sqrt(g/pline(np+i))
               rspeed(np+i) = 1.0/pspeed(np+i)
-              if     (ldebug_latbdt .and. mnproc.eq.1) then
-              write(lp,'(a,i2,4i5,1pe13.5)')  &
-                's port: ',l,i,j,iapi(np+i),japi(np+i),pspeed(np+i)
+              if     (ldebug_latbdt .and. np+i.eq.nptest &
+                                    .and. mnproc.eq.1) then
+                write(lp,'(a,i2,4i5,1pe13.5)')  &
+                  's port: ',l,i,j,iapi(np+i),japi(np+i),pspeed(np+i)
               endif !ldebug_latbdt
 !
               if     (i.ge.i0+ 1-nbdy .and. &
@@ -2735,8 +2726,8 @@
           endif !kdport
         enddo  !l=1,nports
         if     (ldebug_latbdt .and. mnproc.eq.1) then
-        write(lp,*) 
-        call flush(lp)
+          write(lp,*) 
+          call flush(lp)
         endif !ldebug_latbdt
 
         if     (tidflg.eq.1 .or. tidflg.eq.3) then
@@ -2754,21 +2745,100 @@
 !
         call xcsync(flush_lp)
         return
-      endif
+      endif  !lcount.eq.1
 
-      if ((lll.eq.0) .or. (n.eq.0)) return
-
+      if     (.not.allocated(utrans)) then
+        allocate(utrans(nportpts), &
+                 vtrans(nportpts) ) 
+        utrans(:) = 0.0
+        vtrans(:) = 0.0
+!
+        call xciget(uline,nportpts,depthu,iaub,jaub,0)
+        call xciget(vline,nportpts,depthv,iavb,javb,0)
+        call xciget(ulin2,nportpts,scuy,  iaub,jaub,0)
+        call xciget(vlin2,nportpts,scvx,  iavb,javb,0)
+!
+        do l= 1,nports
+          if     (kdport(l).eq.4) then
+!
+!           western port
+!
+            np =  nxport(l)-jfport(l)
+            i  =  ifport(l)
+            do j= jfport(l),jlport(l)
+              utrans(np+j) = uline(np+j)*ulin2(np+j)*qonem
+              if     (ltrans_latbdt .and. mnproc.eq.1) then
+                write(lp,'(a,i2,4i5,1p3e13.5)')  &
+                  'w tran: ',l,i,j,iaub(np+j),jaub(np+j), &
+                  utrans(np+j),uline(np+j)*qonem,ulin2(np+j)
+              endif !ltrans_latbdt
+            enddo !j
+!
+          elseif (kdport(l).eq.3) then
+!
+!           eastern port
+!
+            np =  nxport(l)-jfport(l)
+            i  =  ifport(l)-1
+            do j= jfport(l),jlport(l)
+              utrans(np+j) = uline(np+j)*ulin2(np+j)*qonem
+              if     (ltrans_latbdt .and. mnproc.eq.1) then
+                write(lp,'(a,i2,4i5,1p3e13.5)')  &
+                  'e tran: ',l,i,j,iaub(np+j),jaub(np+j), &
+                  utrans(np+j),uline(np+j)*qonem,ulin2(np+j)
+              endif !ltrans_latbdt
+            enddo !j
+!
+          elseif (kdport(l).eq.1) then
+!
+!           northern port
+!
+            np =  nxport(l)-ifport(l)
+            j  =  jfport(l)-1
+            do i= ifport(l),ilport(l)
+              vtrans(np+i) = vline(np+i)*vlin2(np+i)*qonem
+              if     (ltrans_latbdt .and. mnproc.eq.1) then
+                write(lp,'(a,i2,4i5,1p3e13.5)')  &
+                  'n tran: ',l,i,j,iavb(np+i),javb(np+i), &
+                  vtrans(np+i),vline(np+i)*qonem,vlin2(np+i)
+              endif !ltrans_latbdt
+            enddo !i
+!
+          elseif (kdport(l).eq.2) then
+!
+!           southern port
+!
+            np =  nxport(l)-ifport(l)
+            j  =  jfport(l)
+            do i= ifport(l),ilport(l)
+              vtrans(np+i) = vline(np+i)*vlin2(np+i)*qonem
+              if     (ltrans_latbdt .and. mnproc.eq.1) then
+                write(lp,'(a,i2,4i5,1p3e13.5)')  &
+                  's tran: ',l,i,j,iavb(np+i),javb(np+i), &
+                  vtrans(np+i),vline(np+i)*qonem,vlin2(np+i)
+              endif !ltrans_latbdt
+            enddo
+!
+          endif !kdport
+        enddo  !l=1,nports
+        if     (ltrans_latbdt .and. mnproc.eq.1) then
+          write(lp,*) 
+          call flush(lp)
+        endif !ldebug_latbdt
+      endif  ![uv]trans
+!
+      if ((lll.eq.0) .or. (n.eq.0)) return   !called from dpthuv
 !
 ! --- nested input only required on first barotropic time step.
 !
       if     (lll.eq.1) then
+        sb0 = sports*wb0
+        sb1 = sports*wb1
         do j= 1,jj
           do i= 1,ii
-            if     (maskbc(i,j).eq.1) then
-              util3(i,j) = pbnest(i,j,lb0)*wb0+pbnest(i,j,lb1)*wb1
-              util4(i,j) = ubpnst(i,j,lb0)*wb0+ubpnst(i,j,lb1)*wb1
-              util5(i,j) = vbpnst(i,j,lb0)*wb0+vbpnst(i,j,lb1)*wb1
-            endif
+            util3(i,j) = pbnest(i,j,lb0)*wb0+pbnest(i,j,lb1)*wb1
+            util4(i,j) = ubpnst(i,j,lb0)*sb0+ubpnst(i,j,lb1)*sb1 !scaled
+            util5(i,j) = vbpnst(i,j,lb0)*sb0+vbpnst(i,j,lb1)*sb1 !scaled
           enddo
         enddo
 !
@@ -2787,8 +2857,9 @@
             enddo !i
           endif !mnp
             if     (ldebug_latbdt .and. mnproc.eq.max(mnp,1)) then
-              do l= 1,nports
-                i=nxport(l)-1 + lnport(l)/2
+!             do l= 1,nports
+              do l= 1,1
+                i=nptest
                 if     (kdport(l).eq.4) then
                   write(lp,'(a,i4,a,i4,a,f12.4,3f14.5)') &
                      'W z,u,v at (',iapi(i),',',japi(i),')=', &
@@ -2806,7 +2877,7 @@
                      'S z,u,v at (',iapi(i),',',japi(i),')=', &
                      d_time,(port_tide(i,k),k=1,3)
                 endif !kdport
-              enddo  !l=1,nports
+              enddo  !l
             endif !ldebug_latbdt
         endif !tidflg
       endif !lll.eq.1
@@ -2818,6 +2889,11 @@
       call xciget(pline,nportpts,pbavg(1-nbdy,1-nbdy,n),iapi,japi,mnp)
 !
 ! --- 'wellposed' treatment of pressure and velocity fields.
+! ---   https://www.hycom.org/attachments/067_boundary.pdf
+! ---     u* and p* (eqn. 5) are at 1st sea p-point
+! ---     nested velocity at p-point from 0.5*ui + 0.5*ub ([uv]pnst)
+! ---     inner  velocity at p-point from 1.5*ui - 0.5*ui2
+! ---     boundary velocity at vel-point from 2.0*u* - 1.0*ui
 !
       do l= 1,nports
 !
@@ -2826,11 +2902,29 @@
 !         western port
 !
           if     (mnp.eq.0 .or. mnp.eq.mnproc) then
+            trporp(l) = 0.d0
+            trnest(l) = 0.d0
             do j= nxport(l),nxport(l)-1+lnport(l)
-              crs=                 ulnst(j)+pspeed(j)*plnst(j)
-              fin=1.5*uline(j)-0.5*ulin2(j)-pspeed(j)*pline(j)
-              pline(j)=0.5*(crs-fin)*rspeed(j)
-              uline(j)=    (crs+fin) -uline(j)
+                crs(j)=                 ulnst(j)+pspeed(j)*plnst(j)
+                fin(j)=1.5*uline(j)-0.5*ulin2(j)-pspeed(j)*pline(j)
+              pline(j)=0.5*(crs(j)-fin(j))*rspeed(j)
+              ulin2(j)=    (crs(j)+fin(j)) -uline(j)  !temporary array
+             trport(l) = trport(l) + uline(j)*utrans(j)
+             trporp(l) = trporp(l) + 0.5*(crs(j)+fin(j))*utrans(j)
+             trnest(l) = trnest(l) + ulnst(j)*utrans(j)
+            enddo
+            trport(l) = 0.d0
+            do j= nxport(l),nxport(l)-1+lnport(l)
+!             smooth the transport
+              jm1 = max(j-1,nxport(l))
+              jp1 = min(j+1,nxport(l)-1+lnport(l))
+              uline(j) = (0.25*ulin2(jm1)*utrans(jm1) + &
+                          0.50*ulin2(j  )*utrans(j  ) + &
+                          0.25*ulin2(jp1)*utrans(jp1)  ) / &
+                         (0.25*           utrans(jm1) + &
+                          0.50*           utrans(j  ) + &
+                          0.25*           utrans(jp1)  )
+              trport(l) = trport(l) + uline(j)*utrans(j)
             enddo
             do j= nxport(l)+1,nxport(l)-1+lnport(l)
               vline(j)=0.5*(vlnst(j-1)+vlnst(j))
@@ -2841,8 +2935,9 @@
 !
 !         eastern port
 !
-            if     (ldebug_latbdt .and. mnproc.eq.max(mnp,1)) then
-              i=nxport(l)-1 + lnport(l)
+            if     (ldebug_latbdt .and. &
+                           l.eq.1 .and. mnproc.eq.max(mnp,1)) then
+              i=nptest
               write(lp,'(a,2i5,1pe13.5)') 'e port, uline:', &
                                    iaui(i),jaui(i),uline(i)
               write(lp,'(a,2i5,1pe13.5)') 'e port, ulin2:', &
@@ -2853,23 +2948,40 @@
                                    iapi(i),japi(i),plnst(i)
               write(lp,'(a,2i5,1pe13.5)') 'e port, ulnst:', &
                                    iapi(i),japi(i),ulnst(i)
-            endif !1st tile
+            endif !ldebug_latbdt
           if     (mnp.eq.0 .or. mnp.eq.mnproc) then
+            trporp(l) = 0.d0
+            trnest(l) = 0.d0
             do j= nxport(l),nxport(l)-1+lnport(l)
-              crs=                 ulnst(j)-pspeed(j)*plnst(j)
-              fin=1.5*uline(j)-0.5*ulin2(j)+pspeed(j)*pline(j)
-              pline(j)=0.5*(fin-crs)*rspeed(j)
-              uline(j)=    (fin+crs) -uline(j)
+                crs(j)=                 ulnst(j)-pspeed(j)*plnst(j)
+                fin(j)=1.5*uline(j)-0.5*ulin2(j)+pspeed(j)*pline(j)
+              pline(j)=0.5*(fin(j)-crs(j))*rspeed(j)
+              ulin2(j)=    (fin(j)+crs(j)) -uline(j)  !temporary array
+             trporp(l) = trporp(l) + 0.5*(crs(j)+fin(j))*utrans(j)
+             trnest(l) = trnest(l) + ulnst(j)*utrans(j)
+            enddo
+            trport(l) = 0.d0
+            do j= nxport(l),nxport(l)-1+lnport(l)
+!             smooth the transport
+              jm1 = max(j-1,nxport(l))
+              jp1 = min(j+1,nxport(l)-1+lnport(l))
+              uline(j) = (0.25*ulin2(jm1)*utrans(jm1) + &
+                          0.50*ulin2(j  )*utrans(j  ) + &
+                          0.25*ulin2(jp1)*utrans(jp1)  ) / &
+                         (0.25*           utrans(jm1) + &
+                          0.50*           utrans(j  ) + &
+                          0.25*           utrans(jp1)  )
+              trport(l) = trport(l) + uline(j)*utrans(j)
             enddo
             do j= nxport(l)+1,nxport(l)-1+lnport(l)
               vline(j)=0.5*(vlnst(j-1)+vlnst(j))
             enddo
           endif !mnp
-            if     (ldebug_latbdt .and. mnproc.eq.max(mnp,1)) then
-              j=jlport(l)
-              i=nxport(l)-1 + lnport(l)
+            if     (ldebug_latbdt .and. &
+                           l.eq.1 .and. mnproc.eq.max(mnp,1)) then
+              i=nptest
               write(lp,'(a,2i5,1p2e13.5)') 'e port,   crs:', &
-                                                  0,j,crs,fin
+                                   iapi(i),japi(i),  crs(i),fin(i)
               write(lp,'(a,2i5,1p1e13.5)') 'e port, pbavg:', &
                                    iapi(i),japi(i),pline(i)
               write(lp,'(a,2i5,1p1e13.5)') 'e port, ubavg:', &
@@ -2878,14 +2990,15 @@
                                    iavb(i),javb(i),vline(i)
               write(lp,*)
               call flush(lp)
-            endif !1st tile
+            endif !ldebug_latbdt
 !
         elseif (kdport(l).eq.1) then
 !
 !         northern port
 !
-            if     (ldebug_latbdt .and. mnproc.eq.max(mnp,1)) then
-              j=nxport(l)-1 + lnport(l)
+            if     (ldebug_latbdt .and. &
+                           l.eq.1 .and. mnproc.eq.max(mnp,1)) then
+              j=nptest
               write(lp,'(a,2i5,1pe13.5)') 'n port, vline:', &
                                    iavi(j),javi(j),vline(j)
               write(lp,'(a,2i5,1pe13.5)') 'n port, vlin2:', &
@@ -2898,21 +3011,38 @@
                                    iapi(j),japi(j),vlnst(j)
             endif !ldebug_latbdt
           if     (mnp.eq.0 .or. mnp.eq.mnproc) then
+            trporp(l) = 0.d0
+            trnest(l) = 0.d0
             do i= nxport(l),nxport(l)-1+lnport(l)
-              crs=                 vlnst(i)-pspeed(i)*plnst(i)
-              fin=1.5*vline(i)-0.5*vlin2(i)+pspeed(i)*pline(i)
-              pline(i)=0.5*(fin-crs)*rspeed(i)
-              vline(i)=    (fin+crs) -vline(i)
+                crs(i)=                 vlnst(i)-pspeed(i)*plnst(i)
+                fin(i)=1.5*vline(i)-0.5*vlin2(i)+pspeed(i)*pline(i)
+              pline(i)=0.5*(fin(i)-crs(i))*rspeed(i)
+              vlin2(i)=    (fin(i)+crs(i)) -vline(i)  !temporary array
+             trporp(l) = trporp(l) + 0.5*(fin(i)+crs(i))*vtrans(i)
+             trnest(l) = trnest(l) + vlnst(i)*vtrans(i)
+            enddo
+            trport(l) = 0.d0
+            do i= nxport(l),nxport(l)-1+lnport(l)
+!             smooth the transport
+              im1 = max(i-1,nxport(l))
+              ip1 = min(i+1,nxport(l)-1+lnport(l))
+              vline(i) = (0.25*vlin2(im1)*vtrans(im1) + &
+                          0.50*vlin2(i  )*vtrans(i  ) + &
+                          0.25*vlin2(ip1)*vtrans(ip1)  ) / &
+                         (0.25*           vtrans(im1) + &
+                          0.50*           vtrans(i  ) + &
+                          0.25*           vtrans(ip1)  )
+              trport(l) = trport(l) + vline(i)*vtrans(i)
             enddo
             do i= nxport(l)+1,nxport(l)-1+lnport(l)
               uline(i)=0.5*(ulnst(i-1)+ulnst(i))
             enddo
           endif !mnp
-            if     (ldebug_latbdt .and. mnproc.eq.max(mnp,1)) then
-              i=ilport(l)
-              j=nxport(l)-1 + lnport(l)
+            if     (ldebug_latbdt .and. &
+                           l.eq.1 .and. mnproc.eq.max(mnp,1)) then
+              j=nptest
               write(lp,'(a,2i5,1p2e13.5)') 'n port,   crs:', &
-                                                  0,i,crs,fin
+                                   iapi(j),japi(j),  crs(j),fin(j)
               write(lp,'(a,2i5,1p1e13.5)') 'n port, pbavg:', &
                                    iapi(j),japi(j),pline(j)
               write(lp,'(a,2i5,1p1e13.5)') 'n port, vbavg:', &
@@ -2928,11 +3058,28 @@
 !         southern port
 !
           if     (mnp.eq.0 .or. mnp.eq.mnproc) then
+            trporp(l) = 0.d0
+            trnest(l) = 0.d0
             do i= nxport(l),nxport(l)-1+lnport(l)
-              crs=                 vlnst(i)+pspeed(i)*plnst(i)
-              fin=1.5*vline(i)-0.5*vlin2(i)-pspeed(i)*pline(i)
-              pline(i)=0.5*(crs-fin)*rspeed(i)
-              vline(i)=    (crs+fin) -vline(i)
+                crs(i)=                 vlnst(i)+pspeed(i)*plnst(i)
+                fin(i)=1.5*vline(i)-0.5*vlin2(i)-pspeed(i)*pline(i)
+              pline(i)=0.5*(crs(i)-fin(i))*rspeed(i)
+              vlin2(i)=    (crs(i)+fin(i)) -vline(i)  !temporary array
+              trporp(l) = trporp(l) + 0.5*(fin(i)+crs(i))*vtrans(i)
+              trnest(l) = trnest(l) + vlnst(i)*vtrans(i)
+            enddo
+            trport(l) = 0.d0
+            do i= nxport(l),nxport(l)-1+lnport(l)
+!             smooth the transport
+              im1 = max(i-1,nxport(l))
+              ip1 = min(i+1,nxport(l)-1+lnport(l))
+              vline(i) = (0.25*vlin2(im1)*vtrans(im1) + &
+                          0.50*vlin2(i  )*vtrans(i  ) + &
+                          0.25*vlin2(ip1)*vtrans(ip1)  ) / &
+                         (0.25*           vtrans(im1) + &
+                          0.50*           vtrans(i  ) + &
+                          0.25*           vtrans(ip1)  )
+              trport(l) = trport(l) + vline(i)*vtrans(i)
             enddo
             do i= nxport(l)+1,nxport(l)-1+lnport(l)
               uline(i)=0.5*(ulnst(i-1)+ulnst(i))
@@ -2942,21 +3089,35 @@
         endif !kdport
 !
       enddo  !l=1,nports
+!
+      if     (ltrans_latbdt .and. mnproc.eq.1) then
+        if     (lll.eq.1) then
+          write(lp,'(i9,i3,a,99f10.5)')  &
+                 nstep,lll,' trnest =',trnest(1:nports)*1.0d-6  !Sv
+        endif
+        write(lp,'(i9,i3,a,99f10.5)')  &
+               nstep,lll,' trport =',trport(1:nports)*1.0d-6  !Sv
+        write(lp,'(i9,i3,a,99f10.5)')  &
+               nstep,lll,' trporp =',trporp(1:nports)*1.0d-6  !Sv
+        call flush(lp)
+      endif !transport diagnostic
 !     
 ! --- update the boundary points.
-! --- the same p-point can appear twice at a boundary corner.  only
-! --- the last appearence counts, so alternate the list direction.
+! --- the same p-point can appear twice at a boundary corner,
+! --- so average the two corner values.
 !
       call xciput(uline,nportpts,ubavg(1-nbdy,1-nbdy,n),iaub,jaub,mnp)
       call xciput(vline,nportpts,vbavg(1-nbdy,1-nbdy,n),iavb,javb,mnp)
-      if     (mod(lll,2).eq.1) then
-        call xciput(pline,nportpts,pbavg(1-nbdy,1-nbdy,n),iapi,japi,mnp)
-      else
+      if     (mod(lll-1,npline).eq.0) then  !every npline time steps
+        ulin2(:) = pline(:)  !temporary copy of pline
         do i= 1,nportpts
-          ulin2(i) = pline(nportpts+1-i)  !ulin2 is now pline reversed
-        enddo
-        call xciput(ulin2,nportpts,pbavg(1-nbdy,1-nbdy,n),iapr,japr,mnp)
-      endif
+          j = ndup(i)
+          if    (j.ne.0) then
+            pline(i) = 0.5*(ulin2(i)+ulin2(j))
+          endif
+        enddo !i
+        call xciput(pline,nportpts,pbavg(1-nbdy,1-nbdy,n),iapi,japi,mnp)
+      endif !npline
 !
       return
       end subroutine latbdt
@@ -3002,12 +3163,14 @@
       logical     lfatal,lfatalp
       integer     i,j,k,isec,ifrst,ilast,l,np
       real        aline(nchar)
-      real        fatal
+      real        fatal,sb0,sb1
       character*3 char3
 !
       integer, save ::  &
             nportpts, &
-              nports
+              nports     !number of ports
+      real,    save :: &
+              sports     !scale factor for nested velocity
       integer, save, allocatable :: &
             nxport(:), &
             kdport(:), &
@@ -3016,9 +3179,10 @@
 !
       integer       jline_start,jline,jtide_start,jtide,tidcon1
 !
-      integer, save, allocatable  :: iaub(:),iavb(:),jaub(:),javb(:), &
-                                     iaui(:),iavi(:),jaui(:),javi(:), &
-                                     iapi(:),        japi(:)
+      integer, save, allocatable  :: &
+        iaub(:),iavb(:),jaub(:),javb(:), &  !boundary vel-point
+        iaui(:),iavi(:),jaui(:),javi(:), &  !1st sea  vel-point inside boundary
+        iapi(:),        japi(:)             !1st sea    p-point
       real,    save, allocatable  :: pspeed(:), &
                                      pline(:),uline(:),vline(:), &
                                      plnst(:),ulnst(:),vlnst(:)
@@ -3039,11 +3203,26 @@
 ! --- the first call just initializes data structures.
 !
       if     (lcount.eq.1) then
+        if     (mnproc.eq.1) then
+          write(lp,'(/a/a)') &
+            'Flather barotropic nesting', &
+            '  now processing ports.input ...'
+        endif !1st tile
+        call xcsync(flush_lp)
 !
         open(unit=uoff+99,file=trim(flnminp)//'ports.input')
 !
+! ---   'sports' = scale factor for nested velocity (optional, default 1.0)
 ! ---   'nports' = number of boundary port sections.
-        call blkini(nports,'nports')
+        call blkinr2(sports,i, &
+                              'sports','(a6," =",f10.4," ")', &
+                              'nports','(a6," =",f11.0)')  !treat nports as real
+        if     (i.eq.1) then !sports
+          call blkini(nports,'nports')
+        else  !nports
+          nports = sports
+          sports = 1.0  !default
+        endif
         if     (mnproc.eq.1) then
         write(lp,*)
         endif
@@ -3354,94 +3533,6 @@
           enddo
         enddo
 !
-! ---   define the nested boundary input mask.
-!
-        do j= 1,jj
-          do i= 1,ii
-            maskbc(i,j) = 0
-          enddo
-        enddo
-!
-        do l= 1,nports
-          if     (kdport(l).eq.4) then
-!
-!           western port
-!
-            i = ifport(l)
-            do j= jfport(l),jlport(l)
-              if     (i.le.i0 .or. i.gt.i0+ii .or. &
-                      j.le.j0 .or. j.gt.j0+jj     ) then
-                cycle  ! not on this tile.
-              else
-                maskbc(i-i0,j-j0) = 1
-              endif
-            enddo
-          elseif (kdport(l).eq.3) then
-!
-!           eastern port
-!
-            i = ifport(l)-1
-            do j= jfport(l),jlport(l)
-              if     (i.le.i0 .or. i.gt.i0+ii .or. &
-                      j.le.j0 .or. j.gt.j0+jj     ) then
-                cycle  ! not on this tile.
-              else
-                maskbc(i-i0,j-j0) = 1
-              endif
-            enddo
-          elseif (kdport(l).eq.1) then
-!
-!           northern port
-!
-            j = jfport(l)-1
-            do i= ifport(l),ilport(l)
-              if     (i.le.i0 .or. i.gt.i0+ii .or. &
-                      j.le.j0 .or. j.gt.j0+jj     ) then
-                cycle  ! not on this tile.
-              else
-                maskbc(i-i0,j-j0) = 1
-              endif
-            enddo
-          elseif (kdport(l).eq.2) then
-!
-!           southern port
-!
-            j = jfport(l)
-            do i= ifport(l),ilport(l)
-              if     (i.le.i0 .or. i.gt.i0+ii .or. &
-                      j.le.j0 .or. j.gt.j0+jj     ) then
-                cycle  ! not on this tile.
-              else
-                maskbc(i-i0,j-j0) = 1
-              endif
-            enddo
-          endif
-        enddo  !l=1,nports
-!
-        if     (ldebug_latbdtf) then
-          util1(1:ii,1:jj) = maskbc(1:ii,1:jj)  ! xclget is for real arrays
-          isec=(itdm-1)/nchar
-          do ifrst=0,nchar*isec,nchar
-            ilast=min(itdm,ifrst+nchar)
-            write (char3,'(i3)') ilast-ifrst
-            fmt(8:10)=char3
-            if     (mnproc.eq.1) then
-            write (lp,'(a,i5,a,i5)') &
-              'bc array, cols',ifrst+1,' --',ilast
-            endif !1st tile
-            do j= jtdm,1,-1
-              call xclget(aline,ilast-ifrst, util1,ifrst+1,j,1,0, 1)
-              if     (mnproc.eq.1) then
-              write (lp,fmt) j,(nint(aline(i)),i=1,ilast-ifrst)
-              endif !1st tile
-            enddo
-          enddo
-          if     (mnproc.eq.1) then
-          write (lp,*)
-          endif
-          call xcsync(flush_lp)
-        endif !ldebug_latbdtf
-!
 ! ---   initialize the ports
 !
         allocate(iaub(nportpts),jaub(nportpts), &
@@ -3541,6 +3632,9 @@
                   plnst(nportpts), &
                   ulnst(nportpts), &
                   vlnst(nportpts) )
+!
+! ---   Note that 'speed' is in fact qonem*SQRT(g/H).
+! ---   The qonem allows for the use of pressure fields.
 !
         call xciget(pline,nportpts,depths,iapi,japi,0)
 !
@@ -3653,24 +3747,25 @@
         return
       endif
 
-      if ((lll.eq.0) .or. (n.eq.0)) return
+      if ((lll.eq.0) .or. (n.eq.0)) return   !called from dpthuv
 
 !
 ! --- nested input only required on first barotropic time step.
+! --- [uv]lnst on 1st sea p-point for compatibility with latbdt.
 !
       if     (lll.eq.1) then
+        sb0 = sports*wb0
+        sb1 = sports*wb1
         do j= 1,jj
           do i= 1,ii
-            if     (maskbc(i,j).eq.1) then
-              util1(i,j) = ubnest(i,j,lb0)*wb0+ubnest(i,j,lb1)*wb1
-              util2(i,j) = vbnest(i,j,lb0)*wb0+vbnest(i,j,lb1)*wb1
-              util3(i,j) = pbnest(i,j,lb0)*wb0+pbnest(i,j,lb1)*wb1
-            endif
+            util1(i,j) = ubpnst(i,j,lb0)*sb0+ubpnst(i,j,lb1)*sb1  !scaled
+            util2(i,j) = vbpnst(i,j,lb0)*sb0+vbpnst(i,j,lb1)*sb1  !scaled
+            util3(i,j) = pbnest(i,j,lb0)*wb0+pbnest(i,j,lb1)*wb1
           enddo
         enddo
 !
-        call xciget(ulnst,nportpts,util1,iaub,jaub,mnp)
-        call xciget(vlnst,nportpts,util2,iavb,javb,mnp)
+        call xciget(ulnst,nportpts,util1,iapi,japi,mnp)
+        call xciget(vlnst,nportpts,util2,iapi,japi,mnp)
         call xciget(plnst,nportpts,util3,iapi,japi,mnp)
 !
         if     (tidflg.eq.1 .or. tidflg.eq.3) then
@@ -3713,6 +3808,9 @@
       call xciget(pline,nportpts,pbavg(1-nbdy,1-nbdy,n),iapi,japi,mnp)
 !
 ! --- 'wellposed' treatment of pressure and velocity fields.
+! ---   u* and p* are at 1st sea p-point
+! ---   boundary velocity at vel-point from 2.0*u* - 1.0*ui
+
 !
       do l= 1,nports
 !
@@ -3731,7 +3829,8 @@
           if     (mnp.eq.0 .or. mnp.eq.mnproc) then
             do j= nxport(l),nxport(l)-1+lnport(l)
               pline(j)=w_f*pline(j)+w_c*plnst(j)
-              uline(j)=ulnst(j)+pspeed(j)*(plnst(j)-pline(j))  !new pline
+              uline(j)=2.0*(ulnst(j)+pspeed(j)*(plnst(j)-pline(j))) &  !new pline
+                           -uline(j)
             enddo !j
           endif !mnp
             if     (ldebug_latbdtf .and. mnproc.eq.max(mnp,1)) then
@@ -3758,7 +3857,8 @@
           if     (mnp.eq.0 .or. mnp.eq.mnproc) then
             do j= nxport(l),nxport(l)-1+lnport(l)
               pline(j)=w_f*pline(j)+w_c*plnst(j)
-              uline(j)=ulnst(j)+pspeed(j)*(pline(j)-plnst(j))  !new pline
+              uline(j)=2.0*(ulnst(j)+pspeed(j)*(pline(j)-plnst(j))) &  !new pline
+                           -uline(j)
             enddo
           endif !mnp
             if     (ldebug_latbdtf .and. mnproc.eq.max(mnp,1)) then
@@ -3785,7 +3885,8 @@
           if     (mnp.eq.0 .or. mnp.eq.mnproc) then
             do i= nxport(l),nxport(l)-1+lnport(l)
               pline(i)=w_f*pline(i)+w_c*plnst(i)
-              vline(i)=vlnst(i)+pspeed(i)*(pline(i)-plnst(i))  !new pline
+              vline(i)=2.0*(vlnst(i)+pspeed(i)*(pline(i)-plnst(i))) &  !new pline
+                           -vline(i)
             enddo
           endif !mnp
             if     (ldebug_latbdtf .and. mnproc.eq.max(mnp,1)) then
@@ -3812,7 +3913,8 @@
           if     (mnp.eq.0 .or. mnp.eq.mnproc) then
             do i= nxport(l),nxport(l)-1+lnport(l)
               pline(i)=w_f*pline(i)+w_c*plnst(i)
-              vline(i)=vlnst(i)+pspeed(i)*(plnst(i)-pline(i))  !new pline
+              vline(i)=2.0*(vlnst(i)+pspeed(i)*(plnst(i)-pline(i))) &  !new pline
+                           -vline(i)
             enddo
           endif !mnp
             if     (ldebug_latbdtf .and. mnproc.eq.max(mnp,1)) then
@@ -3829,10 +3931,6 @@
       enddo  !l=1,nports
 !
 ! --- update the boundary points.
-! --- the same point can appear multiple times and only the last
-! --- appearence has effect.  this is ok because they are all the same.
-! --- for each point, one of u and v will be unchanged (i.e. updated 
-! --- with its existing value).
 !
       if     (w_f.ne.1.0) then
         call xciput(pline,nportpts,pbavg(1-nbdy,1-nbdy,n),iapi,japi,mnp)
@@ -4238,3 +4336,8 @@
 !> June 2013 -- added   latbdtc for clammped velocity obc.
 !> May  2014 -- removed latbdtc
 !> Feb  2019 -- error stop on nports=0, because lbflag>0
+!> Oct  2019 -- optionally added sports: nested velocity scale factor
+!> Oct  2019 -- use [uv]pnst in Flather, as in Browning&Kreiss
+!> Oct  2019 -- added ltrans_latbdt for port transport diagnostic
+!> Oct  2019 -- update pline in latbdt every npline time steps
+!> Oct  2019 -- smooth the Browning&Kreiss normal transport
