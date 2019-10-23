@@ -42,7 +42,7 @@
                          212, 243, 273, 304, 334, 365 /
 !
       if     (yrflag.eq.4) then
-        wday = 365.d0*(iyr-1) + month(mon) + idy + ihr/24.0d0
+        wday = 365.d0*(iyr-1) + month(mon) + idy-1 + ihr/24.0d0
       elseif (yrflag.eq.3) then
         nleap = (iyr-1901)/4
         wday  = 365.0d0*(iyr-1901) + nleap + month(mon) + idy + ihr/24.0d0
@@ -50,7 +50,7 @@
           wday  = wday + 1.0d0
         endif
       elseif (yrflag.eq.2) then
-        wday = 366.d0*(iyr-1) + month(mon) + idy + ihr/24.0d0
+        wday = 366.d0*(iyr-1) + month(mon) + idy-1 + ihr/24.0d0
         if     (mon.gt.2) then
           wday  = wday + 1.0d0
         endif
@@ -4802,3 +4802,4 @@
 !> Feb. 2019 - add sshflg=2 for steric Montg. Potential and montg_c in rdbaro_in
 !> May  2019 - add yrflag=4 logic to datefor and fordate
 !> Oct  2019 - added lbmont
+!> Oct  2019 - bugfix in datefor for yrflag=2,4
