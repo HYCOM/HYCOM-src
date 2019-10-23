@@ -2686,7 +2686,7 @@
           do i=1,ii
             if (SEA_P) then
 ! ---         always use mass-conserving diagnostics
-              oneta(i,j,n) = 1.0 + pbavg(i,j,n)/pbot(i,j)
+              oneta(i,j,n) = max( oneta0, 1.0 + pbavg(i,j,n)/pbot(i,j) )
               if     (tidflg.gt.0) then
                 util2(i,j)=(srfhgt(i,j)/g)**2*scp2(i,j)
               endif
@@ -4091,3 +4091,4 @@
 !> Dec. 2018 - added /* USE_NUOPC_CESMBETA */ macro for CESMBETA coupled simulation
 !> Dec. 2018 - added /* ESPC_COUPLE */ macro for coupling with NAVYESPC
 !> Feb. 2019 - replaced onetai by 1.0
+!> Sep. 2019 - added oneta0

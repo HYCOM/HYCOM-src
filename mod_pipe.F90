@@ -1036,7 +1036,7 @@
         if     (i0.lt.ittest .and. i0+ii.ge.ittest .and. &
                 j0.lt.jttest .and. j0+jj.ge.jttest      ) then
         if     (ldebugmas) then
-          etap1=1.0+pbavg(itest,jtest,n)/pbot(itest,jtest)
+          etap1=max(oneta0,1.0+pbavg(itest,jtest,n)/pbot(itest,jtest))
           sshb =(etap1-1.0)*pbot(itest,jtest)
         else
           etap1=1.0
@@ -1265,7 +1265,7 @@
           do j=1,jj
             do i=1,ii
               if (ip(i,j).ne.0) then
-                etap1=1.0+pbavg(i,j,n)/pbot(i,j)
+                etap1=max(oneta0,1.0+pbavg(i,j,n)/pbot(i,j))
                 util5(i,j)=etap1*dp(i,j,k,n)*scp2(i,j)
                 util6(i,j)=etap1*dp(i,j,k,n)*scp2(i,j)*temp(i,j,k,n)
                 util3(i,j)=etap1*dp(i,j,k,n)*scp2(i,j)*saln(i,j,k,n)
@@ -1312,7 +1312,7 @@
         do j=1,jj
           do i=1,ii
             if (ip(i,j).ne.0) then
-              etap1=(1.0 + pbavg(i,j,n)/pbot(i,j))
+              etap1=max(oneta0,1.0 + pbavg(i,j,n)/pbot(i,j))
               util5(i,j)=etap1*pbot(i,j)*scp2(i,j)
               util6(i,j)=scp2(i,j)
             endif !ip
@@ -1550,3 +1550,4 @@
 !> Aug. 2018 - added salt anom to region-wide statistics
 !> Nov. 2018 - added wtrflx
 !> Feb. 2019 - replaced onetai by 1.0
+!> Sep. 2019 - added oneta0

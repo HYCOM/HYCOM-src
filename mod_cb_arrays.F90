@@ -708,6 +708,7 @@
 ! --- 'ds00f'  = shallow z-level spacing stretching factor (1.0=const.z)
 ! --- 'dp00i'  = deep iso-pycnal spacing minimum thickness (m)
 ! --- 'isotop' = shallowest depth for isopycnal layers     (m), <0 from file
+! --- 'oneta0' = minimum 1+eta, must be > 0.0
 ! --- 'nhybrd' = number of hybrid levels (0=all isopycnal)
 ! --- 'nsigma' = number of sigma  levels (nhybrd-nsigma z-levels)
 ! --- 'hybmap' = HYBGEN:  remapper  flag (0=PCM,1=PLM,2=PPM,-ve:isoPCM)
@@ -772,7 +773,7 @@
                      thkmls,thkmlt,thkriv,thkmin,bldmin,bldmax,thkbot, &
                      thkcdw,thkfrz,tfrz_0,tfrz_s,ticegr,hicemn,hicemx, &
                      dp00,dp00f,dp00x,ds00,ds00f,ds00x,dp00i,isotop, &
-                     sigjmp,tmljmp,prsbas,emptgt
+                     oneta0,sigjmp,tmljmp,prsbas,emptgt
 !
       integer, save :: &
                      tsofrq,mixfrq,icefrq,icpfrq,nhybrd,nsigma, &
@@ -1861,3 +1862,5 @@
 !> Dec. 2018 - added /* USE_NUOPC_GENERIC */ and /* ESPC_COUPLE */ macros
 !> Feb. 2019 - added montg_c
 !> Feb. 2019 - removed onetai 
+!> Sep. 2019 - five arrays moved to momtum_init
+!> Sep. 2019 - added oneta0

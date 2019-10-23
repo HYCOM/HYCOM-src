@@ -49,8 +49,8 @@
       do j=1,jj
         do i=1,ii
           if (SEA_P) then
-          oneta( i,j,n) = 1.0 + pbavg(i,j,n)/pbot(i,j)  !t-1
-          oneta( i,j,m) = 1.0 + pbavg(i,j,m)/pbot(i,j)  !t
+          oneta( i,j,n) = max( oneta0, 1.0 + pbavg(i,j,n)/pbot(i,j) )  !t-1
+          oneta( i,j,m) = max( oneta0, 1.0 + pbavg(i,j,m)/pbot(i,j) )  !t
           onetao(i,j,n) = oneta( i,j,n)
           onetao(i,j,m) = oneta( i,j,m)
           endif
@@ -114,8 +114,8 @@
       do j=1-margin,jj+margin
         do i=1-margin,ii+margin
           if (SEA_P) then
-            oneta(i,j,n) = 1.0 + pbavg(i,j,n)/pbot(i,j)  !t+1
-            oneta(i,j,m) = 1.0 + pbavg(i,j,m)/pbot(i,j)  !t with RA
+            oneta(i,j,n) = max( oneta0, 1.0 + pbavg(i,j,n)/pbot(i,j) )  !t+1
+            oneta(i,j,m) = max( oneta0, 1.0 + pbavg(i,j,m)/pbot(i,j) )  !t with RA
           endif !ip
         enddo !i
         do k= 1,kk
@@ -292,3 +292,4 @@
 !>
 !> Aug. 2018 - 1st version
 !> Feb. 2019 - replaced onetai by 1.0
+!> Sep. 2019 - added oneta0

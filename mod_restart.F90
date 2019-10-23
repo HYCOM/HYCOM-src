@@ -304,8 +304,8 @@
       do j= 1,jj
         do i= 1,ii
           if     (ip(i,j).eq.1) then
-             oneta(i,j,1) = 1.0 + pbavg(i,j,1)/pbot(i,j)
-             oneta(i,j,2) = 1.0 + pbavg(i,j,2)/pbot(i,j)
+             oneta(i,j,1) = max( oneta0, 1.0 + pbavg(i,j,1)/pbot(i,j) )
+             oneta(i,j,2) = max( oneta0, 1.0 + pbavg(i,j,2)/pbot(i,j) )
           else
              oneta(i,j,1) = 1.0
              oneta(i,j,2) = 1.0
@@ -890,8 +890,8 @@
       do j= 1,jj
         do i= 1,ii
           if     (ip(i,j).eq.1) then
-            oneta(i,j,1) = 1.0 + pbavg(i,j,1)/pbot(i,j)
-            oneta(i,j,2) = 1.0 + pbavg(i,j,2)/pbot(i,j)
+            oneta(i,j,1) = max( oneta0, 1.0 + pbavg(i,j,1)/pbot(i,j) )
+            oneta(i,j,2) = max( oneta0, 1.0 + pbavg(i,j,2)/pbot(i,j) )
           else
             oneta(i,j,1) = 1.0
             oneta(i,j,2) = 1.0

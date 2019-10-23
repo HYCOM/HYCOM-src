@@ -339,8 +339,8 @@
               pbaold   = pbavg(i,j,n)
               pbanew   = pbavg(i,j,n) - delt1*emnp*onem  !emnp mass = rho0*vol
               pbanew   = max(pbanew, -pbot(i,j))
-              onetaold = 1.0 + pbaold/pbot(i,j)
-              onetanew = 1.0 + pbanew/pbot(i,j)
+              onetaold = max( oneta0, 1.0 + pbaold/pbot(i,j) )
+              onetanew = max( oneta0, 1.0 + pbanew/pbot(i,j) )
 !
 !             if     (i.eq.itest.and.j.eq.jtest) then
 !               s1(1) = dp(i,j,1,n)*onetaold*saln(i,j,1,n)
@@ -351,11 +351,11 @@
 !             endif !test
 !
               pbavg(i,j,n) = pbanew
-              oneta(i,j,n) = 1.0 + pbavg(i,j,n)/pbot(i,j)
+              oneta(i,j,n) = max(oneta0, 1.0 + pbavg(i,j,n)/pbot(i,j))
               if     (delt1.ne.baclin) then
 ! ---           Robert-Asselin time filter correction
                 pbavg(i,j,m) = pbavg(i,j,m)+0.5*ra2fac*(pbanew-pbaold)
-                oneta(i,j,m) = 1.0 + pbavg(i,j,m)/pbot(i,j)
+                oneta(i,j,m) = max(oneta0,1.0 + pbavg(i,j,m)/pbot(i,j))
               endif
 ! ---         treat E-P as a layer above layer 1, merged into layer 1
 ! ---         E-P salinity is 0 psu, E-P temperature is SST (T.1 is unchanged)
@@ -949,7 +949,7 @@
             do i=1,ii
               if (SEA_P) then
 ! ---           always use mass-conserving diagnostics
-                oneta(i,j,nm)= 1.0 + pbavg(i,j,nm)/pbot(i,j)
+                oneta(i,j,nm)= max(oneta0,1.0 + pbavg(i,j,nm)/pbot(i,j))
                 q=oneta(i,j,nm)*dp(i,j,k,nm)*scp2(i,j)
                 util1(i,j)=q
                 util2(i,j)=q*temp(i,j,k,nm)
@@ -2396,3 +2396,4 @@
 !> Nov. 2018 - added emptgt
 !> Dec. 2018 - add /* USE_NUOPC_CESMBETA */ macros for coupled simulation
 !> Feb. 2019 - replaced onetai by 1.0
+!> Sep. 2019 - added oneta0

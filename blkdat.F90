@@ -397,6 +397,7 @@
         endif !error
       endif !dp00 used
 !
+! --- 'oneta0' = minimum 1+eta, must be > 0.0
 ! --- 'saln0'  = initial salinity value (psu), only used for iniflg<2
 ! --- 'locsig' = locally-referenced potential density for stability (0=F,1=T)
 ! --- 'kapref' = thermobaric reference state (-1=input,0=none,1,2,3=constant)
@@ -406,6 +407,7 @@
       if (mnproc.eq.1) then
       write(lp,*)
       endif !1st tile
+      call blkinr(oneta0,'oneta0','(a6," =",f10.4," ")')
       call blkinr(saln0, 'saln0 ','(a6," =",f10.4," psu")')
       call blkinl(locsig,'locsig')
       call blkini(kapref,'kapref')
@@ -417,6 +419,15 @@
         kapnum=2
       endif
 !
+      if     (oneta0.le.0.0 .or. oneta0.ge.1.0) then
+        if (mnproc.eq.1) then
+        write(lp,'(/ a /)') &
+          'error - oneta0 must be above 0.0 and below 1.0'
+        call flush(lp)
+        endif !1st tile
+        call xcstop('(blkdat)')
+               stop '(blkdat)'
+      endif !oneta0 error
       if     (kapref.lt.-1 .or. kapref.gt.3) then
         if (mnproc.eq.1) then
         write(lp,'(/ a,i1 /)') &
@@ -2605,3 +2616,4 @@
 !> Dec. 2018 - add yrflag=4 for 365 days no-leap calendar (CESM)
 !> Feb. 2019 - add sshflg=2 for steric Montg. Potential
 !> Mar. 2019 - updated iversn to 23
+!> Sep. 2019 - added oneta0
