@@ -21,16 +21,50 @@
 ! --- module for momtum and related routines
 !
       private !! default is private
-      public  :: momtum_hs, momtum, momtum4
+      public  :: momtum_hs, momtum, momtum4, momtum_init
 !
 #if defined(RELO)
       real, save, allocatable, dimension(:,:) :: &
 #else
       real, save, dimension(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy) :: &
 #endif
-        stress,stresx,stresy,dpmx,thkbop
+        stress,stresx,stresy,dpmx,thkbop, &
+        defor1, defor2, & ! deformation components
+        uflux1,vflux1,  &  ! mass fluxes
+        potvor          ! potential vorticity 
 
       contains
+
+      subroutine momtum_init()
+! Initialization of arrays for momentum equation
+      implicit none
+#if defined(RELO)
+      allocate( &
+              defor1(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy), &
+              defor2(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy), &
+              uflux1(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy), &
+              vflux1(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy), &
+              potvor(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy), &
+              stress(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy), &
+              stresx(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy), &
+              stresy(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy), &
+              dpmx(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy), &
+              thkbop(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy) )
+        call mem_stat_add( 10*(idm+2*nbdy)*(jdm+2*nbdy) )
+#endif
+        stress = 0. !r_init
+        stresx = r_init
+        stresy = r_init
+        dpmx = r_init
+        thkbop = r_init
+! All of these should be zero on land.
+        defor1 = 0. 
+        defor2 = 0.
+        uflux1 = 0.
+        vflux1 = 0.
+        potvor = 0.
+
+      end  subroutine momtum_init
 
       subroutine momtum_hs(m,n)
       use mod_xc         ! HYCOM communication interface
@@ -71,23 +105,8 @@
 !     real*8    wtime1(10),wtime2(20,kdm),wtimes
 !
 # include "stmt_fns.h"
+
 !
-#if defined(RELO)
-      if     (.not.allocated(stress)) then
-        allocate( &
-                stress(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy), &
-                stresx(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy), &
-                stresy(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy), &
-                  dpmx(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy), &
-                thkbop(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy) )
-        call mem_stat_add( 5*(idm+2*nbdy)*(jdm+2*nbdy) )
-                stress = r_init
-                stresx = r_init
-                stresy = r_init
-                  dpmx = r_init
-                thkbop = r_init
-      endif
-#endif
 !
       mbdy = 6
 !
@@ -3083,7 +3102,7 @@
       logical, parameter :: lpipe_momtum=.false.  !usually .false.
 !
       logical, parameter :: momtum4_orig=.false.  !usually .false.
-      logical, parameter :: momtum4_cfl =.true.   !usually .false.
+      logical, parameter :: momtum4_cfl =.false.   !usually .false.
 !
 #if defined(RELO)
       real, save, allocatable, dimension(:,:) :: &
@@ -3238,8 +3257,6 @@
             pu(i,j,1)   = 0.0
             pv(i,j,1)   = 0.0
 !
-            defor1(i,j) = 0.0
-            defor2(i,j) = 0.0
             visc2p(i,j) = 0.0
             visc2q(i,j) = 0.0
             visc4p(i,j) = 0.0

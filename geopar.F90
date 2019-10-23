@@ -745,8 +745,6 @@
           vtotm( i,j)=hugel
           uflux( i,j)=hugel
           vflux( i,j)=hugel
-          uflux1(i,j)=hugel
-          vflux1(i,j)=hugel
           uflux2(i,j)=hugel
           vflux2(i,j)=hugel
           uflux3(i,j)=hugel

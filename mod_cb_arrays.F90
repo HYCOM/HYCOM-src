@@ -79,7 +79,6 @@
       real, save, dimension(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy) ::  &
 #endif
        corio,          & ! coriolis parameter
-       potvor,         & ! potential vorticity
        srfhgt,         & ! sea surface height, g*ssh(m)
        steric,         & ! steric sea surface height, g*sssh(m)
        sshgmn,         & !   mean sea surface height, g*mssh(m)
@@ -134,12 +133,10 @@
 #else
       real, save, dimension(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy) ::  &
 #endif
-       defor1,defor2,  & ! deformation components
        ubrhs, vbrhs,   & ! rhs of barotropic u,v eqns.
        utotm, vtotm,   & ! total (barotrop.+baroclin.)..
        utotn, vtotn,   & ! ..velocities at 2 time levels
        uflux, vflux,   & ! horizontal mass fluxes
-       uflux1,vflux1,  & ! more mass fluxes
        uflux2,vflux2,  & ! more mass fluxes
        uflux3,vflux3,  & ! more mass fluxes
        onetacnt          ! 1+eta(t+1) after cnuity
@@ -1058,7 +1055,6 @@
 #if defined(RELO)
       allocate( &
               corio(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy), &
-             potvor(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy), &
              srfhgt(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy), &
              steric(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy), &
              sshgmn(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy), &
@@ -1066,10 +1062,9 @@
             montg_c(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy), &
              montg1(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy), &
                skap(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy) )
-      call mem_stat_add( 9*(idm+2*nbdy)*(jdm+2*nbdy) )
+      call mem_stat_add( 8*(idm+2*nbdy)*(jdm+2*nbdy) )
 #endif
               corio = r_init
-             potvor = r_init
              srfhgt = r_init
              steric = r_init
              sshgmn = r_init
@@ -1133,8 +1128,6 @@
 !
 #if defined(RELO)
       allocate( &
-              defor1(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy), &
-              defor2(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy), &
                ubrhs(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy), &
                vbrhs(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy), &
                utotm(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy), &
@@ -1143,17 +1136,13 @@
                vtotn(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy) , &
                uflux(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy), &
                vflux(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy), &
-              uflux1(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy), &
-              vflux1(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy), &
               uflux2(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy), &
               vflux2(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy), &
               uflux3(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy), &
               vflux3(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy), &
             onetacnt(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy) )
-      call mem_stat_add( 18*(idm+2*nbdy)*(jdm+2*nbdy) )
+      call mem_stat_add( 13*(idm+2*nbdy)*(jdm+2*nbdy) )
 #endif
-              defor1 = r_init
-              defor2 = r_init
                ubrhs = r_init
                vbrhs = r_init
                utotm = r_init
@@ -1162,8 +1151,6 @@
                vtotn = r_init
                uflux = r_init
                vflux = r_init
-              uflux1 = r_init
-              vflux1 = r_init
               uflux2 = r_init
               vflux2 = r_init
               uflux3 = r_init

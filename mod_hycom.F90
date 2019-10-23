@@ -1772,8 +1772,8 @@
             if (jerlv0.gt.0) then
 ! ---       calculate jerlov water type,
 ! ---       which governs the penetration depth of shortwave radiation.
-!$OMP     PARALLEL DO PRIVATE(j,i)
-!$OMP&             SCHEDULE(STATIC,jblk)
+!$OMP     PARALLEL DO PRIVATE(j,i) &
+!$OMP             SCHEDULE(STATIC,jblk)
               do j=1-nbdy,jj+nbdy
                 do i=1-nbdy,ii+nbdy
 ! ---           map shallow depths to high jerlov numbers
@@ -1785,8 +1785,8 @@
             else
 ! ---     jerlv0= 0 uses an input annual/monthly kpar field
 ! ---     jerlv0=-1 uses an input annual/monthly chl  field
-!$OMP     PARALLEL DO PRIVATE(j,i)
-!$OMP&             SCHEDULE(STATIC,jblk)
+!$OMP     PARALLEL DO PRIVATE(j,i) &
+!$OMP             SCHEDULE(STATIC,jblk)
               do j=1-nbdy,jj+nbdy
                 do i=1-nbdy,ii+nbdy
                   jerlov(i,j)=jerlv0
@@ -1956,7 +1956,7 @@
       n=mod(nstep0+1,2)+1
       call momtum_hs(n,m)
 #endif
-
+      call momtum_init()
 
 #if defined (USE_NUOPC_CESMBETA)
 ! --- Initialization of CICE export
@@ -1971,10 +1971,10 @@
       pcp_fact = 1.0 ! always 1.: no precipiation adjustment
 
 !!Alex  calculation of seas surface slope for export to CICE (NUOPC)
-!$OMP     PARALLEL DO PRIVATE(j,i)
-!$OMP&             SCHEDULE(STATIC,jblk)
-      do j=1-nbdy,jj+nbdy
-        do i=1-nbdy,ii+nbdy
+!$OMP     PARALLEL DO PRIVATE(j,i) &
+!$OMP             SCHEDULE(STATIC,jblk)
+      do j=1,jj
+        do i=1,ii
           if (SEA_P) then
             ssh_e = 0.0
             ssh_w = 0.0
@@ -2020,10 +2020,10 @@
       enddo
 !$OMP END PARALLEL DO
 !!Alex calculation of u and v surf for export to CICE
-!$OMP     PARALLEL DO PRIVATE(j,i)
-!$OMP&             SCHEDULE(STATIC,jblk)
-      do j=1-nbdy,jj+nbdy
-        do i=1-nbdy,ii+nbdy
+!$OMP     PARALLEL DO PRIVATE(j,i) &
+!$OMP             SCHEDULE(STATIC,jblk)
+      do j=1,jj
+        do i=1,ii
           if (SEA_P) then
 ! ---       average currents over top thkcdw meters
             thksur = onem*min( thkcdw, depths(i,j) )
@@ -2065,8 +2065,8 @@
 !$OMP END PARALLEL DO
       if (linit) then
 !!Alex initialization of time averaged export fields
-!$OMP     PARALLEL DO PRIVATE(j,i)
-!$OMP&             SCHEDULE(STATIC,jblk)
+!$OMP     PARALLEL DO PRIVATE(j,i) &
+!$OMP             SCHEDULE(STATIC,jblk)
           do j=1-nbdy,jj+nbdy
             do i=1-nbdy,ii+nbdy
               if (SEA_P) then
@@ -2078,8 +2078,8 @@
           enddo
 !$OMP END PARALLEL DO
       else
-!$OMP     PARALLEL DO PRIVATE(j,i)
-!$OMP&             SCHEDULE(STATIC,jblk)
+!$OMP     PARALLEL DO PRIVATE(j,i) &
+!$OMP             SCHEDULE(STATIC,jblk)
           do j=1-nbdy,jj+nbdy
             do i=1-nbdy,ii+nbdy
               if (SEA_P) then
@@ -3671,8 +3671,8 @@
 !!Alex
 !! add mean export field
       inv_cplifq= 1./icefrq
-!$OMP     PARALLEL DO PRIVATE(j,i)
-!$OMP&             SCHEDULE(STATIC,jblk)
+!$OMP     PARALLEL DO PRIVATE(j,i) &
+!$OMP             SCHEDULE(STATIC,jblk)
       do j=1-nbdy,jj+nbdy
         do i=1-nbdy,ii+nbdy
           if (SEA_P) then
@@ -3699,10 +3699,10 @@
 
         sshm(:,:)=srfhgt(:,:)
 !Alex  calculation of seas surface slope for export to CICE (NUOPC)
-!$OMP     PARALLEL DO PRIVATE(j,i)
-!$OMP&             SCHEDULE(STATIC,jblk)
-        do j=1-nbdy,jj+nbdy
-          do i=1-nbdy,ii+nbdy
+!$OMP     PARALLEL DO PRIVATE(j,i) &
+!$OMP             SCHEDULE(STATIC,jblk)
+        do j=1,jj
+          do i=1,ii
           if (SEA_P) then
            ssh_e = 0.0
            ssh_w = 0.0
@@ -3748,8 +3748,8 @@
         enddo
 !$OMP END PARALLEL DO
 !!Alex calculation of u and v surf for export to CICE
-!$OMP     PARALLEL DO PRIVATE(j,i)
-!$OMP&             SCHEDULE(STATIC,jblk)
+!$OMP     PARALLEL DO PRIVATE(j,i) &
+!$OMP             SCHEDULE(STATIC,jblk)
         do j=1-nbdy,jj+nbdy
           do i=1-nbdy,ii+nbdy
            if (SEA_P) then
@@ -3767,8 +3767,8 @@
 !$OMP END PARALLEL DO
 
 !!Alex calculation of tmxl,smxl
-!$OMP     PARALLEL DO PRIVATE(j,i)
-!$OMP&             SCHEDULE(STATIC,jblk)
+!$OMP     PARALLEL DO PRIVATE(j,i) &
+!$OMP             SCHEDULE(STATIC,jblk)
         do j=1-nbdy,jj+nbdy
           do i=1-nbdy,ii+nbdy
            if (SEA_P) then
@@ -3797,8 +3797,8 @@
 
 ! --- reset average fields
         ntavg = 0
-!$OMP     PARALLEL DO PRIVATE(j,i)
-!$OMP&             SCHEDULE(STATIC,jblk)
+!$OMP     PARALLEL DO PRIVATE(j,i) &
+!$OMP             SCHEDULE(STATIC,jblk)
         do j=1-nbdy,jj+nbdy
           do i=1-nbdy,ii+nbdy
             if (SEA_P) then
