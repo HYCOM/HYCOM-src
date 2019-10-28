@@ -44,7 +44,7 @@
 ! ---   Ocean Modeling, 23, pp 73-81.
 ! --- ------------------------------------------------------------------------
 !
-      logical, parameter ::  lpipe_barotp=.true.       !usually .false.
+      logical, parameter ::  lpipe_barotp=.false.      !usually .false.
       logical, parameter :: ldebug_barotp=.false.      !usually .false.
 !
       character text*12
