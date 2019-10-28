@@ -3750,8 +3750,8 @@
 !!Alex calculation of u and v surf for export to CICE
 !$OMP     PARALLEL DO PRIVATE(j,i) &
 !$OMP             SCHEDULE(STATIC,jblk)
-        do j=1-nbdy,jj+nbdy
-          do i=1-nbdy,ii+nbdy
+        do j=1,jj
+          do i=1,ii
            if (SEA_P) then
 ! ---      average currents over top thkcdw meters
              utot = 0.5*(um(i  ,j) + ubm(i  ,j) + &
