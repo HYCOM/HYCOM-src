@@ -3106,7 +3106,13 @@
       logical, parameter :: lpipe_momtum=.false.  !usually .false.
 !
       logical, parameter :: momtum4_orig=.false.  !usually .false.
-      logical, parameter :: momtum4_cfl =.false.   !usually .false.
+#if defined(MOMTUM4_CFL)
+      logical, parameter :: momtum4_cfl =.true.   !set by a CPP macro
+                                                  !include an explicit CFL limiter
+#else
+      logical, parameter :: momtum4_cfl =.false.  !usually .false.
+                                                  !include an explicit CFL limiter
+#endif
 !
 #if defined(RELO)
       real, save, allocatable, dimension(:,:) :: &
@@ -5591,3 +5597,4 @@
 !> Dec  2018 - use max (not average) to map drag from p to u and v grids
 !> Feb. 2019 - added montg_c correction to psikk (sshflg.eq.2)
 !> Sep. 2019 - added momtum_init
+!> Oct. 2019 - placed momtum4_cfl in a CPP macro
