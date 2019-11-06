@@ -4336,7 +4336,13 @@
 ! --- I/O and array I/O unit 920 is reserved for the entire run.
 !
       logical, parameter :: ldebug_rdnest = .false.  !usually .false.
-      logical, parameter :: lmask_rdnest  = .false.  !mask velocity outliers
+#if defined(RDNEST_MASK)
+      logical, parameter :: lmask_rdnest  = .true.   !set by a CPP macro
+                                                     !mask velocity outliers
+#else
+      logical, parameter :: lmask_rdnest  = .false.  !usually .false.
+                                                     !mask velocity outliers
+#endif
 !
       character flnm*22, cline*80, cvarin*6, cfield*8
       integer   i,idmtst,ios,j,jdmtst,k,layer
@@ -4954,3 +4960,4 @@
 !> Oct  2019 - added lbmont
 !> Oct  2019 - bugfix in datefor for yrflag=2,4
 !> Oct  2019 - optionally mask nest velocities if outside near-surface range
+!> Oct  2019 - added a CPP macro to set lmask_rdnest
