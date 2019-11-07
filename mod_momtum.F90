@@ -367,7 +367,7 @@
         do j=1-margin,jj+margin
           do i=1-margin,ii+margin
             if (SEA_P) then
-              if     (wndflg.eq.4 .or. wndflg.eq.5 .or. &
+              if     (amoflg.ne.0 .or. &
                       (iceflg.eq.2 .and. si_c(i,j).gt.0.0)) then
 ! ---           average currents over top thkcdw meters
                 thksur = onem*min( thkcdw, depths(i,j) )
@@ -495,31 +495,48 @@
                 endif
 !
                 if     (wndflg.eq.4 .and. flxflg.eq.6) then
-! ---             use wind-current in place of wind for everything
-                  samo  = sqrt( (wndx-usur)**2 + (wndy-vsur)**2 )
-                  cdw   = 1.0e-3*cd_coarep(samo,vpmx,airt,pair, &
-                                           temp(i,j,1,n))
-                  surtx( i,j) = rair*cdw*samo*(wndx-usur)
-                  surty( i,j) = rair*cdw*samo*(wndy-vsur)
-                  wndocn(i,j) = samo  !save for thermf
+                  if     (amoflg.ne.0) then
+! ---               use wind-current in place of wind for everything
+                    samo  = sqrt( (wndx-usur)**2 + (wndy-vsur)**2 )
+                    cdw   = 1.0e-3*cd_coarep(samo,vpmx,airt,pair, &
+                                             temp(i,j,1,n))
+                    surtx( i,j) = rair*cdw*samo*(wndx-usur)
+                    surty( i,j) = rair*cdw*samo*(wndy-vsur)
+                    wndocn(i,j) = samo  !save for thermf
+                  else
+! ---               use wind for everything
+                    cdw   = 1.0e-3*cd_coarep(wind,vpmx,airt,pair, &
+                                             temp(i,j,1,n))
+                    surtx( i,j) = rair*cdw*wind*wndx
+                    surty( i,j) = rair*cdw*wind*wndy
+                  endif !amoflg
                 elseif (wndflg.eq.4) then
                   cdw  = 1.0e-3*cd_coare(wind,vpmx,airt, &
                                           temp(i,j,1,n))
-! ---             use wind-current magnitude and direction for stress 
-                  samo = sqrt( (wndx-usur)**2 + (wndy-vsur)**2 )
-                  surtx(i,j) = rair*cdw*samo*(wndx-usur)
-                  surty(i,j) = rair*cdw*samo*(wndy-vsur)
+                  if     (amoflg.ne.0) then
+! ---               use wind-current magnitude and direction for stress 
+                    samo = sqrt( (wndx-usur)**2 + (wndy-vsur)**2 )
+                    surtx(i,j) = rair*cdw*samo*(wndx-usur)
+                    surty(i,j) = rair*cdw*samo*(wndy-vsur)
+                  else
+! ---               use wind for everything
+                    surtx(i,j) = rair*cdw*wind*wndx
+                    surty(i,j) = rair*cdw*wind*wndy
+                  endif !amoflg
                 else  ! wndflg.eq.5
 ! ---             vpmx assumed to contain specific humidity
                   cdw  = 1.0e-3*cd_core2(wind,vpmx,airt, &
                                           temp(i,j,1,n))
-! ---             use U10 magnitude and direction for stress 
-                  surtx(i,j) = rair*cdw*wind*wndx
-                  surty(i,j) = rair*cdw*wind*wndy
-!*****c ---             use wind-current magnitude and direction for stress 
-!*****                  samo = sqrt( (wndx-usur)**2 + (wndy-vsur)**2 )
-!*****                  surtx(i,j) = rair*cdw*samo*(wndx-usur)
-!*****                  surty(i,j) = rair*cdw*samo*(wndy-vsur)
+                  if     (amoflg.ne.0) then
+! ---               use wind-current magnitude and direction for stress 
+                    samo = sqrt( (wndx-usur)**2 + (wndy-vsur)**2 )
+                    surtx(i,j) = rair*cdw*samo*(wndx-usur)
+                    surty(i,j) = rair*cdw*samo*(wndy-vsur)
+                  else
+! ---               use U10 magnitude and direction for stress 
+                    surtx(i,j) = rair*cdw*wind*wndx
+                    surty(i,j) = rair*cdw*wind*wndy
+                  endif !amoflg
                 endif
 #endif /* USE_NUOPC_CESMBETA */
               endif !wndflg
@@ -732,7 +749,7 @@
 ! --- Wind stress drag coefficient * 10^3 from an approximation
 ! --- to the COARE 3.0 bulk algorithm (Fairall et al. 2003).
 !
-! --- samo = wind-ocean speed (m/s)
+! --- samo = wind-ocean speed or absolute wind speed (m/s)
 ! --- vpmx = water vapor mixing ratio (kg/kg)
 ! --- airt = air temperature (C)
 ! --- pair = air pressure (Pa)
@@ -901,7 +918,7 @@
 ! --- Wind stress drag coefficient * 10^3 from
 ! --- the CORE v2 bulk algorithm (Large and Yeager, 2009).
 !
-! --- wind = wind speed (m/s)
+! --- wind = absolute wind speed (m/s)
 ! --- sphm = specific humidity (kg/kg)
 ! --- airt = air temperature (C)
 ! --- sst  = sea temperature (C)
@@ -5598,3 +5615,4 @@
 !> Feb. 2019 - added montg_c correction to psikk (sshflg.eq.2)
 !> Sep. 2019 - added momtum_init
 !> Oct. 2019 - placed momtum4_cfl in a CPP macro
+!> Nov. 2019 - added amoflg for U10 vs U10-Uocn

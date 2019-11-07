@@ -1215,7 +1215,7 @@
       if (SEA_P) then
       if     (flxflg.gt.0) then
 ! ---   wind = wind, or wind-ocean, speed (m/s)
-        if     (flxflg.eq.6) then
+        if     (flxflg.eq.6 .and. amoflg.ne.0) then
           wind=wndocn(i,j)  !magnitude of wind minus ocean current
 #if defined (USE_NUOPC_CESMBETA)
         elseif(cpl_wndspd) then
@@ -2396,3 +2396,4 @@
 !> Feb. 2019 - replaced onetai by 1.0
 !> Sep. 2019 - added oneta0
 !> Oct. 2019 - rmunv replaced with rmunvu and rmunvv
+!> Nov. 2019 - added amoflg

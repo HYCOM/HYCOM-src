@@ -1739,6 +1739,7 @@
 ! --- 'wndflg' = wind stress input flag (0=none,1=uv-grid,2,3=p-grid,4,5=wnd10m)
 ! ---             (=3 wind speed from wind stress; =4,5 wind stress from wind)
 ! ---             (=4 for COARE 3.0; =5 for COREv2 bulk parameterization)
+! ---             (4,5 use relative wind U10-Uocn; -4,-5 use absolute wind U10)
 ! --- 'ustflg' = ustar forcing   flag          (3=input,1,2=wndspd,4=stress)
 ! --- 'flxflg' = thermal forcing flag   (0=none,3=net_flux,1-2,4-6=sst-based)
 ! ---             (=1 MICOM bulk parameterization)
@@ -1767,6 +1768,12 @@
       endif !1st tile
       call blkini(clmflg,'clmflg')
       call blkini(wndflg,'wndflg')
+      if     (wndflg.lt.0) then
+        wndflg = -wndflg
+        amoflg = 0  !U10
+      else
+        amoflg = 1  !U10-Uocn
+      endif
       call blkini(ustflg,'ustflg')
       call blkini(flxflg,'flxflg')
       call blkini(empflg,'empflg')
@@ -2630,3 +2637,4 @@
 !> Mar. 2019 - updated iversn to 23
 !> Sep. 2019 - added oneta0
 !> Oct. 2019 - added lbmont
+!> Nov. 2019 - added wndflg=-4,-5 and amoflg
