@@ -1277,13 +1277,21 @@
                     max(0.0,fay(i,  j+1)) - min(0.0,fay(i,  j)  )
             if (famax > epsil) then
               qp = (fqmax-fldlo(i,j)) *hloc(i,j)*scal(i,j)*qdt2
-              rp(i,j) = min(1.0, qp/famax)
+              if (qp < famax) then
+                rp(i,j) = qp/famax  !<1.0
+              else
+                rp(i,j) = 1.0
+              endif
             else
               rp(i,j) = 0.0
             endif
             if (famin > epsil) then
               qm = (fldlo(i,j)-fqmin) *hloc(i,j)*scal(i,j)*qdt2
-              rm(i,j) = min(1.0, qm/famin)
+              if (qm < famin) then
+                rm(i,j) = qm/famin  !<1.0
+              else
+                rm(i,j) = 1.0
+              endif
             else
               rm(i,j) = 0.0
             endif
@@ -1600,13 +1608,21 @@
                     max(0.0,fay(i, jb)) - min(0.0,fay(i, j) )
             if (famax > 0.0) then
               qp = (fqmax-fldlo(i,j)) *fcn(i,j)*scal(i,j)*qdt2
-              rp(i,j) = min(1.0, qp/famax)
+              if (qp < famax) then
+                rp(i,j) = qp/famax  !<1.0
+              else
+                rp(i,j) = 1.0
+              endif
             else
               rp(i,j) = 0.0
             endif
             if (famin > 0.0) then
               qm = (fldlo(i,j)-fqmin) *fcn(i,j)*scal(i,j)*qdt2
-              rm(i,j) = min(1.0, qm/famin)
+              if (qm < famin) then
+                rm(i,j) = qm/famin  !<1.0
+              else
+                rm(i,j) = 1.0
+              endif
             else
               rm(i,j) = 0.0
             endif
@@ -2510,3 +2526,4 @@
 !> Aug. 2018 - btrmas added, use onetamas to simplify logic
 !> Aug. 2018 - replaced itest,jtest with itests,jtests
 !> Nov. 2018 - always use oneta for diffusion
+!> Nov. 2018 - replaced min(1.0,A/B) with if(A<B) to avoid overflows
