@@ -46,7 +46,7 @@
 ! --- onetacnt(:,:) = 1+eta afer cnuity
 ! --- ------------------------------------------------------
 !
-      logical, parameter :: lpipe_cnuity=.true.  !usually .false.
+      logical, parameter :: lpipe_cnuity=.false. !usually .false.
 !
       real,    parameter ::      dpfatal=-10.0   !fatal negative dp in meters
       real,    parameter :: epsil_cnuity=1.e-14
