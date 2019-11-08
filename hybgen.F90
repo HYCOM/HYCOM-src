@@ -271,9 +271,13 @@
       if (SEA_P) then
 !
 ! --- terrain following starts at depth dpns and ends at depth dsns
-      qdep = max( 0.0, min( 1.0, &
-                            (depths(i,j) - dsns)/ &
-                            (dpns        - dsns)  ) )
+      if     (dpns.eq.dsns) then
+        qdep = 1.0  !not terrain following
+      else
+        qdep = max( 0.0, min( 1.0, &
+                              (depths(i,j) - dsns)/ &
+                              (dpns        - dsns)  ) )
+      endif
 !
       if     (qdep.lt.1.0) then
 ! ---   terrain following, qhrlx=1 and ignore dp00
@@ -2783,3 +2787,4 @@
 !> Aug. 2015 - overturn with the layer above if bottom layer is very light
 !> Aug. 2015 - entrain into too dense layer (only move upper interface up)
 !> Aug. 2015 - allow entrainment to increase fixlay by 1
+!> Nov. 2019 - avoid overflow in calculation of qdep
