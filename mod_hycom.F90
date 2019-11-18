@@ -2104,10 +2104,9 @@
         if (mnproc.eq.1) then
           call mem_stat_print('mean_allocate:')
         endif !1st tile
-!        call mean_zero(DBLE(time))
         nstep=nstep0
         time =dtime0
-        call mean_zero(DBLE(time))
+        call mean_zero(dtime0)
         call momtum_hs(n,m)  !calculate srfhgt
         call mean_add(n, 0.5)
       endif
