@@ -1,0 +1,47 @@
+#
+# -------------------------------------------------------------------------------
+# common definitions for HPE SGI, OpenMP + Intel MPI (impi), small memory, real*8
+#
+# Intel Compiler:
+# -fp-model precise -no-fma maintains bit for bit equality for all NMPI values
+# version that uses MPI-2 I/O for HYCOM
+# relocatable version
+# -------------------------------------------------------------------------------
+#
+# MACROS      DESCRIPTIONS:
+#
+# FC:         Fortran 90 compiler.
+# FCFFLAGS:   Fortran 90 compilation flags.
+# CC:         C compiler.
+# CCFLAGS:    C compilation flags.
+# CPP:        cpp preprocessor (may be implied by FC).
+# CPPFLAGS:   cpp -D macro flags.
+# LD:         Loader.
+# LDFLAGS:    Loader flags.
+# EXTRALIBS:  Extra local libraries (if any).
+#
+FC            = mpiifort
+FCFFLAGS      =	-traceback -xHost -O3 -fp-model precise -no-fma -ftz -align array64byte -qopenmp -r8 -warn nogeneral -diag-disable 10212 -mcmodel=small
+CC            = mpiicc
+CCFLAGS       =	-traceback -xHost -O -mcmodel=small
+CPP           = cpp -P
+CPPFLAGS      = -DREAL8 -DMPI -DENDIAN_IO -DNAN2003 -DTIMER -DRELO $(CPP_EXTRAS)
+LD            = $(FC)
+LDFLAGS       = -V $(FCFFLAGS)
+EXTRALIBS     = 
+
+#
+# --- generic make definitions
+#
+SHELL         = /bin/sh
+RM            = \rm -f
+
+#
+# rules.
+#
+
+.c.o:
+	$(CC) $(CPPFLAGS) $(CCFLAGS)  -c $*.c
+
+.F90.o:
+	$(FC) $(CPPFLAGS) $(FCFFLAGS) -c $*.F90
