@@ -24,7 +24,7 @@ FCFFLAGS      =	-gopt -fastsse -tp ivybridge -Mdaz -Mvect=simd,uniform -Kieee -r
 CC            =	cc
 CCFLAGS       =	-O -mcmodel=small
 CPP           =	cpp -P
-CPPFLAGS      =	-DIA32 -DREAL8 -DMPI -DENDIAN_IO -DNAN2003 -DTIMER -DRELO $(CPP_EXTRAS)
+CPPFLAGS      =	-DREAL8 -DMPI -DENDIAN_IO -DNAN2003 -DTIMER -DRELO $(CPP_EXTRAS)
 LD            =	$(FC)
 LDFLAGS       =	$(FCFFLAGS) 
 EXTRALIBS     = 

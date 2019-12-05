@@ -23,7 +23,7 @@ FCFFLAGS      =	-fPIC -fno-second-underscore -O2 -march=native -mavx -m64 -fopen
 CC            =	gcc
 CCFLAGS       =	-O -m64 
 CPP           =	cpp -P
-CPPFLAGS      =	-DIA32 -DREAL8 -DENDIAN_IO -DTIMER -DRELO $(CPP_EXTRAS)
+CPPFLAGS      =	-DREAL8 -DENDIAN_IO -DTIMER -DRELO $(CPP_EXTRAS)
 LD            =	$(FC)
 LDFLAGS       =	$(FCFFLAGS) 
 EXTRALIBS     = 
