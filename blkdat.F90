@@ -1407,7 +1407,9 @@
       mxlmy = mlflag.eq.5
 !
       if (mxlmy) then
-#if ! defined(RELO)
+#if defined(RELO)
+        kkmy25 = kk
+#else
         if (kkmy25.ne.kdm) then
           if (mnproc.eq.1) then
           write(lp,'(/ a /)')  &
