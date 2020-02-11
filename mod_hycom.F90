@@ -4027,8 +4027,10 @@
       write(nod,'(a)') 'normal stop'
       call flush(nod)
       endif !1st tile
+# if ! defined (ESPC_COUPLE)
       call xcstop('(normal)')  !calls xctmrp
              stop '(normal)'   !won't get here
+#endif
       end subroutine HYCOM_Final
 #endif /* USE_ESMF4:else */
 
