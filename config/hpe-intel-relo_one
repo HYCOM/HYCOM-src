@@ -23,7 +23,7 @@ FCFFLAGS      =	-traceback -xHost -O3 -fp-model precise -no-fma -ftz -align arra
 CC            = icc
 CCFLAGS       =	-traceback -xHost -O -mcmodel=medium
 CPP           = cpp -P
-CPPFLAGS      = -DIA32 -DREAL8 -DENDIAN_IO -DNAN2003 -DTIMER -DRELO $(CPP_EXTRAS)
+CPPFLAGS      = -DREAL8 -DENDIAN_IO -DNAN2003 -DTIMER -DRELO $(CPP_EXTRAS)
 LD            = $(FC)
 LDFLAGS       = -V $(FCFFLAGS)
 EXTRALIBS     =

@@ -1775,8 +1775,15 @@
         endif !1st tile
         call xcsync(flush_lp)
         call zaiopf(flnmforw(1:lgth)//'relax.ssh.a', 'old', 915)
-        call rdmonth(thmean, -915)  !no .b file (mean depth averaged density)
-        call rdmonth(sshgmn, -915)  !no .b file
+        if     (mnproc.eq.1) then  ! .b file from 1st tile only
+        open (unit=uoff+915,file=flnmforw(1:lgth)//'relax.ssh.b', &
+           status='old', action='read')
+        endif !1st tile
+        call rdmonth(thmean, 915)  ! (mean depth averaged density)
+        call rdmonth(sshgmn, 915)  
+        if     (mnproc.eq.1) then  ! .b file from 1st tile only
+        close (unit=uoff+915)
+        endif !1st tile
         call zaiocl(915)
         do j= 1,jj
           do i= 1,ii
@@ -1796,8 +1803,15 @@
         endif !1st tile
         call xcsync(flush_lp)
         call zaiopf(flnmforw(1:lgth)//'relax.montg.a', 'old', 915)
-        call rdmonth(thmean, -915)  !no .b file (Montg. Pot. correction)
-        call rdmonth(sshgmn, -915)  !no .b file
+        if     (mnproc.eq.1) then  ! .b file from 1st tile only
+        open (unit=uoff+915,file=flnmforw(1:lgth)//'relax.montg.b', &
+           status='old', action='read')
+        endif !1st tile
+        call rdmonth(thmean, 915)
+        call rdmonth(sshgmn, 915)
+        if     (mnproc.eq.1) then  ! .b file from 1st tile only
+        close (unit=uoff+915)
+        endif !1st tile
         call zaiocl(915)
         do j= 1,jj
           do i= 1,ii
@@ -2570,7 +2584,7 @@
 !
 ! --- iunit=900-910; atmospheric forcing field
 ! --- iunit=911-914; relaxation  forcing field
-! --- iunit=915;     relaxation  time scale field
+! --- iunit=915;     relaxation  control field
 ! --- iunit=918;     river       forcing field
 ! --- iunit=919;     kpar or chl forcing field
 ! --- iunit=922;     isopycnal target density field
@@ -2600,7 +2614,7 @@
 !
 ! --- iunit=900-910; atmospheric forcing field
 ! --- iunit=911-914; relaxation  forcing field
-! --- iunit=915;     relaxation  time scale field
+! --- iunit=915;     relaxation  control field
 ! --- iunit=916;     offset      forcing field
 ! --- iunit=918;     river       forcing field
 ! --- iunit=919;     kpar or chl forcing field
@@ -2735,7 +2749,10 @@
          endif
         endif
       elseif (iunit.eq.915) then
-! ---   relaxation time scale
+! ---   relaxation control field.
+        if     (i.eq.0) then
+          i = index(cline,':',back=.true.)  !last : is the separator
+        endif
         read (cline(i+1:),*) hminb,hmaxb
       elseif (iunit.eq.922) then
 ! ---   target density field.
@@ -2807,7 +2824,7 @@
 !
 ! --- iunit=900-910; atmospheric forcing field
 ! --- iunit=911-914; relaxation  forcing field
-! --- iunit=915;     relaxation strength field
+! --- iunit=915;     relaxation  control field
 ! --- iunit=918;     river       forcing field
 ! --- iunit=919;     kpar or chl forcing field
 !
@@ -4961,3 +4978,4 @@
 !> Oct  2019 - bugfix in datefor for yrflag=2,4
 !> Oct  2019 - optionally mask nest velocities if outside near-surface range
 !> Oct  2019 - added a CPP macro to set lmask_rdnest
+!> Feb  2020 - read relax.ssh.b and relax.montg.b, which use ":" before min,max

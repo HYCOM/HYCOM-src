@@ -2104,10 +2104,9 @@
         if (mnproc.eq.1) then
           call mem_stat_print('mean_allocate:')
         endif !1st tile
-!        call mean_zero(DBLE(time))
         nstep=nstep0
         time =dtime0
-        call mean_zero(DBLE(time))
+        call mean_zero(dtime0)
         call momtum_hs(n,m)  !calculate srfhgt
         call mean_add(n, 0.5)
       endif
@@ -4028,8 +4027,10 @@
       write(nod,'(a)') 'normal stop'
       call flush(nod)
       endif !1st tile
+# if ! defined (ESPC_COUPLE)
       call xcstop('(normal)')  !calls xctmrp
              stop '(normal)'   !won't get here
+#endif
       end subroutine HYCOM_Final
 #endif /* USE_ESMF4:else */
 

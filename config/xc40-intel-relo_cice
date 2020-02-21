@@ -27,7 +27,7 @@ FCFFLAGS      =	-traceback -xHost -O3 -fp-model precise -no-fma -ftz -align arra
 CC            = cc
 CCFLAGS       =	-traceback -xHost -O -mcmodel=small
 CPP           = cpp -P
-CPPFLAGS      = -DUSE_ESMF4 -DIA32 -DREAL8 -DMPI -DENDIAN_IO -DTIMER -DRELO $(CPP_EXTRAS) 
+CPPFLAGS      = -DUSE_ESMF4 -DREAL8 -DMPI -DENDIAN_IO -DTIMER -DRELO $(CPP_EXTRAS) 
 LD            = $(FC)
 LDFLAGS       = -V $(FCFFLAGS)
 EXTRALIBS     =

@@ -517,7 +517,7 @@
 !*
 !  1) prints current hints.
 !
-!  2) dummy version for HPE with Intel MPI
+!  2) dummy version for HPE with Intel MPI via mpt perfboost
 !*
 !**********
 !

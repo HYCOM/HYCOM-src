@@ -1,0 +1,50 @@
+README.src/README.src.changes.3p01
+
+Significant changes since 2.3.01:
+
+a) Added blkdat variable oneta0.  1+eta is the scale factor from depth 
+to depth + non-steric_SSH.  So 1+eta=0.0 is dry land, which isn't allowed.
+oneta0 sets a minimum on 1+eta.  A typical value is 0.1, and there
+will be entries in the model .log file if oneta is clipped to oneta0.
+
+b) Added blkdat variable lbmont.  When HYCOM is run with sshflg=2 the 
+Montgomery potential is offset so that montg1 in an archive file 
+represents steric SSH.  This makes tidal analysis easier since non-steric 
+SSH (including tides) is srfhgt-montg1.  The Browning & Kreiss barotropic 
+open boundary reads montg1, and it needs to know if this is the original 
+field or the field corrected via sshflg=2.  Hence the new blkdat variable 
+lbmont.  This only has an effect when lbflag=2, and in all legacy cases 
+lbmont will be 0 (false).
+
+c) Added lmask_rdnest. Mean archives can contain large layer velocities 
+near the bottom because of a mismatch between the p-grid layer thickness 
+mean projected onto cell faces and u-grid and v-grid layer thickness means.  
+These no longer occur for means calculated by the running model, but old 
+in-line means and off-line means (e.g. monthly or annual) still have this 
+issue.  To prevent these large velocities effecting the baroclinic nesting, 
+rdnest_in has a compile time parameter, lmask_rdnest, that, when .true., 
+masks nest velocities (sets rmunv to zero) when they are outside the 
+near-surface range.  It is .false. unless CPP macro RDNEST_MASK is set.
+
+d) The Browning&Kreiss (latbdt) and Flather (latbdtf) barotropic nesting 
+routines have been overhauled.  Flather now uses p-grid nested velocities, 
+[uv]pnst, as in Browning&Kreiss.  The Browning&Kreiss normal transport now 
+always has an along port 1-2-1 smoother applied to it.  Added a compile 
+time parameter, npline, to control how often pline is updated in latbdt.  
+It is set to 1 unless the CPP macro LATBDT_NPLINE3 sets it to 3.
+
+e) A new variable, sports, has been optionally added to ports.input.  It is 
+a scale factor that is applied to all the nested barotropic velocities.  Use 
+1.0 (the default if it is absent) to get the orignal velocities.  If present, 
+it is the 1st line of ports.input:
+  1.2   'sports' = scale factor for nested velocity (typically 1.0)
+  6     'nports' = number of boundary port sections
+
+f) Added wndflg=-4,-5.  When wndflg is set to 4 or 5 U10 winds are read in 
+and wind stress is calculated inside HYCOM using a bulk parameterization.  
+This can be based either on absolute winds (U10) or relative winds (U10-Uocn).  
+Previously, wndflg=4 always used relative winds and wndflg=5 recently used 
+absolute winds (although the original Large&Yeager parameterizion used 
+relative winds, and code for relative winds was included but commented out).
+Now, wndflg=4,5 uses relative winds and the new options wndflg=-4,-5 use 
+absolute winds.  Note that 2.3.00's wndflg=5 becomes 2.3.01's wndflg=-5.
