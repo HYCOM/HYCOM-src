@@ -836,28 +836,28 @@
 
 #if ! defined (ESPC_COUPLE)
 ! --- needed for restart if coupled
-#  if defined(RELO)
+#if defined(RELO)
       real, save, allocatable, dimension(:,:) :: &
-#  else
+#else
       real, save, dimension(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy) :: &
-#  endif
+#endif
        dhde,dhdn,             & ! sea-surface height slope for CICE
        umxl,vmxl,             & ! surface u and v for CICE
        tml,sml                  ! surface T and S for CICE
 #endif
 
-#if defined (USE_NUOPC_GENERIC)
 ! ---  import from atm
       logical cpl_taux, cpl_tauy, cpl_wndspd, cpl_ustara, &
        cpl_airtmp, cpl_vapmix, cpl_precip, cpl_surtmp, cpl_seatmp
 
+#if defined (USE_NUOPC_GENERIC)
 ! ---  import from ice
       logical cpl_sic, cpl_sitx, cpl_sity, cpl_siqs, cpl_sifh, &
               cpl_sifs, cpl_sifw, cpl_sit, cpl_sih, cpl_siu, &
               cpl_siv
 
-!
-#  if defined(RELO)
+
+#if defined(RELO)
       real, target, allocatable,dimension (:,:) :: &
              sic_import, & !Sea Ice Concentration
             sitx_import, & !Sea Ice X-Stress
@@ -871,7 +871,7 @@
              siu_import, & !Sea Ice X-Velocity
              siv_import    !Sea Ice Y-Velocity
 
-#  else
+#else
       real, target, dimension (1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy) :: &
              sic_import, & !Sea Ice Concentration
             sitx_import, & !Sea Ice X-Stress
@@ -884,17 +884,17 @@
              sih_import, & !Sea Ice Thickness
              siu_import, & !Sea Ice X-Velocity
              siv_import    !Sea Ice Y-Velocity
-#  endif
+#endif
 
 #endif /* USE_NUOPC_GENERIC */
 
 #if defined (USE_NUOPC_CESMBETA)
 ! --- Average array for export
-#  if defined(RELO)
+#if defined(RELO)
       real, save, allocatable, dimension(:,:) :: &
-#  else
+#else
       real, save, dimension(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy) :: &
-#  endif
+#endif
        sshm,               & ! sea-surface height averaged over 1 coupling sequence
        um,vm,              & ! surface u and v
        ubm,vbm,            & ! surface ubaro and vbaro
@@ -911,14 +911,12 @@
       real pcp_fact  ! always 1. : no precipiation adjustment
 ! ---  import from atm
       real nstep1_cpl,nstep2_cpl
-      logical cpl_swflx, cpl_lwmdnflx, cpl_lwmupflx, &
-       cpl_latflx, cpl_sensflx, &
-       cpl_orivers,cpl_irivers
 
-      real cpl_w2, cpl_w3
       logical cpl_implicit
+#endif /* USE_NUOPC_CESMBETA */
 
-#  if defined(RELO)
+
+#if defined(RELO)
       real, target, allocatable,dimension (:,:,:) :: &
        imp_taux, imp_tauy, imp_taue, imp_taun, imp_wndspd, imp_ustara, &
        imp_airtmp, imp_vapmix, imp_swflx, imp_lwdflx, imp_lwuflx, &
@@ -926,16 +924,18 @@
        imp_precip, imp_surtmp, imp_seatmp, &
        imp_orivers,imp_irivers
 
-#  else
+#else
       real, target, dimension (1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy,2) :: &
        imp_taux, imp_tauy, imp_taue, imp_taun, imp_wndspd, imp_ustara, &
        imp_airtmp, imp_vapmix, imp_swflx, imp_lwdflx, imp_lwuflx, &
        imp_latflx, imp_sensflx, &
        imp_precip, imp_surtmp, imp_seatmp, &
        imp_orivers,imp_irivers
-#  endif
-#endif /* USE_NUOPC_CESMBETA */
-
+#endif
+       real cpl_w2, cpl_w3
+       logical cpl_swflx, cpl_lwmdnflx, cpl_lwmupflx, &
+       cpl_latflx, cpl_sensflx, &
+       cpl_orivers,cpl_irivers
 
 !
 #if defined (ESPC_COUPLE)
@@ -947,16 +947,16 @@
        cpl_u10,cpl_v10,cpl_mslprs
 
 
-#  if defined(RELO)
+#if defined(RELO)
       real, target, allocatable,dimension (:,:) :: &
         exp_sbhflx, &
         exp_lthflx
 
-#  else
+#else
       real, target, dimension (1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy) :: &
         exp_sbhflx, &
         exp_lthflx
-#  endif
+#endif
 #endif /* ESPC_COUPLE */
 
       contains
@@ -1659,7 +1659,7 @@
 !
 
 #if defined (USE_NUOPC_GENERIC)
-#  if defined(RELO)
+#if defined(RELO)
       allocate( &
                 sic_import(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy), &
                sitx_import(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy), &
@@ -1673,7 +1673,7 @@
                 siu_import(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy), &
                 siv_import(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy) )
       call mem_stat_add( 11*(idm+2*nbdy)*(jdm+2*nbdy) )
-#  endif
+#endif
 
                sic_import = 0.d0
               sitx_import = 0.d0
@@ -1710,7 +1710,7 @@
 #endif
 
 #if defined (USE_NUOPC_CESMBETA)
-#  if defined(RELO)
+#if defined(RELO)
       allocate( &
                   sshm(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy), &
                     um(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy), &
@@ -1721,7 +1721,7 @@
                  savgm(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy), &
                   frzh(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy))
       call mem_stat_add( 8*(idm+2*nbdy)*(jdm+2*nbdy) )
-#  endif
+#endif
 
                 sshm = 0.d0
                   um = 0.d0
@@ -1732,7 +1732,7 @@
                savgm = 0.d0
                 frzh = 0.d0
 
-#  if defined(RELO)
+#if defined(RELO)
       allocate( &
                    imp_taux(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy,2), &
                    imp_tauy(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy,2), &
