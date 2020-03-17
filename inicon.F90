@@ -144,10 +144,14 @@
       p(i,j,   1)=0.0
       p(i,j,kk+1)=depths(i,j)*onem
 !
-      qdep = max( 0.0, min( 1.0, &
-                            (depths(i,j) - dsns)/ &
-                            (dpns        - dsns)  ) )
-!
+       if     (dpns.eq.dsns) then
+            qdep = 1.0  !not terrain following
+       else
+            qdep = max( 0.0, min( 1.0, &
+                   (depths(i,j) - dsns)/ &
+                   (dpns        - dsns)  ) )
+      endif
+
       pmin(0)=0.0
       do k=1,kk
       if     (k.le.nhybrd) then

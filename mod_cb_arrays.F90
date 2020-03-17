@@ -909,12 +909,7 @@
       real ocn_cpl_frq
 ! --- precipitation factor for coupled simulation
       real pcp_fact  ! always 1. : no precipiation adjustment
-! ---  import from atm
-      real nstep1_cpl,nstep2_cpl
-
-      logical cpl_implicit
 #endif /* USE_NUOPC_CESMBETA */
-
 
 #if defined(RELO)
       real, target, allocatable,dimension (:,:,:) :: &
@@ -932,7 +927,6 @@
        imp_precip, imp_surtmp, imp_seatmp, &
        imp_orivers,imp_irivers
 #endif
-       real cpl_w2, cpl_w3
        logical cpl_swflx, cpl_lwmdnflx, cpl_lwmupflx, &
        cpl_latflx, cpl_sensflx, &
        cpl_orivers,cpl_irivers
@@ -1784,6 +1778,23 @@
        exp_lthflx(:,:) = 0.0 
 
 #  endif
+    ! initialize coupling flags
+    cpl_taux      =.false.
+    cpl_tauy      =.false.
+    cpl_wndspd    =.false.
+    cpl_ustara    =.false.
+    cpl_airtmp    =.false.
+    cpl_vapmix    =.false.
+    cpl_swflx     =.false.
+    cpl_lwmdnflx  =.false.
+    cpl_lwmupflx  =.false.
+    cpl_latflx    =.false.
+    cpl_sensflx   =.false.
+    cpl_precip    =.false.
+    cpl_surtmp    =.false.
+    cpl_seatmp    =.false.
+    cpl_orivers   =.false.
+    cpl_irivers   =.false.
 
       end subroutine cb_allocate
 

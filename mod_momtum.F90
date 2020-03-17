@@ -343,22 +343,6 @@
       if     (windf) then
         margin =0
 
-#if defined (USE_NUOPC_CESMBETA)
-!jc   weights for the coupled forcing
-      if(cpl_implicit) then
-        if(nstep2_cpl.eq.0 .or. (nstep1_cpl.eq.nstep2_cpl)) then
-          cpl_w2=1.
-          cpl_w3=0.
-        else
-          cpl_w2=(nstep-nstep1_cpl)/(nstep2_cpl-nstep1_cpl)
-          cpl_w3=1.-cpl_w2
-        endif
-      else
-         cpl_w2=1.0
-         cpl_w3=0.
-      endif
-#endif
-!
 !$OMP   PARALLEL DO PRIVATE(j,i,k, &
 !$OMP                       dpsur,psur,usur,vsur,thksur, &
 !$OMP                       airt,vpmx,wndx,wndy,wind,cdw,rair, &
@@ -391,10 +375,8 @@
               endif !usur,vsur
 !
               if     (wndflg.eq.2 .or. wndflg.eq.3) then ! tau on p grid
-#if defined (USE_NUOPC_CESMBETA)
                 if (cpl_taux) then
-                  surtx(i,j) = imp_taux(i,j,1)*cpl_w2 &
-                             + imp_taux(i,j,2)*cpl_w3
+                  surtx(i,j) = imp_taux(i,j,1)
                 elseif (natm.eq.2) then
                   surtx(i,j) = taux(i,j,l0)*w0+taux(i,j,l1)*w1
                 else
@@ -403,25 +385,13 @@
                 endif ! cpl_taux
 
                 if (cpl_tauy) then
-                  surty(i,j) = imp_tauy(i,j,1)*cpl_w2 &
-                             + imp_tauy(i,j,2)*cpl_w3
+                  surty(i,j) = imp_tauy(i,j,1)
                 elseif (natm.eq.2) then
                   surty(i,j) = tauy(i,j,l0)*w0+tauy(i,j,l1)*w1
                 else
                   surty(i,j) = tauy(i,j,l0)*w0+tauy(i,j,l1)*w1 &
                              + tauy(i,j,l2)*w2+tauy(i,j,l3)*w3
                 endif ! cpl_tauy
-#else
-                if     (natm.eq.2) then
-                  surtx(i,j) = taux(i,j,l0)*w0+taux(i,j,l1)*w1
-                  surty(i,j) = tauy(i,j,l0)*w0+tauy(i,j,l1)*w1
-                else
-                  surtx(i,j) =   taux(i,j,l0)*w0+taux(i,j,l1)*w1 &
-                                +taux(i,j,l2)*w2+taux(i,j,l3)*w3
-                  surty(i,j) =   tauy(i,j,l0)*w0+tauy(i,j,l1)*w1 &
-                                +tauy(i,j,l2)*w2+tauy(i,j,l3)*w3
-                endif !natm
-#endif /* USE_NUOPC_CESMBETA */
               elseif (wndflg.eq.1) then ! tau on u&v grids - NOT RECOMMEDED
 #if defined (USE_NUOPC_CESMBETA)
                  if     (mnproc.eq.1) then

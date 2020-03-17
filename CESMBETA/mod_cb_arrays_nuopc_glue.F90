@@ -24,8 +24,6 @@
         public scux     ! grid cell area at the p pts
         public scvy     ! grid cell area at the p pts
 
-        public cpl_implicit  ! time step scheme
-        
         ! import from ATM
         public cpl_taux,    imp_taux, imp_taue ! xstress [Pa], eastward stress [Pa]
         public cpl_tauy,    imp_tauy, imp_taun ! ystress [Pa], northward stress [Pa]

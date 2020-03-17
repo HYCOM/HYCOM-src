@@ -471,25 +471,6 @@ module mod_hycom_nuopc_glue
     glue%rh_import2shadow_ready = .false.
     glue%rh_shadow2export_ready = .false.
 #endif
-
-    ! initialize coupling flags
-    cpl_taux      =.false.
-    cpl_tauy      =.false.
-    cpl_wndspd    =.false.
-    cpl_ustara    =.false.
-    cpl_airtmp    =.false.
-    cpl_vapmix    =.false.
-    cpl_swflx     =.false.
-    cpl_lwmdnflx  =.false.
-    cpl_lwmupflx  =.false.
-    cpl_latflx    =.false.
-    cpl_sensflx   =.false.
-    cpl_precip    =.false.
-    cpl_surtmp    =.false.
-    cpl_seatmp    =.false.
-    cpl_implicit  =.false.
-    cpl_orivers   =.false.
-    cpl_irivers   =.false.
    
   end subroutine
 
