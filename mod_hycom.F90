@@ -96,7 +96,7 @@
 #if defined (USE_NUOPC_CESMBETA)
       logical, save, public  :: end_of_run_cpl   !set in HYCOM_Run for coupling
 ! --- ntavg number of time step between coupling sequence (CESM)
-      integer :: ntavg
+      integer :: ntavg, nstep2_cpl
 #endif
 #if defined (ESPC_COUPLE)
 ! ESPC -- add
@@ -2142,7 +2142,6 @@
       real :: dp1,usur1,vsur1,psur1,dp2,usur2,vsur2,psur2,thksur, &
               utot,vtot
       real :: inv_cplifq
-      real :: nstep2_cpl
       integer :: ld
       logical :: restart_cpl
 #elif defined (ESPC_COUPLE)
