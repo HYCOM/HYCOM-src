@@ -628,10 +628,10 @@
              tptot0,tpcot0,ttot0,tcot0,tctot0,tpvot,tptot,tpcot, &
              ttot,tcot,tctot,back_l_0
 !
-      real*8, save :: area,avgbot,watcum,empcum,wndrep
+      real*8, save :: area,avgbot,watcum,empcum,wndrep, time
 !
       real, save :: &
-                     time,delt1,dlt, &
+                      delt1,dlt, &
                       w0, w1, w2, w3,   & ! wind  interp. scale factors
                       wk0,wk1,wk2,wk3,  & ! kpar  interp. scale factors
                       wr0,wr1,wr2,wr3,  & ! river interp. scale factors
@@ -856,9 +856,8 @@
               cpl_sifs, cpl_sifw, cpl_sit, cpl_sih, cpl_siu, &
               cpl_siv
 
-
-#if defined(RELO)
-      real, target, allocatable,dimension (:,:) :: &
+#  if defined(RELO)
+      real(8), target, allocatable,dimension (:,:) :: &
              sic_import, & !Sea Ice Concentration
             sitx_import, & !Sea Ice X-Stress
             sity_import, & !Sea Ice Y-Stress
@@ -872,7 +871,7 @@
              siv_import    !Sea Ice Y-Velocity
 
 #else
-      real, target, dimension (1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy) :: &
+      real(8), target, dimension (1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy) :: &
              sic_import, & !Sea Ice Concentration
             sitx_import, & !Sea Ice X-Stress
             sity_import, & !Sea Ice Y-Stress
@@ -906,7 +905,7 @@
 ! --- tripolar grid
       logical ltripolar
 ! --- import from coupler
-      real ocn_cpl_frq
+      real(8) ocn_cpl_frq
 ! --- precipitation factor for coupled simulation
       real pcp_fact  ! always 1. : no precipiation adjustment
 #endif /* USE_NUOPC_CESMBETA */
@@ -1367,7 +1366,7 @@
               wflice = r_init
               wflfrz = 0.0     !diagnostic, icloan only
               sflice = r_init
-                si_c = r_init
+                si_c = 0.0 !r_init
                 si_h = r_init
                 si_t = r_init
                 si_u = r_init
@@ -1746,7 +1745,7 @@
                 imp_orivers(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy,2), &
                  imp_surtmp(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy,2), &
                  imp_seatmp(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy,2) )
-      call mem_stat_add( 16*(idm+2*nbdy)*(jdm+2*nbdy)*(2) )
+      call mem_stat_add( 18*(idm+2*nbdy)*(jdm+2*nbdy)*(2) )
 #  endif
 
                   imp_taux = 0.d0

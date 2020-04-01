@@ -393,7 +393,7 @@
                              + tauy(i,j,l2)*w2+tauy(i,j,l3)*w3
                 endif ! cpl_tauy
               elseif (wndflg.eq.1) then ! tau on u&v grids - NOT RECOMMEDED
-#if defined (USE_NUOPC_CESMBETA)
+#if defined (USE_NUOPC_CESMBETA) && !defined (DMI_CICE_COUPLED)
                  if     (mnproc.eq.1) then
                     write(lp,*)
                     write(lp,*) 'error in momtum - wndflg should be '
@@ -401,7 +401,7 @@
                  endif !1st tile
                  call xcstop('(momtum)')
                  stop '(momtum)'
-#else
+#endif /* USE_NUOPC_CESMBETA   and DMI_CICE_COUPLED*/
                 if     (natm.eq.2) then
                   surtx(i,j) = ( (taux(i,j,l0)+taux(i+1,j,l0))*w0 &
                                 +(taux(i,j,l1)+taux(i+1,j,l1))*w1)*0.5
@@ -417,11 +417,10 @@
                                 +(tauy(i,j,l2)+tauy(i,j+1,l2))*w2 &
                                 +(tauy(i,j,l3)+tauy(i,j+1,l3))*w3)*0.5
                 endif !natm
-#endif /* USE_NUOPC_CESMBETA */
               else !wndflg.eq.4,5,6
 ! ---           calculate stress from 10m winds using cd_coare or cd_core2
 ! ---           for cd_core2, vpmx (vapmix) is specific humidity
-#if defined (USE_NUOPC_CESMBETA)
+#if defined (USE_NUOPC_CESMBETA) && !defined (DMI_CICE_COUPLED)
                  if     (mnproc.eq.1) then
                     write(lp,*)
                     write(lp,*) 'error in momtum - wndflg should be '
@@ -429,7 +428,7 @@
                  endif !1st tile
                  call xcstop('(momtum)')
                  stop '(momtum)'
-#else
+#endif /* DMI_CICE_COUPLED and USE_NUOPC_CESMBETA */
                 if     (natm.eq.2) then
                   airt = airtmp(i,j,l0)*w0+airtmp(i,j,l1)*w1
                   vpmx = vapmix(i,j,l0)*w0+vapmix(i,j,l1)*w1
@@ -508,7 +507,7 @@
                     surty(i,j) = rair*cdw*wind*wndy
                   endif !amoflg
                 endif
-#endif /* USE_NUOPC_CESMBETA */
+
               endif !wndflg
 !
               if     (stroff) then
@@ -521,7 +520,12 @@
                 surty(i,j) = 0.0
               elseif (iceflg.eq.2 .and. si_c(i,j).gt.0.0) then
 ! ---           allow for ice-ocean stress
-#if defined (USE_NUOPC_CESMBETA)
+#if defined (DMI_CICE_COUPLED)
+                surtx(i,j) = (1.0-si_c(i,j))*surtx(i,j) + &
+                             si_c(i,j) *si_tx(i,j)
+                surty(i,j) = (1.0-si_c(i,j))*surty(i,j) + &
+                                  si_c(i,j) *si_ty(i,j)
+#elif defined (USE_NUOPC_CESMBETA)
 ! ---           ice-ocean stress already in surtx and surty
 #else
                 uimo = si_u(i,j) - usur

@@ -377,15 +377,12 @@
       zm(k)=zgrid(i,j,k)
 !
 ! --- do rivers here because difs is also used for tracers.
-#if defined (USE_NUOPC_CESMBETA)
       if(cpl_orivers.and.cpl_irivers) then
          riv_input = imp_orivers(i,j,1)+imp_irivers(i,j,1)
       else
          riv_input = rivers(i,j,1)
       endif
-#else
       riv_input = rivers(i,j,1)
-#endif
       if     (thkriv.gt.0.0 .and. riv_input.ne.0.0) then
         do k=1,nlayer
           if     (-zm(k)+0.5*hm(k).lt.thkriv) then !interface<thkriv

@@ -60,11 +60,10 @@ module ocn_comp_nuopc_mod
   type(ESMF_Routehandle), save      :: HYCOM2CESM_RHI4, CESM2HYCOM_RHI4
   integer, parameter, public        :: number_import_fields = 30
   integer, parameter, public        :: number_export_fields = 8
-
+  
   type(HYCOM_CESM_FIELD_TABLE_ENTRY):: cesm2hycom_table(number_import_fields)
   type(HYCOM_CESM_FIELD_TABLE_ENTRY):: hycom2cesm_table(number_export_fields)
 
-  
   !-----------------------------------------------------------------------------
   contains
   !-----------------------------------------------------------------------------
@@ -400,7 +399,7 @@ module ocn_comp_nuopc_mod
     ! Call into the HYCOM initialization  
     call HYCOM_Init(mpiComm, & ! -->> call into HYCOM <<--
        hycom_start_dtg=l_startTime_r8, hycom_end_dtg=stopTime_r8, &
-       pointer_filename=pointer_filename,  restart_write=restart_write)
+       pointer_filename=pointer_filename)
 
     call ESMF_LOGWRITE("AFTER HYCOM_INIT", ESMF_LOGMSG_INFO, rc=rc)
 

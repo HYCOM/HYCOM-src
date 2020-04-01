@@ -10,42 +10,12 @@
       private !! default is private
       public  :: restart_in, restart_out, restart_zero
 
-      interface restart_in
-        module procedure restart_in_standalone
-        module procedure restart_in_coupled
-      end interface restart_in 
-
-      interface restart_out
-        module procedure restart_out_standalone
-        module procedure restart_out_coupled
-      end interface restart_out
 
       contains
 
-      subroutine restart_in_standalone(nstep0, dtime0, flnmra,flnmrb)
 
-      implicit none
-      integer       nstep0
-      real*8        dtime0
-      character*(*) flnmra,flnmrb
-!
-      call restart_in_coupled(nstep0, dtime0, flnmra,flnmrb,.false.)
 
-      end subroutine restart_in_standalone
-
-      subroutine restart_out_standalone(nstepx, dtimex, flnmra,flnmrb, last)
-      implicit none
-!
-      logical last
-      integer nstepx
-      real*8  dtimex
-      character*(*) flnmra,flnmrb
-!
-      call restart_out_coupled(nstepx, dtimex, flnmra,flnmrb, last, .false.)
-
-      end subroutine restart_out_standalone
-
-      subroutine restart_in_coupled(nstep0, dtime0, flnmra,flnmrb, restart_cpl)
+      subroutine restart_in(nstep0, dtime0, flnmra,flnmrb, restart_cpl)
       use mod_cb_arrays  ! HYCOM saved arrays
       use mod_tides      ! HYCOM tides
       implicit none
@@ -393,7 +363,6 @@
         enddo
       endif
 
-#if defined (USE_NUOPC_CESMBETA)
       if (restart_cpl) then
         call zagetc(cline,ios, uoff+11)
         if (cline(1:8).eq. 'tml     ') then
@@ -433,7 +402,6 @@
           call restart_inrw(kskip)
         endif !cline
       endif ! restart_cpl = .true.
-#endif  /* USE_NUOPC_CESMBETA */
 
       if     (mnproc.eq.1) then  ! .b file from 1st tile only
         close (unit=uoff+11)
@@ -449,7 +417,7 @@
         enddo
       enddo
       return
-      end subroutine restart_in_coupled
+      end subroutine restart_in
 
       subroutine restart_in3d(field,l, mask, cfield)
 !
@@ -544,7 +512,7 @@
       return
       end subroutine restart_inrw
 
-      subroutine restart_out_coupled(nstepx, dtimex, flnmra,flnmrb, last, restart_cpl)
+      subroutine restart_out(nstepx, dtimex, flnmra,flnmrb, last, restart_cpl)
       use mod_cb_arrays  ! HYCOM saved arrays
       use mod_tides      ! HYCOM tides
       implicit none
@@ -951,7 +919,6 @@
           endif !1st tile
         enddo !ktr
       endif !trcout
-#if defined (USE_NUOPC_CESMBETA)
       if (restart_cpl) then
 !!Alex averaged export fields
         call zaiowr3(tml,     1, ip,.false., xmin,xmax, iunta,.true.)
@@ -995,7 +962,6 @@
         call flush(iunit)
         endif !1st tile
       endif ! restart_cpl = .true.
-#endif /* USE_NUOPC_CESMBETA */  
       if     (flnmra.ne.flnmrb) then  !unique restart file
         call zaiocl(iunta)
         if     (mnproc.eq.1) then
@@ -1099,7 +1065,7 @@
 !
       return
  4100 format(a,': layer,tlevel,range = ',i3,i3,2x,1p2e16.7)
-      end subroutine restart_out_coupled
+      end subroutine restart_out
 
       subroutine restart_zero
       use mod_cb_arrays  ! HYCOM saved arrays
