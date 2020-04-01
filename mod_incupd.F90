@@ -1395,6 +1395,7 @@
               q   = (delt1/3600.0)*exp(-zij/stfrdv)
               u(i,j,k,n) = u(i,j,k,n) + q*(stoc_u(i,j,l0)*w0+ &
                                            stoc_u(i,j,l1)*w1 )
+              utotij = utotij + u(i,j,k,n)*dpu(i,j,k,n)
             enddo ! k
             utotij=utotij/depthu(i,j)
             do k=1,kk
