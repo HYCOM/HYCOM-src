@@ -834,17 +834,14 @@
 ! --- diurnal cycle factor for short wave heat flux
       integer, save :: nsteps_per_day,nsteps_today
 
-#if ! defined (ESPC_COUPLE)
-! --- needed for restart if coupled
 #if defined(RELO)
       real, save, allocatable, dimension(:,:) :: &
 #else
       real, save, dimension(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy) :: &
 #endif
        dhde,dhdn,             & ! sea-surface height slope for CICE
-       umxl,vmxl,             & ! surface u and v for CICE
+       uml,vml,             & ! surface u and v for CICE
        tml,sml                  ! surface T and S for CICE
-#endif
 
 ! ---  import from atm
       logical cpl_taux, cpl_tauy, cpl_wndspd, cpl_ustara, &
@@ -1682,13 +1679,12 @@
 
 #endif /* USE_NUOPC_GENERIC */
 
-#if ! defined (ESPC_COUPLE)
 #if defined(RELO)
       allocate( &
                    dhde(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy), &
                    dhdn(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy), &
-                   umxl(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy), &
-                   vmxl(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy), &
+                   uml(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy), &
+                   vml(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy), &
                     tml(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy), &
                     sml(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy)) 
       call mem_stat_add( 6*(idm+2*nbdy)*(jdm+2*nbdy) )
@@ -1696,11 +1692,10 @@
 
                 dhde = 0.d0
                 dhdn = 0.d0
-                umxl = 0.d0
-                vmxl = 0.d0
-                 tml = 0.d0
-                 sml = 0.d0
-#endif
+                uml = 0.d0
+                vml = 0.d0
+                tml = 0.d0
+                sml = 0.d0
 
 #if defined (USE_NUOPC_CESMBETA)
 #if defined(RELO)

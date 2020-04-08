@@ -2070,8 +2070,8 @@
                            vsur2/psur2 + vbavg(i,j,  2) + &
                                          vbavg(i,j+1,2)  )
 
-             umxl(i,j)=utot*cos(pang(i,j)) + vtot*sin(-pang(i,j))
-             vmxl(i,j)=vtot*cos(pang(i,j)) - utot*sin(-pang(i,j))
+             uml(i,j)=utot*cos(pang(i,j)) + vtot*sin(-pang(i,j))
+             vml(i,j)=vtot*cos(pang(i,j)) - utot*sin(-pang(i,j))
           endif
         enddo
       enddo
@@ -3744,8 +3744,8 @@
              vtot = 0.5*(vm(i,j  ) + vbm(i,j  ) + &
                          vm(i,j+1) + vbm(i,j+1))
 
-             umxl(i,j)=(utot*cos(pang(i,j)) + vtot*sin(-pang(i,j)))/ntavg
-             vmxl(i,j)=(vtot*cos(pang(i,j)) - utot*sin(-pang(i,j)))/ntavg
+             uml(i,j)=(utot*cos(pang(i,j)) + vtot*sin(-pang(i,j)))/ntavg
+             vml(i,j)=(vtot*cos(pang(i,j)) - utot*sin(-pang(i,j)))/ntavg
            endif
           enddo
         enddo
@@ -3767,8 +3767,8 @@
 !          if (ntavg.eq.2*icefrq) then !! first coupling cycle ...
 !            tml(:,:)=tml(:,:)*(icefrq/ntavg)
 !            sml(:,:)=sml(:,:)*(icefrq/ntavg)
-!            umxl(:,:)=umxl(:,:)*(icefrq/ntavg)
-!            vmxl(:,:)=vmxl(:,:)*(icefrq/ntavg)
+!            uml(:,:)=uml(:,:)*(icefrq/ntavg)
+!            vml(:,:)=vml(:,:)*(icefrq/ntavg)
 !          else
 !            if (mnproc.eq.1) then
 !              write(lp,*) 

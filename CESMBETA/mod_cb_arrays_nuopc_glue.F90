@@ -66,8 +66,8 @@
         public pang           ! ANGLET
         public dhde           ! eastward ssh slope
         public dhdn           ! northward ssh slope
-        public umxl           ! eastward u velocity
-        public vmxl           ! northward v velocity
+        public uml           ! eastward u velocity
+        public vml           ! northward v velocity
         public tml            ! export T average over one coupling sequence
         public sml            ! export S average over one coupling sequence
         public sshm           ! export SSH average over one coupling sequence

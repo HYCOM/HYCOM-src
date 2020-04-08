@@ -1307,7 +1307,7 @@ module mod_hycom_nuopc_glue
            if (.not. initFlag) then 
            ! Now calculated in mod_hycom.F with accurate loop boundaries to get a bit for bit restart
            ! Results now differs from when the calculation was done here
-              farrayPtr(i,j) = umxl(i,j)
+              farrayPtr(i,j) = uml(i,j)
            else
               farrayPtr(i,j) = 0.
            endif
@@ -1319,7 +1319,7 @@ module mod_hycom_nuopc_glue
            if (.not. initFlag) then 
            ! Now calculated in mod_hycom.F with accurate loop boundaries to get a bit for bit restart
            ! Results now differs from when the calculation was done here
-              farrayPtr(i,j) = vmxl(i,j)
+              farrayPtr(i,j) = vml(i,j)
            else
               farrayPtr(i,j) = 0.
            endif

@@ -382,7 +382,6 @@
       else
          riv_input = rivers(i,j,1)
       endif
-      riv_input = rivers(i,j,1)
       if     (thkriv.gt.0.0 .and. riv_input.ne.0.0) then
         do k=1,nlayer
           if     (-zm(k)+0.5*hm(k).lt.thkriv) then !interface<thkriv

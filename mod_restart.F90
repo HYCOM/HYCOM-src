@@ -383,8 +383,8 @@
           call restart_inrw(kskip)
           call restart_in3d(tml ,    1, ip, 'tml     ')
           call restart_in3d(sml ,    1, ip, 'sml     ')
-          call restart_in3d(umxl,    1, ip, 'umxl    ')
-          call restart_in3d(vmxl,    1, ip, 'vmxl    ')
+          call restart_in3d(uml,    1, ip, 'umxl    ')
+          call restart_in3d(vml,    1, ip, 'vmxl    ')
         else
 ! ---   reposition file for coupled input
 !
@@ -941,8 +941,8 @@
         enddo
         call flush(iunit)
         endif !1st tile
-        call zaiowr3(umxl,     1, ip,.false., xmin,xmax, iunta,.true.)
-        call xctilr( umxl,   1,1, nbdy,nbdy, halo_ps)
+        call zaiowr3(uml,     1, ip,.false., xmin,xmax, iunta,.true.)
+        call xctilr( uml,   1,1, nbdy,nbdy, halo_ps)
         if     (mnproc.eq.1) then
         do l= 1,1
           do k= 0,0
@@ -951,8 +951,8 @@
         enddo
         call flush(iunit)
         endif !1st tile
-        call zaiowr3(vmxl,     1, ip,.false., xmin,xmax, iunta,.true.)
-        call xctilr( vmxl,   1,1, nbdy,nbdy, halo_ps)
+        call zaiowr3(vml,     1, ip,.false., xmin,xmax, iunta,.true.)
+        call xctilr( vml,   1,1, nbdy,nbdy, halo_ps)
         if     (mnproc.eq.1) then
         do l= 1,1
           do k= 0,0
