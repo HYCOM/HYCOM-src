@@ -847,40 +847,29 @@
       logical cpl_taux, cpl_tauy, cpl_wndspd, cpl_ustara, &
        cpl_airtmp, cpl_vapmix, cpl_precip, cpl_surtmp, cpl_seatmp
 
-#if defined (USE_NUOPC_GENERIC)
+#if defined (USE_NUOPC_GENERIC) && !defined (DMI_CICE_COUPLED)
 ! ---  import from ice
       logical cpl_sic, cpl_sitx, cpl_sity, cpl_siqs, cpl_sifh, &
               cpl_sifs, cpl_sifw, cpl_sit, cpl_sih, cpl_siu, &
               cpl_siv
-
-#  if defined(RELO)
-      real(8), target, allocatable,dimension (:,:) :: &
-             sic_import, & !Sea Ice Concentration
-            sitx_import, & !Sea Ice X-Stress
-            sity_import, & !Sea Ice Y-Stress
-            siqs_import, & !Solar Heat Flux thru Ice to Ocean
-            sifh_import, & !Ice Freezing/Melting Heat Flux
-            sifs_import, & !Ice Freezing/Melting Salt Flux
-            sifw_import, & !Ice Net Water Flux
-             sit_import, & !Sea Ice Temperature
-             sih_import, & !Sea Ice Thickness
-             siu_import, & !Sea Ice X-Velocity
-             siv_import    !Sea Ice Y-Velocity
-
-#else
-      real(8), target, dimension (1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy) :: &
-             sic_import, & !Sea Ice Concentration
-            sitx_import, & !Sea Ice X-Stress
-            sity_import, & !Sea Ice Y-Stress
-            siqs_import, & !Solar Heat Flux thru Ice to Ocean
-            sifh_import, & !Ice Freezing/Melting Heat Flux
-            sifs_import, & !Ice Freezing/Melting Salt Flux
-            sifw_import, & !Ice Net Water Flux
-             sit_import, & !Sea Ice Temperature
-             sih_import, & !Sea Ice Thickness
-             siu_import, & !Sea Ice X-Velocity
-             siv_import    !Sea Ice Y-Velocity
+#if defined(RELO)
+      real, target, allocatable,dimension (:,:) :: &
+#else 
+      real, target, dimension (1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy) :: &
 #endif
+             sic_import, & !Sea Ice Concentration
+            sitx_import, & !Sea Ice X-Stress
+            sity_import, & !Sea Ice Y-Stress
+            siqs_import, & !Solar Heat Flux thru Ice to Ocean
+            sifh_import, & !Ice Freezing/Melting Heat Flux
+            sifs_import, & !Ice Freezing/Melting Salt Flux
+            sifw_import, & !Ice Net Water Flux
+             sit_import, & !Sea Ice Temperature
+             sih_import, & !Sea Ice Thickness
+             siu_import, & !Sea Ice X-Velocity
+             siv_import    !Sea Ice Y-Velocity
+! --- import from coupler
+      real ocn_cpl_frq
 
 #endif /* USE_NUOPC_GENERIC */
 
@@ -901,8 +890,6 @@
 ! --- NUOPC glue code structures
 ! --- tripolar grid
       logical ltripolar
-! --- import from coupler
-      real(8) ocn_cpl_frq
 ! --- precipitation factor for coupled simulation
       real pcp_fact  ! always 1. : no precipiation adjustment
 #endif /* USE_NUOPC_CESMBETA */
@@ -1648,7 +1635,7 @@
       endif !mxlgiss
 !
 
-#if defined (USE_NUOPC_GENERIC)
+#if defined (USE_NUOPC_GENERIC) && !defined (DMI_CICE_COUPLED)
 #if defined(RELO)
       allocate( &
                 sic_import(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy), &
