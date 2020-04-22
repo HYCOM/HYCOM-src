@@ -628,10 +628,10 @@
              tptot0,tpcot0,ttot0,tcot0,tctot0,tpvot,tptot,tpcot, &
              ttot,tcot,tctot,back_l_0
 !
-      real*8, save :: area,avgbot,watcum,empcum,wndrep
+      real*8, save :: area,avgbot,watcum,empcum,wndrep, time
 !
       real, save :: &
-                     time,delt1,dlt, &
+                      delt1,dlt, &
                       w0, w1, w2, w3,   & ! wind  interp. scale factors
                       wk0,wk1,wk2,wk3,  & ! kpar  interp. scale factors
                       wr0,wr1,wr2,wr3,  & ! river interp. scale factors
@@ -834,45 +834,29 @@
 ! --- diurnal cycle factor for short wave heat flux
       integer, save :: nsteps_per_day,nsteps_today
 
-#if ! defined (ESPC_COUPLE)
-! --- needed for restart if coupled
 #if defined(RELO)
       real, save, allocatable, dimension(:,:) :: &
 #else
       real, save, dimension(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy) :: &
 #endif
        dhde,dhdn,             & ! sea-surface height slope for CICE
-       umxl,vmxl,             & ! surface u and v for CICE
+       uml,vml,             & ! surface u and v for CICE
        tml,sml                  ! surface T and S for CICE
-#endif
 
 ! ---  import from atm
       logical cpl_taux, cpl_tauy, cpl_wndspd, cpl_ustara, &
        cpl_airtmp, cpl_vapmix, cpl_precip, cpl_surtmp, cpl_seatmp
 
-#if defined (USE_NUOPC_GENERIC)
+#if defined (USE_NUOPC_GENERIC) && !defined (DMI_CICE_COUPLED)
 ! ---  import from ice
       logical cpl_sic, cpl_sitx, cpl_sity, cpl_siqs, cpl_sifh, &
               cpl_sifs, cpl_sifw, cpl_sit, cpl_sih, cpl_siu, &
               cpl_siv
-
-
 #if defined(RELO)
       real, target, allocatable,dimension (:,:) :: &
-             sic_import, & !Sea Ice Concentration
-            sitx_import, & !Sea Ice X-Stress
-            sity_import, & !Sea Ice Y-Stress
-            siqs_import, & !Solar Heat Flux thru Ice to Ocean
-            sifh_import, & !Ice Freezing/Melting Heat Flux
-            sifs_import, & !Ice Freezing/Melting Salt Flux
-            sifw_import, & !Ice Net Water Flux
-             sit_import, & !Sea Ice Temperature
-             sih_import, & !Sea Ice Thickness
-             siu_import, & !Sea Ice X-Velocity
-             siv_import    !Sea Ice Y-Velocity
-
-#else
+#else 
       real, target, dimension (1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy) :: &
+#endif
              sic_import, & !Sea Ice Concentration
             sitx_import, & !Sea Ice X-Stress
             sity_import, & !Sea Ice Y-Stress
@@ -884,7 +868,8 @@
              sih_import, & !Sea Ice Thickness
              siu_import, & !Sea Ice X-Velocity
              siv_import    !Sea Ice Y-Velocity
-#endif
+! --- import from coupler
+      real ocn_cpl_frq
 
 #endif /* USE_NUOPC_GENERIC */
 
@@ -905,8 +890,6 @@
 ! --- NUOPC glue code structures
 ! --- tripolar grid
       logical ltripolar
-! --- import from coupler
-      real ocn_cpl_frq
 ! --- precipitation factor for coupled simulation
       real pcp_fact  ! always 1. : no precipiation adjustment
 #endif /* USE_NUOPC_CESMBETA */
@@ -1367,7 +1350,7 @@
               wflice = r_init
               wflfrz = 0.0     !diagnostic, icloan only
               sflice = r_init
-                si_c = r_init
+                si_c = 0.0 !r_init
                 si_h = r_init
                 si_t = r_init
                 si_u = r_init
@@ -1652,7 +1635,7 @@
       endif !mxlgiss
 !
 
-#if defined (USE_NUOPC_GENERIC)
+#if defined (USE_NUOPC_GENERIC) && !defined (DMI_CICE_COUPLED)
 #if defined(RELO)
       allocate( &
                 sic_import(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy), &
@@ -1683,13 +1666,12 @@
 
 #endif /* USE_NUOPC_GENERIC */
 
-#if ! defined (ESPC_COUPLE)
 #if defined(RELO)
       allocate( &
                    dhde(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy), &
                    dhdn(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy), &
-                   umxl(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy), &
-                   vmxl(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy), &
+                   uml(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy), &
+                   vml(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy), &
                     tml(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy), &
                     sml(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy)) 
       call mem_stat_add( 6*(idm+2*nbdy)*(jdm+2*nbdy) )
@@ -1697,11 +1679,10 @@
 
                 dhde = 0.d0
                 dhdn = 0.d0
-                umxl = 0.d0
-                vmxl = 0.d0
-                 tml = 0.d0
-                 sml = 0.d0
-#endif
+                uml = 0.d0
+                vml = 0.d0
+                tml = 0.d0
+                sml = 0.d0
 
 #if defined (USE_NUOPC_CESMBETA)
 #if defined(RELO)
@@ -1746,7 +1727,7 @@
                 imp_orivers(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy,2), &
                  imp_surtmp(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy,2), &
                  imp_seatmp(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy,2) )
-      call mem_stat_add( 16*(idm+2*nbdy)*(jdm+2*nbdy)*(2) )
+      call mem_stat_add( 18*(idm+2*nbdy)*(jdm+2*nbdy)*(2) )
 #  endif
 
                   imp_taux = 0.d0

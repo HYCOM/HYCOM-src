@@ -1,8 +1,4 @@
-#if defined (USE_NUOPC_CESMBETA)
-      subroutine blkdat(hycom_start_dtg)
-#else
-      subroutine blkdat
-#endif
+      subroutine blkdat(linit)
       use mod_xc         ! HYCOM communication interface
       use mod_cb_arrays  ! HYCOM saved arrays
       use mod_incupd     ! HYCOM incremental update (for data assimilation)
@@ -17,25 +13,12 @@
       integer   k,kdmblk,mlflag,thflag,trcflg1
       integer   lngblk
       character sigfmt*26
-#if defined (USE_NUOPC_CESMBETA)
-      real,         intent(in):: hycom_start_dtg
-#endif
+      logical   linit
 !
 # include "stmt_fns.h"
 !
 ! --- initialize common variables.
 !
-#if defined(OCEANS2)
-      if     (nocean.eq.2) then
-! ---   slave HYCOM works from ./OCEAN2
-        flnminp = './OCEAN2/'
-      else
-! ---   master HYCOM
-        flnminp = './'
-      endif
-#else
-      flnminp = './'
-#endif
       open(unit=uoff+99,file=trim(flnminp)//'blkdat.input')  !on all nodes
 !
 ! --- 'lp' = logical unit number for printer output
@@ -2235,14 +2218,7 @@
 !
 ! --- initialize from climatology (update relaxf and relaxs)?
       if     (iniflg.eq.2) then
-#if defined (USE_NUOPC_CESMBETA)
-          day1 = hycom_start_dtg
-#else
-        open(unit=uoff+99,file=trim(flnminp)//'limits')  !on all nodes
-        read(uoff+99,*) day1
-        close(unit=uoff+99) !file='limits'
-#endif /* USE_NUOPC_CESMBETA */
-        if     (day1.le.0.0) then
+        if     (linit) then
           relaxf = .true.
           relaxs = .false.
         endif !initialize from climatology
