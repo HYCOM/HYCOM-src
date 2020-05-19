@@ -3637,7 +3637,7 @@
 ! --- end of coupling sequence
       ! stepable end-of-run condition
       ! endtime present means that "end_of_run_cpl" needs to be set correctly
-#if defined (DMI_CICE_COUPLEd)
+#if defined (DMI_CICE_COUPLED)
       end_of_run_cpl = .true.
 #else
       nstep2_cpl=nint(endtime*(86400.0d0/baclin))
