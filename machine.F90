@@ -23,6 +23,19 @@
       return
       end
 #endif /* AIX */
+#if defined(POWER9)
+      subroutine flush(iunit)
+      implicit none
+      integer iunit
+!
+! --- wrapper for flush system call under Power9.
+!
+      integer*4 iunit4
+!
+      iunit4=iunit
+      flush(iunit4)
+      end
+#endif /* POWER9 */
 #if defined(X1)
       subroutine x1flush(iunit)
       implicit none
