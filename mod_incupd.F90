@@ -521,11 +521,12 @@
         enddo
       endif
 !
-      call rd_archive(ubinc, cfield,layer, 925)  !u_btrop or covice or mix_dpth or kemix
-      if     (cfield.eq.'mix_dpth' .or. cfield.eq.'kemix') then
-! ---   archive contains 'steric  '
-        call rd_archive(ubinc, cfield,layer, 925)  !u_btrop or covice
-      endif
+      do
+        call rd_archive(ubinc, cfield,layer, 925)
+        if     (cfield.eq.'covice  ' .or. cfield.eq.'u_btrop ') then
+          exit
+        endif
+      enddo !found u_btrop or covice
       if     (mnproc.eq.1) then
       write(lp,'(2a)') "surface: ",cfield
       endif
@@ -1008,11 +1009,12 @@
         call zaiosk(925)
       enddo
 !
-      call rd_archive(ubinc, cfield,layer, 925)  !u_btrop or covice or kemix
-      if     (cfield.eq.'kemix') then
-! ---   archive contains 'steric  '
-        call rd_archive(ubinc, cfield,layer, 925)  !u_btrop or covice
-      endif
+      do
+        call rd_archive(ubinc, cfield,layer, 925)
+        if     (cfield.eq.'covice  ' .or. cfield.eq.'u_btrop ') then
+          exit
+        endif
+      enddo !found u_btrop or covice
       if     (mnproc.eq.1) then
       write(lp,'(2a)') "surface: ",cfield
       endif
@@ -1447,3 +1449,5 @@
 !> Jul  2017 - bugfix for steric in archive
 !> Aug  2017 - incupf -ve to write a restart after each update completes
 !> Sep  2017 - added subroutine stfupd
+!> Apr  2020 - utotij bugfix in subroutine stfupd
+!> Apr  2020 - allow for extra surface fields in incupd archive input
