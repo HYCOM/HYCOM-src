@@ -2316,7 +2316,7 @@
 
       subroutine xcspmd(mpi_comm_vm)
       implicit none
-      integer, optional ::  mpi_comm_vm
+      integer, intent(in), optional ::  mpi_comm_vm
 !
 !**********
 !*

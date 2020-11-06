@@ -772,8 +772,9 @@
       return
       end subroutine xcminr_1o
 
-      subroutine xcspmd
+      subroutine xcspmd(mpi_comm_vm)
       implicit none
+      integer, intent(in), optional ::  mpi_comm_vm
 !
 !**********
 !*
@@ -801,12 +802,17 @@
 !
 !     shared memory version, mproc=nproc=1.
 !
+      lp = 6
+!
       if     (iqr.ne.1 .or. jqr.ne.1 .or. ijqr.ne.1) then
-        call xcstop('Error in xcspmd: must have iqr=jqr=ijqr=1')
+        call xchalt('Error in xcspmd: must have iqr=jqr=ijqr=1')
                stop '(xcspmd)'
       endif
 !
-      lp = 6
+      if     (present(mpi_comm_vm)) then
+        call xchalt('Error in xcspmd: mpi_comm_vm is not allowed')
+               stop '(xcspmd)'
+      endif
 !
       ipr    = 1
       jpr    = 1
@@ -1627,3 +1633,4 @@
 !> Apr. 2012 - added optional mnflg to xceget and xceput
 !> Apr. 2012 - added xciget and xciput
 !> Oct. 2019 - added xcsumr
+!> Nov. 2020 - added mpi_comm_vm to xcspmd for compatibility with mpi version

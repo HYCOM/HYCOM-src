@@ -1087,7 +1087,6 @@
       real(8),         intent(in), optional :: hycom_end_dtg
       character*80, intent(in), optional :: pointer_filename
       logical       restart_cpl
-      integer :: mpi_comm_ocean,istat
 #endif /* USE_ESMF4:USE_NUOPC_CESMBETA:else */
 #if defined(USE_NUOPC_CESMBETA)
       real :: ssh_n,ssh_s,ssh_e,ssh_w,dhdx,dhdy
@@ -1134,14 +1133,10 @@
 #else
 ! --- initialize hycom message passing.
       if (present(mpiCommunicator)) then
-         call MPI_Comm_Dup(mpiCommunicator,mpi_comm_ocean,istat)
-         call xcspmd(mpi_comm_ocean)
+         call xcspmd(mpiCommunicator)
       else
 ! --- initialize SPMD processsing
          call xcspmd
-! avoid computer warnings not used
-          mpi_comm_ocean = 0
-          istat = 0 
       endif
 #endif
 ! --- initialize timer names.
@@ -4068,3 +4063,4 @@
 !> Dec. 2018 - added /* ESPC_COUPLE */ macro for coupling with NAVYESPC
 !> Feb. 2019 - replaced onetai by 1.0
 !> Sep. 2019 - added oneta0
+!> Nov. 2020 - removed call to MPI_Comm_Dup, duplicative of call in xcspmd
