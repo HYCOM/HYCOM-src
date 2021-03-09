@@ -1077,6 +1077,7 @@
       type(ESMF_State)     :: expState
       type(ESMF_Clock)     :: extClock
       integer, intent(out) :: rc
+      logical       restart_cpl
 #else 
       subroutine HYCOM_Init &
                   (mpiCommunicator,hycom_start_dtg,hycom_end_dtg, &
@@ -1187,6 +1188,7 @@
 
 ! --- model is to be integrated from time step 'nstep1' to 'nstep2'
 ! either get time from coupler or read from limits
+#if ! defined (USE_ESMF4)
       if ((present(hycom_start_dtg)) .and. (present(hycom_end_dtg))) then
          day1 = hycom_start_dtg
          day2 = hycom_end_dtg
@@ -1207,6 +1209,16 @@
         read(      uoff+99,*) day1,day2
         close(unit=uoff+99)
       endif
+#else
+         if (mnproc.eq.1) then
+         write(lp,*)  trim(flnminp)//'limits'
+         call flush(lp)
+        endif !1st tile
+        open( unit=uoff+99,file=trim(flnminp)//'limits')
+        read(      uoff+99,*) day1,day2
+        close(unit=uoff+99)
+#endif
+
 ! --- non-positive day1 indicates a new initialization, or
 ! --- the start of a yrflag==3 case.
       linit =day1.le.0.0
@@ -1544,6 +1556,7 @@
 ! ---   start from restart file
 !
         restart_cpl = .false.
+#if ! defined (USE_ESMF4)
         if (present(pointer_filename)) then
           open(1,file=trim(pointer_filename),form='formatted', &
                  status='old')
@@ -1551,6 +1564,7 @@
           close(1)
           restart_cpl = .true.
         endif
+#endif
         flnmra = trim(flnmrsi)//'.a'
         flnmrb = trim(flnmrsi)//'.b'
         call restart_in(nstep0,dtime0, flnmra,flnmrb,restart_cpl)
@@ -3798,11 +3812,15 @@
 #endif /* USE_NUOPC_CESMBETA */
 ! --- restart
 !TILL 28/3  I am a bit in doubt here whether it is correct
+      restart_cpl = .false.
+# if ! defined (USE_ESMF4)
       if (present(restart_write) ) then
           restart_cpl = restart_write .and. end_of_run_cpl
       else
           restart_cpl = .false.
       endif
+#endif /* ! USE_ESMF4 */
+
       if (restrt .or. restart_cpl) then
 
         call xctmr0(51)
@@ -3833,6 +3851,8 @@
         endif !1st tile
 !
         if (restart_cpl) then
+#if ! defined (USE_ESMF4)
+!!Alex Note: pointer_filename not defined for USE_ESMF4 ...
           write(flnmra,'(a,i4.4,a,i3.3,a,i2.2)') &
                       &'restart_', iyear,'-',jday,'-',ihour
           open(1,file=trim(pointer_filename),form='formatted', &
@@ -3840,6 +3860,7 @@
           write(1,'(a)')trim(flnmra)
           close(1)
           flnmrb = trim(flnmra)
+#endif
         else
           flnmra = flnmrso  !.a extension added by restart_out
           flnmrb = flnmrso  !.b extension added by restart_out
@@ -3847,6 +3868,7 @@
 !
         call restart_out(nstep,dtime, flnmra,flnmrb, nstep.ge.nstep2, &
                          restart_cpl )
+
 !
 ! ---   set layer thickness (incl.bottom pressure) at u,v points
 ! ---   needed because restart_out may have modified dp
