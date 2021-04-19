@@ -4548,8 +4548,13 @@
           un1min(lslot) = un1min(lslot) - 0.1
           un1max(lslot) = un1max(lslot) + 0.1
         else
-          call rd_archive(    unest(1-nbdy,1-nbdy,k,lslot), &
-                                           cfield,layer, 920)
+          do !skip tracers
+            call rd_archive(unest(1-nbdy,1-nbdy,k,lslot), &
+                            cfield,layer, 920)
+            if     (cfield.eq.'u-vel.  ') then
+              exit
+            endif 
+          enddo !skip
         endif !k==1:else
         if     (cfield.ne.'u-vel.  ') then
           if     (mnproc.eq.1) then
@@ -4979,3 +4984,4 @@
 !> Oct  2019 - optionally mask nest velocities if outside near-surface range
 !> Oct  2019 - added a CPP macro to set lmask_rdnest
 !> Feb  2020 - read relax.ssh.b and relax.montg.b, which use ":" before min,max
+!> Mar  2021 - skip tracers in nest archive files
