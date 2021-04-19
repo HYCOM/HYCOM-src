@@ -1903,6 +1903,7 @@
         endif !1st tile
         call preambl_print(preambl)
         call rdmonth(rmu, 915)
+        call xctilr( rmu,1,1, nbdy,nbdy, halo_ps)
         if     (mnproc.eq.1) then  ! .b file from 1st tile only
         close (unit=uoff+915)
         endif
@@ -4985,3 +4986,4 @@
 !> Oct  2019 - added a CPP macro to set lmask_rdnest
 !> Feb  2020 - read relax.ssh.b and relax.montg.b, which use ":" before min,max
 !> Mar  2021 - skip tracers in nest archive files
+!> Apr  2021 - update the halo of rmu
