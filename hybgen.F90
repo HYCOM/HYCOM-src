@@ -40,8 +40,6 @@
 !diag   p(itest,jtest,k+1)*qonem,k=1,kk)
 !diag endif
 !
-      call xctilr(dpmixl( 1-nbdy,1-nbdy,  n),1, 1, 1,1, halo_ps)
-!
 !$OMP PARALLEL DO PRIVATE(j) &
 !$OMP              SHARED(m,n) &
 !$OMP          SCHEDULE(STATIC,jblk)
@@ -2788,3 +2786,4 @@
 !> Aug. 2015 - entrain into too dense layer (only move upper interface up)
 !> Aug. 2015 - allow entrainment to increase fixlay by 1
 !> Nov. 2019 - avoid overflow in calculation of qdep
+!> May  2021 - removed unneeded dpmixl halo update
