@@ -1786,14 +1786,9 @@
 ! ---   actual e-folding time is (dpmixl(i,j,n)/(thkmlt*onem))/rmut
 ! ---   in shallow water this is (dpmixl(i,j,n)/p(i,j,kk+1)  )/rmut
         if     (sstflg.eq.1) then !climatological sst
-        if     (natm.eq.2) then
-          sstdif = ( twall(i,j,1,lc0)*wc0+twall(i,j,1,lc1)*wc1) - &
-                   temp(i,j,1,n)
-          else
           sstdif = ( twall(i,j,1,lc0)*wc0+twall(i,j,1,lc1)*wc1 &
                     +twall(i,j,1,lc2)*wc2+twall(i,j,1,lc3)*wc3) - &
                    temp(i,j,1,n)
-          endif !natm
         else  !synoptic sst
           if(cpl_seatmp) then
             sstdif = imp_seatmp(i,j,1) - temp(i,j,1,n)
@@ -2272,3 +2267,4 @@
 !> Sep. 2019 - added oneta0
 !> Oct. 2019 - rmunv replaced with rmunvu and rmunvv
 !> Nov. 2019 - added amoflg
+!> May  2021 - bug fix: removed natm from sstflg=1
