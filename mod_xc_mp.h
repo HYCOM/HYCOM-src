@@ -2392,7 +2392,7 @@
 ! ---   two copies of HYCOM on distinct MPI tasks, master/slave via mod_pipe.
         call mpi_init(mpierr)
         call mpi_comm_rank(mpi_comm_world, mypei, mpierr)
-        open(unit=uoff+99,file='./patch.input', iostat=ios)
+        open(unit=uoff+99, file='./patch.input', iostat=ios, status='old')
         if     (ios.ne.0) then
           if     (mypei.eq.0) then
             write(6,'(a)') "xcspmd: can't open ./patch.input"
@@ -2518,15 +2518,15 @@
 !
 #if defined(OCEANS2)
       if     (nocean.eq.2) then
-        open(unit=uoff+99,file="./OCEAN2/patch.input", &
-             iostat=ios)
+        open(unit=uoff+99, file="./OCEAN2/patch.input", &
+             iostat=ios, status='old')
       else
-        open(unit=uoff+99,file='./patch.input', &
-             iostat=ios)
+        open(unit=uoff+99, file='./patch.input', &
+             iostat=ios, status='old')
       endif
 #else
       open(unit=uoff+99,file='./patch.input', &
-           iostat=ios)
+           iostat=ios, status='old')
 #endif
       if     (ios.ne.0) then
         call xcstop('xcspmd: error opening patch.input')
