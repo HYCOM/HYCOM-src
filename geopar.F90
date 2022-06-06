@@ -673,6 +673,7 @@
 !
 !       assumes that reference states 1 and 3 are never next to each other.
 !
+        util2(:,:) = -99.0  !otherwise ii(jj)+1 to i(j)dm are NaN
         do j= 1,jj
           do i= 1,ii
             if     (max(util1(i,  j), &
