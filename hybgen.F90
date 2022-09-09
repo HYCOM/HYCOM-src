@@ -208,7 +208,7 @@
       double precision asum(  mxtrcr+4,3)
       real             offset(mxtrcr+4)
 !
-      logical lcm(kdm)             !use PCM for some layers?
+      logical lcm(kdm)                !use PCM for some layers?
       real    s1d(kdm,mxtrcr+4),    & !original scalar fields
               f1d(kdm,mxtrcr+4),    & !final    scalar fields
               c1d(kdm,mxtrcr+4,3),  & !interpolation coefficients
@@ -218,7 +218,9 @@
               prsf(kdm+1),          & !final    layer interfaces
               qhrlx( kdm+1),        & !relaxation coefficient, from qhybrlx
               dp0ij( kdm),          & !minimum layer thickness
-              dp0cum(kdm+1)        !minimum interface depth
+              dp0cum(kdm+1)           !minimum interface depth
+      real    rthin                   !ratio dp.k/dp.k+1 to be "thin"
+      logical ltop                    !modify top layer
       real    p_hat,p_hat0,p_hat2,p_hat3,hybrlx, &
               delt,deltm,dels,delsm,q,qdep,qtr,qts,thkbop, &
               zthk,dpthin
@@ -248,6 +250,8 @@
       dpthin = 0.001*onemm
       thkbop = thkbot*onem
       hybrlx = 1.0/qhybrlx
+!
+      rthin  = hybthn  !=1.0 -> use thickness alone to select between layers
 !
       if (mxlmy) then
         nums1d = ntracr + 4
@@ -935,12 +939,26 @@
 ! ---       try to dilute with water from layer k-1
 ! ---       do not move interface if k = fixlay + 1
 !
-            if (th3d(i,j,k-1,n).ge.theta(i,j,k-1) .or. &
-                p(i,j,k).le.dp0cum(k)+onem .or. &
-                p(i,j,k+1)-p(i,j,k).le.p(i,j,k)-p(i,j,k-1)) then
 !
-! ---         if layer k-1 is too light, thicken the thinner of the two,
-! ---         i.e. skip this layer if it is thicker.
+! ---       rthin = use density anomaly to select layer unless
+! ---               other layer is thin based on rthin
+! ---       ltop  = select top, k-1, layer
+            if     (rthin*(p(i,j,k)  -p(i,j,k-1)).le. &
+                          (p(i,j,k+1)-p(i,j,k)  )    ) then
+              ltop = .true.   !top layer is relatively thin
+            elseif (rthin*(p(i,j,k+1)-p(i,j,k)  ).le. &
+                          (p(i,j,k)  -p(i,j,k-1))    ) then
+              ltop = .false.  !bottom layer is relatively thin
+            else
+              ltop = theta(i,j,k-1)  - th3d(i,j,k-1,n) .ge. &
+                      th3d(i,j,k  ,n)-theta(i,j,k)  ! larger top anomaly
+            endif
+            if (th3d(i,j,k-1,n).ge.theta(i,j,k-1) .or. .not.ltop .or. &
+                p(i,j,k).le.dp0cum(k)+onem) then
+!
+! ---         if layer k-1 is too light, thicken the relatively
+! ---         thin layer or the relatively larger density anomaly,
+! ---         i.e. skip if ltop
 !
 !diag         if (i.eq.itest .and. j.eq.jtest) then
 !diag           write(lp,'(a,3x,i2.2,1pe13.5)') &
@@ -1052,6 +1070,18 @@
 !diag           call flush(lp)
 !diag         endif !debug
 !
+!diag       else !skip vs k-1
+!diag         if (i.eq.itest .and. j.eq.jtest) then
+!diag           if     (rthin*(p(i,j,k)  -p(i,j,k-1)).le. &
+!diag                         (p(i,j,k+1)-p(i,j,k)  )    ) then
+!diag             write(lp,'(a,3x,i2.2,a)') &
+!diag                 'hybgen, too dense:',k,' skipped vs k-1 thk'
+!diag           else
+!diag             write(lp,'(a,3x,i2.2,a)') &
+!diag                 'hybgen, too dense:',k,' skipped vs k-1 den'
+!diag           endif
+!diag           call flush(lp)
+!diag         endif !debug
             endif  !too-dense adjustment
 !
           elseif (th3d(i,j,k,n).lt.theta(i,j,k)-epsil) then   ! layer too light
@@ -1061,13 +1091,26 @@
 ! ---       do not entrain if layer k touches bottom
 !
             if (p(i,j,k+1).lt.p(i,j,kk+1)) then  ! k<kk
-              if (th3d(i,j,k+1,n).le.theta(i,j,k+1) .or. &
-                  p(i,j,k+1).le.dp0cum(k+1)+onem    .or. &
-                  p(i,j,k+1)-p(i,j,k).lt.p(i,j,k+2)-p(i,j,k+1)) then
 !
-! ---           if layer k+1 is too dense, thicken the thinner of the 
-! ---           two, i.e. skip this layer (never get here) if it is not 
-! ---           thinner than the other.
+! ---         rthin = use density anomaly to select layer unless
+! ---                 other layer is thin based on rthin
+! ---         ltop  = select top, k, layer
+              if     (rthin*(p(i,j,k+1)-p(i,j,k)  ).le. &
+                            (p(i,j,k+2)-p(i,j,k+1))    ) then
+                ltop = .true.   !top layer is relatively thin
+              elseif (rthin*(p(i,j,k+2)-p(i,j,k+1)).le. &
+                            (p(i,j,k+1)-p(i,j,k)  )    ) then
+                ltop = .false.  !bottom layer is relatively thin
+              else
+                ltop = theta(i,j,k)    - th3d(i,j,k,n) .ge. &
+                        th3d(i,j,k+1,n)-theta(i,j,k+1)  ! larger top anomaly
+              endif
+              if (th3d(i,j,k+1,n).le.theta(i,j,k+1) .or. ltop .or. &
+                  p(i,j,k+1).le.dp0cum(k+1)+onem) then
+!
+! ---           if layer k+1 is too dense, thicken the relatively
+! ---           thin layer or the relatively larger density anomaly
+! ---           i.e. skip if .not. ltop
 !
 !diag           if (i.eq.itest .and. j.eq.jtest) then
 !diag             write(lp,'(a,3x,i2.2,1pe13.5)') &
@@ -1114,6 +1157,18 @@
 !diag             call flush(lp)
 !diag           endif !debug
 !
+!diag         else !skip vs k+1
+!diag           if (i.eq.itest .and. j.eq.jtest) then
+!diag             if     (rthin*(p(i,j,k+2)-p(i,j,k+1)).le. &
+!diag                           (p(i,j,k+1)-p(i,j,k)  )    ) then
+!diag               write(lp,'(a,3x,i2.2,a)') &
+!diag                   'hybgen, too light:',k,' skipped vs k+1 thk'
+!diag             else
+!diag               write(lp,'(a,3x,i2.2,a)') &
+!diag                   'hybgen, too light:',k,' skipped vs k+1 den'
+!diag             endif
+!diag             call flush(lp)
+!diag           endif !debug
               endif !too-light adjustment
             endif !above bottom
           endif !too dense or too light
@@ -2787,3 +2842,4 @@
 !> Aug. 2015 - allow entrainment to increase fixlay by 1
 !> Nov. 2019 - avoid overflow in calculation of qdep
 !> May  2021 - removed unneeded dpmixl halo update
+!> July 2022 - added hybthn (rthin)

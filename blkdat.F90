@@ -838,6 +838,9 @@
 !                 (1.0 for no relaxation)
 ! --- 'hybiso' = HYBGEN: Use PCM if layer is within hybiso of target density
 !                 (0.0 for no PCM; large to recover pre-2.2.09 behaviour)
+! --- 'hybthn' = HYBGEN: ratio of layer thicknesses to select the thiner
+!                 (1.0 for original behaviour, i.e. key only on thickness;
+!                  5.0 to favor the larger density anomaly over thickness)
 ! --- 'hybmap' = HYBGEN:  remapper  flag (0=PCM, 1=PLM,    2=PPM,  3=WENO-like)
 ! --- 'hybflg' = HYBGEN:  generator flag (0=T&S, 1=th&S,   2=th&T)
 ! --- 'advflg' = thermal  advection flag (0=T&S, 1=th&S,   2=th&T)
@@ -874,6 +877,7 @@
       call blkinl(hybraf,'hybraf')
       call blkinr(hybrlx,'hybrlx','(a6," =",f10.4," time steps")')
       call blkinr(hybiso,'hybiso','(a6," =",f10.4," kg/m^3")')
+      call blkinr(hybthn,'hybthn','(a6," =",f10.4," ")')
       call blkini(hybmap,'hybmap')
       call blkini(hybflg,'hybflg')
       call blkini(advflg,'advflg')
@@ -911,6 +915,16 @@
                stop '(blkdat)'
       endif
       qhybrlx = 1.0/hybrlx
+!
+      if (hybthn.lt.1.0) then
+        if (mnproc.eq.1) then
+        write(lp,'(/ a /)')  &
+         &'error - hybthn must be at least 1.0'
+        call flush(lp)
+        endif !1st tile
+        call xcstop('(blkdat)')
+               stop '(blkdat)'
+      endif
 !
       if (btrmas .and. .not.btrlfr) then
         if (mnproc.eq.1) then
@@ -2616,3 +2630,4 @@
 !> Sep. 2019 - added oneta0
 !> Oct. 2019 - added lbmont
 !> Nov. 2019 - added wndflg=-4,-5 and amoflg
+!> Sep. 2022 - added hybthn
