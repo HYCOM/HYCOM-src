@@ -4003,34 +4003,22 @@
         call xcstop('(rdbaro_in)')
                stop '(rdbaro_in)'
       endif
-      call zagetc(cline,ios, uoff+921)  !steric or surflx
-      call zaiosk(921)
-      if     (cline(1:8).eq.'steric  ') then  !surflx
-        if     (mnproc.eq.1) then  ! .b file from 1st tile only
-          read (uoff+921,*)
-        endif
+      do !skip to salflx
+        call zagetc(cline,ios, uoff+921) !steric/oneta/surflx/wtrflx/salflx
         call zaiosk(921)
-      endif
+        if     (cline(1:8).eq.'salflx  ') then  !salflx
+          exit
+        endif 
+      enddo !skip
       if     (nodens) then
-        call zagetc(cline,ios, uoff+921)  !wtrflx or salflx
-        call zaiosk(921)
-        if     (cline(1:8).eq.'wtrflx  ') then
-          do i= 1,3 !salflx,dpbl,dpmixl
-            if     (mnproc.eq.1) then  ! .b file from 1st tile only
-              read (uoff+921,*)
-            endif
-            call zaiosk(921)
-          enddo
-        else  !.eq.salflx
-          do i= 1,2 !dpbl,dpmixl
-            if     (mnproc.eq.1) then  ! .b file from 1st tile only
-              read (uoff+921,*)
-            endif
-            call zaiosk(921)
-          enddo
-        endif !wtrflx/salflx
+        do i= 1,2 !dpbl,dpmixl
+          if     (mnproc.eq.1) then  ! .b file from 1st tile only
+            read (uoff+921,*)
+          endif
+          call zaiosk(921)
+        enddo
       else
-        do i= 1,8 !salflx,dpbl,dpmixl,tmix,smix,thmix,umix,vmix
+        do i= 1,7 !dpbl,dpmixl,tmix,smix,thmix,umix,vmix
           if     (mnproc.eq.1) then  ! .b file from 1st tile only
             read (uoff+921,*)
           endif
@@ -4462,34 +4450,22 @@
         read (uoff+920,*)
       endif
       call zaiosk(920)                  !srfhgt
-      call zagetc(cline,ios, uoff+920)  !steric or surflx
-      call zaiosk(920)
-      if     (cline(1:8).eq.'steric  ') then  !surflx
-        if     (mnproc.eq.1) then  ! .b file from 1st tile only
-          read (uoff+920,*)
-        endif
+      do !skip to salflx
+        call zagetc(cline,ios, uoff+920) !steric/oneta/surflx/wtrflx/salflx
         call zaiosk(920)
-      endif
+        if     (cline(1:8).eq.'salflx  ') then  !salflx
+          exit
+        endif 
+      enddo !skip
       if     (nodens) then
-        call zagetc(cline,ios, uoff+920)  !wtrflx or salflx
-        call zaiosk(920)
-        if     (cline(1:8).eq.'wtrflx  ') then
-          do i= 1,3 !salflx,dpbl,dpmixl
-            if     (mnproc.eq.1) then  ! .b file from 1st tile only
-              read (uoff+920,*)
-            endif
-            call zaiosk(920)
-          enddo
-        else  !.eq.salflx
-          do i= 1,2 !dpbl,dpmixl
-            if     (mnproc.eq.1) then  ! .b file from 1st tile only
-              read (uoff+920,*)
-            endif
-            call zaiosk(920)
-          enddo
-        endif !wtrflx/salflx
+        do i= 1,2 !dpbl,dpmixl
+          if     (mnproc.eq.1) then  ! .b file from 1st tile only
+            read (uoff+920,*)
+          endif
+          call zaiosk(920)
+        enddo
       else
-        do i= 1,8 !salflx,dpbl,dpmixl,tmix,smix,thmix,umix,vmix
+        do i= 1,7 !dpbl,dpmixl,tmix,smix,thmix,umix,vmix
           if     (mnproc.eq.1) then  ! .b file from 1st tile only
             read (uoff+920,*)
           endif
@@ -4987,3 +4963,4 @@
 !> Feb  2020 - read relax.ssh.b and relax.montg.b, which use ":" before min,max
 !> Mar  2021 - skip tracers in nest archive files
 !> Apr  2021 - update the halo of rmu
+!> Nov  2022 - skip oneta in nest archive files
