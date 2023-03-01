@@ -3370,7 +3370,7 @@
       real*8     zero8
       parameter (zero8=0.0)
 !
-      real*8  sum8
+      real*8  sum8, sum8s
       real    vsave
       integer i,i1,j,l,mp,np
 #if defined(TIMER)
