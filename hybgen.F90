@@ -341,7 +341,7 @@
           endif
           qhrlx( k+1)=1.0/(1.0 + qts*(hybrlx-1.0))  !1 at  dp0k, qhybrlx at dp00i
           dp0ij( k)  =min( q, dp0k(k) )
-          dp0cum(k+1)=dp0cum(k)+dp0ij(k)
+          dp0cum(k+1)=dp0cum(k)+dp0k(k)
           p(i,j, k+1)=p(i,j,k)+dp(i,j,k,n)
 !diag         if (i.eq.itest .and. j.eq.jtest) then
 !diag           write (lp,'(i6,1x,6f9.3)') &
@@ -2843,3 +2843,4 @@
 !> Nov. 2019 - avoid overflow in calculation of qdep
 !> May  2021 - removed unneeded dpmixl halo update
 !> July 2022 - added hybthn (rthin)
+!> Feb. 2023 - bugfix to dp0cum
