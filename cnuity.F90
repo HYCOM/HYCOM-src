@@ -532,21 +532,6 @@
               enddo !i
             enddo !j
             call xcsync(flush_lp)
-            if     (dpmin.lt.dpfatal*onem) then
-              do j=1,jj
-                do i=1,ii
-                  if (SEA_P) then
-                    if (dpo(i,j,k,m).lt.dpfatal*onem .and. &
-                        iprint.le.5) then
-                      write (lp,100) nstep,i+i0,j+j0,k,19, &
-                                     dpo(i,j,k,m)*qonem,' fatal'
-                      iprint = iprint + 1
-                    endif
-                  endif !ip
-                enddo !i
-              enddo !j
-              call xcsync(flush_lp)
-            endif !dpfatal
           endif
         enddo !k
         do k= 1,kk
@@ -582,7 +567,7 @@
             endif !dpfatal
           endif
         enddo !k
-        if     (minval(dpkmin(1:2*kk)).lt.dpfatal*onem) then
+        if     (minval(dpkmin(kk+1:kk+kk)).lt.dpfatal*onem) then
           if     (mnproc.eq.1) then
             write(lp,'(/ a,f9.2 /)') &
               'error: neg. dp (m) < ',dpfatal
@@ -699,8 +684,6 @@
 !
       call pipe_comparall(m,n, 'cnui77, step')
 !
-      endif !.not.btrmas
-!
 ! --- check for negative thicknesses.
 !
       if     (mod(nstep,3).eq.0) then  !skip some time steps for efficiency
@@ -722,8 +705,6 @@
           endif
         enddo !k
       endif !every 3 time steps
-!
-      if  (.not.btrmas) then
 !
 ! --- add bottom-pressure restoring term arising from split-explicit treatment
 ! --- of continuity equation (step 4 in appendix b to 1992 brhs paper)
@@ -1467,3 +1448,4 @@
 !> Jan  2018 - spacially varying thkdf2 is now allowed
 !> Aug. 2018 - btrmas added, use onetamas to simplify logic
 !> Nov. 2018 - added oneta_u and oneta_v to correct and simplify logic
+!> Mar. 2023 - neg. dp in loop 19 is not fatal, might be corrected in loop 15

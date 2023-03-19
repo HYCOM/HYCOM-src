@@ -1052,12 +1052,25 @@
 !
       logical, parameter :: lpipe_momtum=.false.  !usually .false.
 !
+#if defined(MOMTUM_CFL)
+      logical, parameter :: momtum_cfl=.true.     !set by a CPP macro
+                                                  !include an explicit CFL limiter
+#else
+      logical, parameter :: momtum_cfl=.false.    !usually .false.
+                                                  !include an explicit CFL limiter
+#endif
+      real,    parameter :: clip_min=0.5          !minimum clipping to report
+!
 #if defined(RELO)
       real, save, allocatable, dimension(:,:) :: &
                        vis2u,vis4u,vis2v,vis4v,vort, &
                        wgtia,wgtib,wgtja,wgtjb, &
                        dl2u,dl2uja,dl2ujb,dl2v,dl2via,dl2vib, &
                        pnk0,pnkp,stresl
+      real, save, allocatable, dimension(:,:) :: &
+       uvjclp
+      real, save, allocatable, dimension(:) :: &
+       uvkmax
 #else
       real, dimension(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy) :: &
                        vis2u,vis4u,vis2v,vis4v,vort, &
@@ -1070,6 +1083,10 @@
                        dl2u,dl2uja,dl2ujb,dl2v,dl2via,dl2vib, &
                        pnk0,pnkp,stresl
       save  /momtumr4/
+      real, save, dimension(1-nbdy:jdm+nbdy,1:kdm) :: &
+       uvjclp
+      real, save, dimension(1:kdm) :: &
+       uvkmax=clip_min
 #endif
 !
 #if defined(STOKES)
@@ -1087,10 +1104,9 @@
 #endif
                   dvdzu,dudzu,dvdzv,dudzv,dzdx,dzdy
 !
-
       real    uatvk0,uatvkm,uatvkp,usd_v,vatuk0,vatukm,vatukp,vsd_u, &
               zbot,ztop
-
+!
 #endif /* STOKES */
       integer, save :: ifirst
 !
@@ -1101,6 +1117,7 @@
            dmontg,dthstr,dragu,dragv,qdpu,qdpv,dpthin, &
            dpun,uhm,uh0,uhp,dpvn,vhm,vh0,vhp,sum_m,sum_n
       real dp12,dp23,dp123,dp3m1,ql1,ql2,ql3
+      real cfl,uvclpm,uvclpn,uvkclp(kdm)
       integer i,ia,ib,j,ja,jb,k,ka,l,mbdy,ktop,kmid,kbot,margin
 !
 !     real*8    wtime
@@ -1159,6 +1176,16 @@
                   pnk0 = 0.0  !r_init
                   pnkp = 0.0  !r_init
                 stresl = 0.0  !r_init
+        if     (momtum_cfl) then
+          allocate( &
+                   uvjclp(1-nbdy:jdm+nbdy,1:kdm) )
+          call mem_stat_add( (jdm+2*nbdy)*kdm )
+                   uvjclp = 0.0
+          allocate( &
+                   uvkmax(1:kdm) )
+          call mem_stat_add( kdm )
+                   uvkmax = clip_min
+        endif !cfl
       endif !vis2u
 #if defined(STOKES)
       if     (.not.allocated(usdflux)) then
@@ -2927,16 +2954,31 @@
 ! --- extract barotropic velocities generated during most recent 
 ! --- baroclinic time step and use them to force barotropic flow field.
 !
+      if     (momtum_cfl) then
+        uvjclp(:,:) = 0.0
+      endif
+!
       margin = 0
 !
-!$OMP PARALLEL DO PRIVATE(j,i,k,q,sum_m,sum_n) &
+!$OMP PARALLEL DO PRIVATE(j,i,k,q,sum_m,sum_n,cfl,uvclpm,uvclpn) &
 !$OMP          SCHEDULE(STATIC,jblk)
       do j=1-margin,jj+margin
         do i=1-margin,ii+margin
+! ---     limit is conservative, so clipping occurs before CFL is exceedd
+          cfl = 0.707*0.5*min(scpx(i,j),scpy(i,j))/delt1
           if (SEA_U) then
             k=1
               u(i,j,k,m) = u(i,j,k,m)/max(dpu(i,j,k,m),dpthin)
               u(i,j,k,n) = u(i,j,k,n)/max(dpu(i,j,k,n),dpthin)
+              if     (momtum_cfl) then  !this should not be needed
+                uvclpm = abs(u(i,j,k,m))
+                uvclpn = abs(u(i,j,k,n))
+                u(i,j,k,m) = max( -cfl, min( cfl, u(i,j,k,m) ) )
+                u(i,j,k,n) = max( -cfl, min( cfl, u(i,j,k,n) ) )
+                uvclpm = uvclpm - abs(u(i,j,k,m))
+                uvclpn = uvclpn - abs(u(i,j,k,n))
+                uvjclp(j,k) = max( uvjclp(j,k), uvclpm, uvclpn)
+              endif !cfl
               sum_m      = u(i,j,k,m)*    dpu(i,j,k,m)
               sum_n      = u(i,j,k,n)*    dpu(i,j,k,n)
             do k=2,kk
@@ -2948,6 +2990,15 @@
               q          = min(dpu(i,j,k,n),cutoff)
               u(i,j,k,n) = (u(i,j,k,n)*q+u(i,j,k-1,n)*(cutoff-q))* &
                            qcutoff
+              if     (momtum_cfl) then  !this should not be needed
+                uvclpm = abs(u(i,j,k,m))
+                uvclpn = abs(u(i,j,k,n))
+                u(i,j,k,m) = max( -cfl, min( cfl, u(i,j,k,m) ) )
+                u(i,j,k,n) = max( -cfl, min( cfl, u(i,j,k,n) ) )
+                uvclpm = uvclpm - abs(u(i,j,k,m))
+                uvclpn = uvclpn - abs(u(i,j,k,n))
+                uvjclp(j,k) = max( uvjclp(j,k), uvclpm, uvclpn)
+              endif !cfl
               sum_m      = sum_m + u(i,j,k,m)*dpu(i,j,k,m)
               sum_n      = sum_n + u(i,j,k,n)*dpu(i,j,k,n)
             enddo !k
@@ -2966,6 +3017,15 @@
             k=1
               v(i,j,k,m) = v(i,j,k,m)/max(dpv(i,j,k,m),dpthin)
               v(i,j,k,n) = v(i,j,k,n)/max(dpv(i,j,k,n),dpthin)
+              if     (momtum_cfl) then  !this should not be needed
+                uvclpm = abs(v(i,j,k,m))
+                uvclpn = abs(v(i,j,k,n))
+                v(i,j,k,m) = max( -cfl, min( cfl, v(i,j,k,m) ) )
+                v(i,j,k,n) = max( -cfl, min( cfl, v(i,j,k,n) ) )
+                uvclpm = uvclpm - abs(v(i,j,k,m))
+                uvclpn = uvclpn - abs(v(i,j,k,n))
+                uvjclp(j,k) = max( uvjclp(j,k), uvclpm, uvclpn)
+              endif !cfl
               sum_m      = v(i,j,1,m)*    dpv(i,j,1,m)
               sum_n      = v(i,j,1,n)*    dpv(i,j,1,n)
             do k=2,kk
@@ -2977,6 +3037,15 @@
               q          = min(dpv(i,j,k,n),cutoff)
               v(i,j,k,n) = (v(i,j,k,n)*q+v(i,j,k-1,n)*(cutoff-q))* &
                            qcutoff
+              if     (momtum_cfl) then  !this should not be needed
+                uvclpm = abs(v(i,j,k,m))
+                uvclpn = abs(v(i,j,k,n))
+                v(i,j,k,m) = max( -cfl, min( cfl, v(i,j,k,m) ) )
+                v(i,j,k,n) = max( -cfl, min( cfl, v(i,j,k,n) ) )
+                uvclpm = uvclpm - abs(v(i,j,k,m))
+                uvclpn = uvclpn - abs(v(i,j,k,n))
+                uvjclp(j,k) = max( uvjclp(j,k), uvclpm, uvclpn)
+              endif !cfl
               sum_m      = sum_m + v(i,j,k,m)*dpv(i,j,k,m)
               sum_n      = sum_n + v(i,j,k,n)*dpv(i,j,k,n)
             enddo !k
@@ -2993,6 +3062,30 @@
         enddo !i
       enddo !j - do 30 loop
 !$OMP END PARALLEL DO
+!
+! --- check for velocity clipping at cfl limit
+!
+      if     (momtum_cfl .and. mod(nstep,3).eq.0) then  !skip some time steps for efficiency
+        do k= 1,kk
+          uvkclp(k) = 0.0
+          do j=1,jj
+            uvkclp(k) = max( uvkclp(k), uvjclp(j,k) )
+          enddo !j
+        enddo !k
+        call xcmaxr(uvkclp(1:kk))
+        do k= 1,kk
+          if     (uvkclp(k).gt.uvkmax(k)) then
+            if     (mnproc.eq.1) then
+              write(lp, &
+                '(i9,a,i3,a,f7.2,a)') &
+                nstep,' k=',k, &
+                ' velocty clipped, max=',uvkclp(k),' m/s'
+            endif !mnproc
+            uvkmax(k) = uvkclp(k)
+          endif
+        enddo !k
+        call xcsync(flush_lp)
+      endif !every 3 time steps
 !
       if     (lpipe .and. lpipe_momtum) then
 ! ---   compare two model runs.
@@ -5368,8 +5461,9 @@
 !$OMP          SCHEDULE(STATIC,jblk)
       do j=1-margin,jj+margin
         do i=1-margin,ii+margin
+! ---     limit is conservative, so clipping occurs before CFL is exceedd
+          cfl = 0.707*0.5*min(scpx(i,j),scpy(i,j))/delt1
           if (SEA_U) then
-            cfl = 0.5*min(scpx(i,j),scpy(i,j))/delt1
             k=1
               u(i,j,k,m) = u(i,j,k,m)/max(dpu(i,j,k,m),dpthin)
               u(i,j,k,n) = u(i,j,k,n)/max(dpu(i,j,k,n),dpthin)
@@ -5405,11 +5499,8 @@
 !
             utotn(i,j) = dt1inv*(sum_n - ubavg(i,j,n))  !for barotp
           endif !iu
-        enddo !i
 !
-        do i=1-margin,ii+margin
           if (SEA_V) then
-            cfl = 0.5*min(scpx(i,j),scpy(i,j))/delt1
             k=1
               v(i,j,k,m) = v(i,j,k,m)/max(dpv(i,j,k,m),dpthin)
               v(i,j,k,n) = v(i,j,k,n)/max(dpv(i,j,k,n),dpthin)
@@ -5594,3 +5685,4 @@
 !> Sep. 2019 - added momtum_init
 !> Oct. 2019 - placed momtum4_cfl in a CPP macro
 !> Nov. 2019 - added amoflg for U10 vs U10-Uocn
+!> Mar. 2023 - added momtum_cfl in a CPP macro
