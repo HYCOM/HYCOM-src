@@ -623,7 +623,11 @@
         p(i,j,k+1)=pij(k+1)
       enddo
       do k=kk,1,-1
+#if defined(MASSLESS_1MM)
+        if (dpmm(k).gt.onemm) then
+#else
         if (dpmm(k).gt.tencm) then
+#endif
           exit
         endif
       enddo
@@ -1835,7 +1839,11 @@
         p(i,j,k+1)=pij(k+1)
       enddo
       do k=kk,1,-1
+#if defined(MASSLESS_1MM)
+        if (dpmm(k).gt.onemm) then
+#else
         if (dpmm(k).gt.tencm) then
+#endif
           exit
         endif
       enddo
@@ -2117,7 +2125,11 @@
         p(i,j,k+1)=pij(k+1)
       enddo
       do k=kk,1,-1
+#if defined(MASSLESS_1MM)
+        if (dpmm(k).gt.onemm) then
+#else
         if (dpmm(k).gt.tencm) then
+#endif
           exit
         endif
       enddo
@@ -2366,7 +2378,11 @@
         p(i,j,k+1)=pij(k+1)
       enddo
       do k=kk,1,-1
+#if defined(MASSLESS_1MM)
+        if (dpmm(k).gt.onemm) then
+#else
         if (dpmm(k).gt.tencm) then
+#endif
           exit
         endif
       enddo
@@ -3389,7 +3405,11 @@
       nlayer=1
       presu=0.
       do k=1,kk
+#if defined(MASSLESS_1MM)
+        if (presu.lt.depthu(i,j)-onemm) then
+#else
         if (presu.lt.depthu(i,j)-tencm) then
+#endif
           diffm(k+1)=max(vcty(i,j,k+1),vcty(i-1,j,k+1))
           u1do(k)=u(i,j,k,n)
           hm(k)=max(onemm,dpu(i,j,k,n))*qonem
@@ -3506,7 +3526,11 @@
       nlayer=1
       presv=0.
       do k=1,kk
+#if defined(MASSLESS_1MM)
+        if (presv.lt.depthv(i,j)-onemm) then
+#else
         if (presv.lt.depthv(i,j)-tencm) then
+#endif
           diffm(k+1)=max(vcty(i,j,k+1),vcty(i,j-1,k+1))
           v1do(k)=v(i,j,k,n)
           hm(k)=max(onemm,dpv(i,j,k,n))*qonem
@@ -3765,3 +3789,4 @@
 !> Nov. 2018 - allow for wtrflx in buoyancy flux 
 !> Nov. 2018 - allow for oneta in swfrac and surface fluxes
 !> Dec  2018 - added /* USE_NUOPC_CESMBETA */ macro and riv_input
+!> Mar  2023 - added /* MASSLESS_1MM */ macro
