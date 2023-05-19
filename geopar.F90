@@ -11,7 +11,7 @@
 !
       real*4,  allocatable, dimension(:,:) :: g_sc
 !
-      real      dp0kf,dpm,dpms,ds0kf,dsm,dsms
+      real      dx0kf,dp0kf,dpm,dpms,ds0kf,dsm,dsms
       real      hmina,hminb,hmaxa,hmaxb
       real*8    sum_ip,sum_is,sum_isa
       integer   i,ios,j,k,ktr,l,nishlf
@@ -453,6 +453,42 @@
       endif
       call xcsync(flush_lp)
 !
+! --- calculate dx0k?
+      if     (dx00.gt.0.0) then
+! ---   logarithmic k-dependence of dx0
+        if     (mnproc.eq.1) then
+        write(lp,*)
+        write(lp,*)  'dx00  =',dx00
+        write(lp,*)  'dx00x =',dx00x
+        write(lp,*)  'dx00f =',dx00f
+        endif
+        call xcsync(flush_lp)
+!
+        dx00 =onem*dx00
+        dx00x=onem*dx00x
+        dx0k(1)=dx00
+!
+        dx0kf=1.0
+        do k=2,kk
+          dx0kf=dx0kf*dx00f
+          if     (mnproc.eq.1) then
+          write(lp,*)  'dx0kf =',dx0kf,k
+          endif
+          call xcsync(flush_lp)
+          dx0k(k)=min(dx00*dx0kf,dx00x)
+        enddo !k
+      else
+        do k=1,kk
+          dx0k(k)=onem*dx0k(k)
+        enddo !k
+      endif
+      if     (mnproc.eq.1) then
+      write(lp,*)
+      write(lp,125)  1,dx0k( 1)*qonem
+      write(lp,125) kk,dx0k(kk)*qonem
+      endif
+ 125  format('dx0k(',i2,') =',f7.2,' m')
+!
 ! --- calculate dp0k and ds0k?
       if     (dp00.lt.0.0) then
 ! ---   dp0k and ds0k already input
@@ -491,7 +527,7 @@
       else
 ! ---   calculate dp0k and ds0k
 !
-! ---   logorithmic k-dependence of dp0 (deep z's)
+! ---   logarithmic k-dependence of dp0 (deep z's)
         dp00 =onem*dp00
         dp00x=onem*dp00x
         dp00i=onem*dp00i
@@ -535,7 +571,7 @@
           call xcsync(flush_lp)
         enddo !k
 !
-! ---   logorithmic k-dependence of ds0 (shallow z-s)
+! ---   logarithmic k-dependence of ds0 (shallow z-s)
         ds00 =onem*ds00
         ds00x=onem*ds00x
         if     (isopyc) then
@@ -1013,7 +1049,7 @@
 !> Oct. 1999 - added code that defines the vertical distribution of dp0
 !>             used in hybgen
 !> Jan. 2000 - added mapflg logic for different projections
-!> Feb. 2000 - added dp00f for logorithmic z-level spacing
+!> Feb. 2000 - added dp00f for logarithmic z-level spacing
 !> Mar. 2000 - added dp00s for sigma-spacing in shallow water
 !> May  2000 - conversion to SI units (still wrong corio)
 !> Feb. 2001 - removed rotated grid option
@@ -1028,3 +1064,4 @@
 !> July 2017 - for momtum4, calculate accurate halos for sc[pq][xy]
 !> Aug. 2018 - initialize umix and vmix
 !> Dec. 2018 - add /* USE_NUOPC_CESMBETA */ macro for pang (for coupled simulation)
+!> Apr. 2023 - added dx0k

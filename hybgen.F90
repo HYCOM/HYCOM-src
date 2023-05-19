@@ -1190,6 +1190,20 @@
         endif !k.le.fixlay:else
 !
       enddo !k  vertical coordinate relocation
+
+      do k=1,kk-1
+        ! If layer is too thick, move interface up
+        if ((p(i,j,k+1)-p(i,j,k)) .gt. dx0k(k)) then
+          p(i,j,k+1)=p(i,j,k)+dx0k(k)
+!
+!diag     if (i.eq.itest .and. j.eq.jtest) then
+!diag       write(lp,'(a,i3.2,f8.2)') &
+!diag            'hybgen, max. thknss (k+):',k,p(i,j,k+1)*qonem
+!diag       call flush(lp)
+!diag     endif !debug
+        endif !dx0k
+      enddo !k  vertical coordinate relocation for maximum thickness
+
 !
 ! --- remap scalar field profiles from the 'old' vertical
 ! --- grid onto the 'new' vertical grid.
@@ -2844,3 +2858,4 @@
 !> May  2021 - removed unneeded dpmixl halo update
 !> July 2022 - added hybthn (rthin)
 !> Feb. 2023 - bugfix to dp0cum
+!> Apr. 2023 - added dx0k

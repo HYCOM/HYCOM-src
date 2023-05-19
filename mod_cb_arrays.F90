@@ -275,6 +275,7 @@
 #else
       real, save, dimension(kdm) ::  &
 #endif
+       dx0k,           & ! maximum layer thickness
        dp0k,           & ! minimum deep    z-layer separation
        ds0k              ! minimum shallow z-layer separation
 
@@ -710,6 +711,9 @@
 ! --- 'tmljmp' = equivalent temperature jump across the mixed layer (degC)
 ! --- 'prsbas' = msl pressure is input field + prsbas (Pa)
 ! --- 'salmin' = minimum salinity allowed in an isopycnic layer (psu)
+! --- 'dx00'   = maximum layer thickness minimum, optional (m)
+! --- 'dx00x'  = maximum layer thickness maximum, optional (m)
+! --- 'dx00f'  = maximum layer thickness stretching factor (1.0=const)
 ! --- 'dp00'   = deep    z-level spacing minimum thickness (m)
 ! --- 'dp00x'  = deep    z-level spacing maximum thickness (m)
 ! --- 'dp00f'  = deep    z-level spacing stretching factor (1.0=const.z)
@@ -783,6 +787,7 @@
                      sefold, &
                      thkmls,thkmlt,thkriv,thkmin,bldmin,bldmax,thkbot, &
                      thkcdw,thkfrz,tfrz_0,tfrz_s,ticegr,hicemn,hicemx, &
+                     dx00,dx00f,dx00x, &
                      dp00,dp00f,dp00x,ds00,ds00f,ds00x,dp00i,isotop, &
                      oneta0,sigjmp,tmljmp,prsbas,emptgt
 !
@@ -1875,3 +1880,4 @@
 !> Oct. 2019 - added rmunvu and rmunvv, and layer 1 nested velocity ranges
 !> Nov. 2019 - added amoflg
 !> Sep. 2022 - added hybthn
+!> Apr. 2023 - added dx0k

@@ -145,6 +145,7 @@
       kk  = kdmblk
 !
       allocate( &
+          dx0k(kdm), &
           dp0k(kdm), &
           ds0k(kdm), &
          sigma(kdm), &
@@ -164,6 +165,9 @@
 !
 ! --- 'nhybrd' = number of hybrid levels (0=all isopycnal)
 ! --- 'nsigma' = number of sigma  levels (nhybrd-nsigma z-levels)
+! --- 'dx00'   = maximum layer thickness minimum, optional (m)
+! --- 'dx00x'  = maximum layer thickness maximum, optional (m)
+! --- 'dx00f'  = maximum layer thickness stretching factor (1.0=const)
 ! --- 'dp00'   = deep    z-level spacing minimum thickness (m)
 ! --- 'dp00x'  = deep    z-level spacing maximum thickness (m)
 ! --- 'dp00f'  = deep    z-level spacing stretching factor (1.0=const.z)
@@ -200,7 +204,8 @@
 ! --- for an entirely fixed vertical coordinate (no isopycnal layers), set
 ! --- isotop large or make all target densities (sigma(k), below) very small.
 !
-! --- or, in place of 'dp00','dp00x','dp00f','ds00','ds00x','ds00f' specify:
+! --- or, in place of 'd?00','d?00x','d?00f' specify:
+! --- 'dx0k  ' = layer k maximum layer thickness (m)
 ! --- 'dp0k  ' = layer k deep    z-level spacing minimum thickness (m)
 ! ---              k=1,kdm; dp0k must be zero for k>nhybrd
 ! --- 'ds0k  ' = layer k shallow z-level spacing minimum thickness (m)
@@ -216,11 +221,47 @@
 ! --- depth) that varied linearly with total depth.  These two approachs
 ! --- are identical for "pure sigma-z", but differ if ds00f/=dp00f.
 !
+! --- dx0* is optional, and is disabled if not present. It "inflates"
+! --- zero thickness layers at the bottom if the layer above is thicker
+! --- than its maximum.  This replaces very thick isopycnal layers with
+! --- several thinner layers that might still have about the same
+! --- density but can have different velocities.  Hence increasing the
+! --- deep vertical resolution.  The idea behind dx0k comes from
+! --- MOM6's HYCOM1 option MAX_LAYER_THICKNESS.
+!
       call blkini(nhybrd,'nhybrd')
       call blkini(nsigma,'nsigma')
-      call blkinr2(dp00,k, &
-                         'dp00  ','(a6," =",f10.4," m")', &
-                         'dp0k  ','(a6," =",f10.4," m")' )
+      call blkinr9(dp00,k, &
+                  'dp00  ','(a6," =",f10.4," m")', &
+                  'dp0k  ','(a6," =",f10.4," m")', &
+                  'dx00  ','(a6," =",f10.4," m")', &
+                  'dx0k  ','(a6," =",f10.4," m")', &
+                  'XXXXXX','(a6," =",f10.4," ")', &
+                  'XXXXXX','(a6," =",f10.4," ")', &
+                  'XXXXXX','(a6," =",f10.4," ")', &
+                  'XXXXXX','(a6," =",f10.4," ")', &
+                  'XXXXXX','(a6," =",f10.4," ")')
+      if     (k.eq.3) then !dx00
+        dx00 = dp00
+        call blkinr(dx00x, 'dx00x ','(a6," =",f10.4," m")')
+        call blkinr(dx00f, 'dx00f ','(a6," =",f10.4," ")')
+        call blkinr2(dp00,k, &
+                           'dp00  ','(a6," =",f10.4," m")', &
+                           'dp0k  ','(a6," =",f10.4," m")' )
+      elseif (k.eq.4) then !dx0k
+        dx0k(1) = dp00
+        dx00    = -1.0  !signal that dx00 is not input
+        do k=2,kdmblk
+          call blkinr(dx0k(k), 'dx0k  ','(a6," =",f10.4," m")')
+        enddo !k
+        call blkinr2(dp00,k, &
+                           'dp00  ','(a6," =",f10.4," m")', &
+                           'dp0k  ','(a6," =",f10.4," m")' )
+      else !no dx0*
+        dx00  = 9999.0
+        dx00x = 9999.0
+        dx00f =    1.0
+      endif
       if     (k.eq.1) then !dp00
         call blkinr(dp00x, 'dp00x ','(a6," =",f10.4," m")')
         call blkinr(dp00f, 'dp00f ','(a6," =",f10.4," ")')
@@ -2399,6 +2440,99 @@
       endif
       return
       end
+      subroutine blkinr9(rvar,nvar, &
+                         cvar1,cfmt1,cvar2,cfmt2,cvar3,cfmt3, &
+                         cvar4,cfmt4,cvar5,cfmt5,cvar6,cfmt6, &
+                         cvar7,cfmt7,cvar8,cfmt8,cvar9,cfmt9)
+      use mod_xc         ! HYCOM communication interface
+      use mod_cb_arrays  ! HYCOM saved arrays
+      implicit none
+!
+      real      rvar
+      integer   nvar
+      character cvar1*6,cvar2*6,cvar3*6,cfmt1*(*),cfmt2*(*),cfmt3*(*)
+      character cvar4*6,cvar5*6,cvar6*6,cfmt4*(*),cfmt5*(*),cfmt6*(*)
+      character cvar7*6,cvar8*6,cvar9*6,cfmt7*(*),cfmt8*(*),cfmt9*(*)
+!
+!     read in one of nine possible real values
+!     identified as either cvar1 (return nvar=1) or
+!                          cvar2 (return nvar=2) or
+!                          ...
+!                          cvar9 (return nvar=9)
+!
+      character*6 cvarin
+!
+      read(uoff+99,*) rvar,cvarin
+      if     (cvar1.eq.cvarin) then
+        nvar = 1
+        if (mnproc.eq.1) then
+        write(lp,cfmt1) cvarin,rvar
+        call flush(lp)
+        endif !1st tile
+      elseif (cvar2.eq.cvarin) then
+        nvar = 2
+        if (mnproc.eq.1) then
+        write(lp,cfmt2) cvarin,rvar
+        call flush(lp)
+        endif !1st tile
+      elseif (cvar3.eq.cvarin) then
+        nvar = 3
+        if (mnproc.eq.1) then
+        write(lp,cfmt3) cvarin,rvar
+        call flush(lp)
+        endif !1st tile
+      elseif (cvar4.eq.cvarin) then
+        nvar = 4
+        if (mnproc.eq.1) then
+        write(lp,cfmt4) cvarin,rvar
+        call flush(lp)
+        endif !1st tile
+      elseif (cvar5.eq.cvarin) then
+        nvar = 5
+        if (mnproc.eq.1) then
+        write(lp,cfmt5) cvarin,rvar
+        call flush(lp)
+        endif !1st tile
+      elseif (cvar6.eq.cvarin) then
+        nvar = 6
+        if (mnproc.eq.1) then
+        write(lp,cfmt6) cvarin,rvar
+        call flush(lp)
+        endif !1st tile
+      elseif (cvar7.eq.cvarin) then
+        nvar = 7
+        if (mnproc.eq.1) then
+        write(lp,cfmt7) cvarin,rvar
+        call flush(lp)
+        endif !1st tile
+      elseif (cvar8.eq.cvarin) then
+        nvar = 8
+        if (mnproc.eq.1) then
+        write(lp,cfmt8) cvarin,rvar
+        call flush(lp)
+        endif !1st tile
+      elseif (cvar9.eq.cvarin) then
+        nvar = 9
+        if (mnproc.eq.1) then
+        write(lp,cfmt9) cvarin,rvar
+        call flush(lp)
+        endif !1st tile
+      else
+        if (mnproc.eq.1) then
+        write(lp,*)
+        write(lp,*) 'error in blkinr9 - input ',cvarin, &
+                    ' but should be:'
+        write(lp,*) cvar1,' or ',cvar2,' or ',cvar3,' or'
+        write(lp,*) cvar4,' or ',cvar5,' or ',cvar6,' or'
+        write(lp,*) cvar7,' or ',cvar8,' or ',cvar9
+        write(lp,*)
+        call flush(lp)
+        endif !1st tile
+        call xcstop('(blkinr9)')
+               stop
+      endif
+      return
+      end
       subroutine blkin8(rvar,cvar,cfmt)
       use mod_xc         ! HYCOM communication interface
       use mod_cb_arrays  ! HYCOM saved arrays
@@ -2631,3 +2765,4 @@
 !> Oct. 2019 - added lbmont
 !> Nov. 2019 - added wndflg=-4,-5 and amoflg
 !> Sep. 2022 - added hybthn
+!> Apr. 2023 - added optional dx0k
