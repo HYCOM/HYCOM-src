@@ -2554,8 +2554,14 @@
         call xcstop('xcspmd: patch.input must be for arctic')
         stop '(xcspmd)'
 #else
-      elseif (nreg.lt.0 .or. nreg.gt.2) then  ! not closed or periodic
-                                              ! use TYPE=one/omp for f-plane 
+      elseif (nreg.eq.4 .and. jpr.ne.1) then  ! only 1-d tiling allowed
+        if     (mnproc.eq.1) then
+          write(lp,'(a,i5)') 'input: nreg =',nreg
+          call flush(lp)
+        endif
+        call xcstop('xcspmd: f-plane requires mpe=1')
+        stop '(xcspmd)'
+      elseif (nreg.lt.0 .or. nreg.eq.3) then  ! not closed or periodic
         if     (mnproc.eq.1) then
           write(lp,'(a,i5)') 'input: nreg =',nreg
           call flush(lp)
@@ -2828,13 +2834,17 @@
       idproc(    0,jpr+1) = idproc(ipr,jpr+1)
       idproc(ipr+1,jpr+1) = idproc(1,  jpr+1)
 #else
-!
-!     latitudinal tile dimension is closed
-!
-      do m= 0,ipr+1
-        idproc(m,    0) = null_tile
-        idproc(m,jpr+1) = null_tile
-      enddo
+      if     (nreg.le.2) then  ! closed in latitude
+        do m= 0,ipr+1
+          idproc(m,    0) = null_tile
+          idproc(m,jpr+1) = null_tile
+        enddo
+      else  ! periodic (f-plane) in latitude, jpr==1
+        do m= 0,ipr+1
+          idproc(m,    0) = idproc(m,jpr)
+          idproc(m,jpr+1) = idproc(m,  1)
+        enddo
+      endif
 #endif /* ARCTIC:else */
 !
 !     1-d tiling logic is easier if assumed periodic.
@@ -4746,14 +4756,25 @@
 !
       if     (nhl.gt.0) then
         if     (jpr.eq.1) then
-          do k= l1,ld
-            do j= 1,nhl
-              do i= 1,ii
-                a(i, 1-j,k) = vland
-                a(i,jj+j,k) = vland
+          if     (nreg.le.2) then  ! closed in latitude
+            do k= l1,ld
+              do j= 1,nhl
+                do i= 1,ii
+                  a(i, 1-j,k) = vland
+                  a(i,jj+j,k) = vland
+                enddo
               enddo
             enddo
-          enddo
+          else  ! periodic (f-plane) in latitude
+            do k= l1,ld
+              do j= 1,nhl
+                do i= 1,ii
+                  a(i, 1-j,k) = a(i,jj+1-j,k)
+                  a(i,jj+j,k) = a(i,     j,k)
+                enddo
+              enddo
+            enddo
+          endif !nreg
         else
           l = 0
           do i= 1,ii  ! outer loop to simplify multiple neighbor case
@@ -5446,3 +5467,4 @@
 !> Dec. 2018 - mpi_comm_vm now an optional argument to xcspmd
 !> Oct. 2019 - bugfix to xcmaxr and xcminr for SHMEM
 !> Oct. 2019 - added xcsumr
+!> May  2023 - support for nreg=4 providing jpr=1
