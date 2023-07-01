@@ -1483,6 +1483,11 @@
         call inigiss
       endif
 !
+      if     (mtracr.ne.0) then
+! ---   zero out diagnostic tracers
+        tracer(:,:,:,:,ntracr+1:ntracr+mtracr) = 0.0
+      endif !mtracr
+!
       if (linit) then
 !
 ! ---   set up initial conditions
@@ -3421,7 +3426,7 @@
         call flush(nod)
         endif !1st tile
 !
-        do ktr= 1,ntracr
+        do ktr= 1,ntracr+mtracr
           dsumtr(ktr)=0.0d0
           do k=1,kk
 !$OMP       PARALLEL DO PRIVATE(j,i) &
@@ -4086,3 +4091,4 @@
 !> Feb. 2019 - replaced onetai by 1.0
 !> Sep. 2019 - added oneta0
 !> Nov. 2020 - removed call to MPI_Comm_Dup, duplicative of call in xcspmd
+!> July 2024 - added mtracr

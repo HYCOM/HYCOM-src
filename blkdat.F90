@@ -1295,7 +1295,7 @@
           ! replicate last decimal digit across remaining tracers
         endif
         if (mnproc.eq.1) then
-        write(lp,'(a,i3,i2)') '    k,trcflg =',k,trcflg(k)
+        write(lp,'(a,i3,i4)') '    k,trcflg =',k,trcflg(k)
         endif !1st tile
         if     (trcflg(k).gt.3 .and. trcflg(k).lt.9) then !not 0,1,2,3,9
           if (mnproc.eq.1) then
@@ -1306,6 +1306,47 @@
           call xcstop('(blkdat)')
                  stop '(blkdat)'
         endif
+      enddo !k
+!
+! --- 'mtracr' = number of diagnostic tracers
+! --- 'dtrflg' = diagnostic tracer flag (one per tracer, 801-899)
+! ---              801: change in layer thickness   due to hybgen (m/day)
+! ---              802: change in layer temperature due to hybgen (degC/day)
+! ---              803: change in layer salinity    due to hybgen (psu/day)
+!
+      if (mnproc.eq.1) then
+      write(lp,*)
+      endif !1st tile
+      call blkini(mtracr,'mtracr')
+! 
+      if (ntracr+mtracr.gt.mxtrcr) then
+        if (mnproc.eq.1) then
+        write(lp,'(/ a,i3, a /)')  &
+         &'error - maximum ntracr+mtracr is',mxtrcr, &
+         &'  (recompile with larger mxtrcr)'
+        call flush(lp)
+        endif !1st tile
+        call xcstop('(blkdat)')
+               stop '(blkdat)'
+      endif
+!
+      itracr(:) = 0
+      do k= ntracr+1,ntracr+mtracr
+        call blkini(trcflg(k),'dtrflg')
+        if     (trcflg(k).lt.801 .or. trcflg(k).gt.899) then
+          if (mnproc.eq.1) then
+          write(lp,'(/ a,i3 /)')  &
+           &'error - unknown diagnostic tracer type for tracer',k
+          call flush(lp)
+          endif !1st tile
+          call xcstop('(blkdat)')
+                 stop '(blkdat)'
+        endif
+        itracr(trcflg(k)) = k  !index to diagnostic tracer
+        if (mnproc.eq.1) then
+        write(lp,'(a,i3,i4,i4)') '    k,trcflg =',k,trcflg(k), &
+                                                  itracr(trcflg(k))
+        endif !1st tile
       enddo !k
 !
 ! --- 'tsofrq' = number of time steps between anti-drift offset calcs
@@ -2766,3 +2807,4 @@
 !> Nov. 2019 - added wndflg=-4,-5 and amoflg
 !> Sep. 2022 - added hybthn
 !> Apr. 2023 - added optional dx0k
+!> July 2023 - added mtracr

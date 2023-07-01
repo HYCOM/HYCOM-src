@@ -58,9 +58,9 @@
 !
 ! --- Allocate mean fields.
 !
-      if     (ntracr.gt.0) then
-        allocate( tracer_m(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy,kdm,ntracr) )
-        call mem_stat_add(       (idm+2*nbdy)*(jdm+2*nbdy)*kdm*ntracr )
+      if     (ntracr+mtracr.gt.0) then
+        allocate(tracer_m(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy,kdm,ntracr+mtracr) )
+        call mem_stat_add((idm+2*nbdy)*(jdm+2*nbdy)*kdm*ntracr+mtracr )
       endif
 !
       allocate(      u_m(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy,kdm) )
@@ -147,7 +147,7 @@
               ke_m(i,j,k) = 0.0
                u_m(i,j,k) = 0.0
                v_m(i,j,k) = 0.0
-            do ktr= 1,ntracr
+            do ktr= 1,ntracr+mtracr
               tracer_m(i,j,k,ktr) = 0.0
             enddo !ktr
 #if defined(STOKES)
@@ -247,7 +247,7 @@
               saln_m(i,j,k) = saln_m(i,j,k) +   saln(i,j,k,n) * q
               th3d_m(i,j,k) = th3d_m(i,j,k) +   th3d(i,j,k,n) * q
                 ke_m(i,j,k) =   ke_m(i,j,k) +     ke          * q
-              do ktr= 1,ntracr
+              do ktr= 1,ntracr+mtracr
                 tracer_m(i,j,k,ktr) = tracer_m(i,j,k,  ktr) + &
                                         tracer(i,j,k,n,ktr) * q
               enddo !ktr
@@ -334,7 +334,7 @@
                 saln_m(i,j,k) = saln_m(i,j,k) * qdp
                 th3d_m(i,j,k) = th3d_m(i,j,k) * qdp
                   ke_m(i,j,k) =   ke_m(i,j,k) * qdp
-                do ktr= 1,ntracr
+                do ktr= 1,ntracr+mtracr
                   tracer_m(i,j,k,ktr) = tracer_m(i,j,k,  ktr) * qdp
                 enddo !ktr
 #if defined(STOKES)
@@ -348,7 +348,7 @@
                 saln_m(i,j,k) = saln_m(i,j,k-1)
                 th3d_m(i,j,k) = th3d_m(i,j,k-1)
                   ke_m(i,j,k) =   ke_m(i,j,k-1)
-                do ktr= 1,ntracr
+                do ktr= 1,ntracr+mtracr
                   tracer_m(i,j,k,ktr) = tracer_m(i,j,k-1,ktr)
                 enddo !ktr
 #if defined(STOKES)
@@ -398,6 +398,7 @@
 !
 ! --- write a mean archive file.
 !
+      character*8  ctype
       character*80 cformat
       integer      i,j,k,ktr,ldot,nop,nopa
       integer      itst1,jtst1
@@ -619,11 +620,17 @@
       write (nop,117) 'density ',nmean,time_ave,k,coord,xmin,xmax
       call flush(nop)
       endif !1st tile
-      do ktr= 1,ntracr
+      do ktr= 1,ntracr+mtracr
         call zaiowr(tracer_m(1-nbdy,1-nbdy,k,ktr),ip,.true., &
                     xmin,xmax, nopa, .false.)
         if     (mnproc.eq.1) then
-        write (nop,117) 'tracer  ',nmean,time_ave,k,coord,xmin,xmax
+        if     (ktr.le.99) then
+! ---     older postprocessing code will not recognise this
+          write(ctype,'(a6,i2.2)') 'tracer',ktr
+        else
+          ctype = 'tracer  '
+        endif
+        write (nop,117) ctype,nmean,time_ave,k,coord,xmin,xmax
         call flush(nop)
         endif !1st tile
       enddo !ktr
@@ -632,13 +639,27 @@
         call zaiowr(usdp_m(1-nbdy,1-nbdy,k),ip,.true., &
                     xmin,xmax, nopa, .false.)
         if     (mnproc.eq.1) then
-        write (nop,117) 'tracer  ',nmean,time_ave,k,coord,xmin,xmax
+        ktr = ntracr+mtracr + 1
+        if     (ktr.le.99) then
+! ---     older postprocessing code will not recognise this
+          write(ctype,'(a6,i2.2)') 'tracer',ktr
+        else
+          ctype = 'tracer  '
+        endif
+        write (nop,117) ctype,nmean,time_ave,k,coord,xmin,xmax
         call flush(nop)
         endif !1st tile
         call zaiowr(vsdp_m(1-nbdy,1-nbdy,k),ip,.true., &
                     xmin,xmax, nopa, .false.)
         if     (mnproc.eq.1) then
-        write (nop,117) 'tracer  ',nmean,time_ave,k,coord,xmin,xmax
+        ktr = ntracr+mtracr + 2
+        if     (ktr.le.99) then
+! ---     older postprocessing code will not recognise this
+          write(ctype,'(a6,i2.2)') 'tracer',ktr
+        else
+          ctype = 'tracer  '
+        endif
+        write (nop,117) ctype,nmean,time_ave,k,coord,xmin,xmax
         call flush(nop)
         endif !1st tile
       endif !stdarc
@@ -754,41 +775,41 @@
             0.0   !sflice_m(itest,jtest)*svref*8.64E7/saln_m(itest,jtest,1) !mm/day
         endif !iceflg
 #if defined(STOKES)
-        if     (ntracr.eq.0) then
+        if     (ntracr+mtracr.eq.0) then
           write(cformat,'(a)')      '(4a)'
         else
-          write(cformat,'(a,i2,a)') '(4a,', ntracr, 'a)'
+          write(cformat,'(a,i2,a)') '(4a,', ntracr+mtracr, 'a)'
         endif
         write (nop,cformat) &
             '#  k', &
             '    utot    vtot  p.temp    saln  p.dens', &
             '    thkns      dpth  viscty  t-diff  s-diff', &
             '  usdtot  vsdtot', &
-            ('  tracer',ktr=1,ntracr)
-        if     (ntracr.eq.0) then
+            ('  tracer',ktr=1,ntracr+mtracr)
+        if     (ntracr+mtracr.eq.0) then
           write(cformat,'(a)') &
             '(i4,2f8.2,3f8.4,f9.3,f10.3,3f8.2,2f8.2)'
         else
           write(cformat,'(a,i2,a)') &
-            '(i4,2f8.2,3f8.4,f9.3,f10.3,3f8.2,2f8.2,', ntracr, 'f8.3)'
+            '(i4,2f8.2,3f8.4,f9.3,f10.3,3f8.2,2f8.2,', ntracr+mtracr, 'f8.3)'
         endif
 #else
-        if     (ntracr.eq.0) then
+        if     (ntracr+mtracr.eq.0) then
           write(cformat,'(a)')      '(3a)'
         else
-          write(cformat,'(a,i2,a)') '(3a,', ntracr, 'a)'
+          write(cformat,'(a,i2,a)') '(3a,', ntracr+mtracr, 'a)'
         endif
         write (nop,cformat) &
             '#  k', &
             '    utot    vtot  p.temp    saln  p.dens', &
             '    thkns      dpth  viscty  t-diff  s-diff', &
-            ('  tracer',ktr=1,ntracr)
-        if     (ntracr.eq.0) then
+            ('  tracer',ktr=1,ntracr+mtracr)
+        if     (ntracr+mtracr.eq.0) then
           write(cformat,'(a)') &
             '(i4,2f8.2,3f8.4,f9.3,f10.3,3f8.2)'
         else
           write(cformat,'(a,i2,a)') &
-            '(i4,2f8.2,3f8.4,f9.3,f10.3,3f8.2,', ntracr, 'f8.3)'
+            '(i4,2f8.2,3f8.4,f9.3,f10.3,3f8.2,', ntracr+mtracr, 'f8.3)'
         endif
 #endif
         do k= 1,kk
@@ -819,7 +840,7 @@
              max(-999.99,min(999.99,ustk*100.0)),                     & !cm/s
              max(-999.99,min(999.99,vstk*100.0)),                     & !cm/s
 #endif
-             (tracer_m(itest,jtest,k,ktr),ktr=1,ntracr)                 !0-999?
+             (tracer_m(itest,jtest,k,ktr),ktr=1,ntracr+mtracr)          !0-999?
         enddo !k
         close (unit=nop)
       endif !test point tile
@@ -840,3 +861,5 @@
 !> Nov  2018 - added wtrflx
 !> Nov  2018 - added oneta, use oneta*dp in place of dp
 !> Dec  2018 - archive dp_m/oneta_m
+!> July 2023 - added a number 01-99 to tracer output
+!> July 2023 - added mtracr for diagnostic tracers
