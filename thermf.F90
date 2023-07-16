@@ -1038,6 +1038,9 @@
                  evaplh=2.47e6, &
                  csice =0.0006)
 !
+! --- parameter to disable sssrmx when much fresher than climatology
+      real, parameter :: frac_clim=0.5  !usually 0.5, can be 0.0
+!
 ! --- parameter for lwflag=-1
 ! --- 'sb_cst' = Stefan-Boltzman constant
       real       sb_cst
@@ -1845,12 +1848,12 @@
 ! ---          set negative to stop relaxing entirely at -sssrlx
 ! ---          the default (sssflg=1) is 99.9, i.e. no limit
 ! ---          always fully relax when ice covered or when
-! ---          fresher than half climatological sss.
+! ---          fresher than "frac_clim" of climatological sss.
 !
         sssc   =  swall(i,j,1,lc0)*wc0+swall(i,j,1,lc1)*wc1 &
                  +swall(i,j,1,lc2)*wc2+swall(i,j,1,lc3)*wc3
         sssdif = sssc - saln(i,j,1,n)
-        if     (saln(i,j,1,n).gt.0.5*sssc .and. &
+        if     (saln(i,j,1,n).ge.frac_clim*sssc .and. &
                 abs(sssdif).gt.abs(sssrmx(i,j))) then  !large sss anomaly
           if     (sssrmx(i,j).lt.0.0) then
             sssdif = covice(i,j)*sssdif !turn off relaxation except under ice
@@ -2268,3 +2271,4 @@
 !> Oct. 2019 - rmunv replaced with rmunvu and rmunvv
 !> Nov. 2019 - added amoflg
 !> May  2021 - bug fix: removed natm from sstflg=1
+!> July 2023 - add parameter frac_clim, usualy 0.5 for original behaviour

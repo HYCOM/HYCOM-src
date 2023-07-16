@@ -807,7 +807,8 @@
           mixflx(ipnt,jpnt),                                    & !W/m**2
           sstflx(ipnt,jpnt),                                    & !W/m**2
           wtrflx(ipnt,jpnt)*svref*8.64E7,                       & !mm/day
-          sssflx(ipnt,jpnt)*svref*8.64E7/saln(ipnt,jpnt,1,n),   & !mm/day
+          sssflx(ipnt,jpnt)*svref*8.64E7/ &
+                            max(0.1,saln(ipnt,jpnt,1,n)),       & !mm/day
           rivflx(ipnt,jpnt)*svref*8.64E7,                       & !mm/day
           bhtflx(ipnt,jpnt)*1.e6,                          & !1.e6*m**2/sec**3
           buoflx(ipnt,jpnt)*1.e6,                          & !1.e6*m**2/sec**3
@@ -858,7 +859,8 @@
           mixflx(ipnt,jpnt),                                    & !W/m**2
           sstflx(ipnt,jpnt),                                    & !W/m**2
           wtrflx(ipnt,jpnt)*svref*8.64E7,                       & !mm/day
-          sssflx(ipnt,jpnt)*svref*8.64E7/saln(ipnt,jpnt,1,n),   & !mm/day
+          sssflx(ipnt,jpnt)*svref*8.64E7/ &
+                            max(0.1,saln(ipnt,jpnt,1,n)),       & !mm/day
           rivflx(ipnt,jpnt)*svref*8.64E7,                       & !mm/day
           bhtflx(ipnt,jpnt)*1.e6,                          & !1.e6*m**2/sec**3
           buoflx(ipnt,jpnt)*1.e6,                          & !1.e6*m**2/sec**3

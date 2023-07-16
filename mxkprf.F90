@@ -567,6 +567,7 @@
       real ahbl,bhbl,chbl,dhbl ! coefficients for quadratic hbl calculation
 !
       logical lhbl             ! safe to use quadratic hbl calculation
+      logical lnegsaln         ! negative salinity corrected
 !
       integer nbl              ! layer containing boundary layer base
       integer nbbl             ! layer containing bottom boundary layer base
@@ -1219,7 +1220,7 @@
 #else
               ghats(i,j,k)=       (1.-stable)*cg/(ws*hbl+epsil)
 #endif
-            endif
+            endif !nonloc
           endif !k.le.min(nbl,klist)
         enddo !k
 !
@@ -1702,6 +1703,27 @@
 !diag       call flush(lp)
 !diag     endif
 !
+! ---     detrain negative near-surface salinitites
+          lnegsaln = .false.
+          do k= 1,nlayer-1
+            if     (s1dn(k).lt.0.0) then
+              s1dn(k+1) = s1dn(k+1) + s1dn(k) * &
+                           ( hm(k) / max( hm(k+1), 0.001 ) )
+              s1dn(k)   = 0.0
+              lnegsaln  = .true.
+            else
+              exit
+            endif
+          enddo
+!
+!diag     if (lnegsaln.and.i.eq.itest.and.j.eq.jtest) then
+!diag       write (lp,114) (nstep,iter,i+i0,j+j0,k, &
+!diag         hm(k),t1do(k),t1dn(k),s1do(k),s1dn(k), &
+!diag         0.0,0.0, &
+!diag         k=1,nlayer)
+!diag       call flush(lp)
+!diag     endif
+!
 ! --- u solution
           call tridcof(diffm,tri,nlayer,tcu,tcc,tcl)
           do k=1,nlayer
@@ -1759,6 +1781,9 @@
            /(i9,i2,2i5,i3,2x,4f10.2,f11.6))
  104  format(25x, &
            '  thick   t old   t new   s old   s new trc old trc new' &
+           /(i9,i2,2i5,i3,1x,f9.2,4f8.3,2f7.4))
+ 114  format(25x, &
+           '  thick   t old   t new   s old   S-new trc old trc new' &
            /(i9,i2,2i5,i3,1x,f9.2,4f8.3,2f7.4))
  105  format(25x,'   thick   u old   u new   v old   v new' &
            /(i9,i2,2i5,i3,1x,f10.2,4f8.3))
@@ -3213,8 +3238,11 @@
            rhs(kdm)          ! right-hand-side terms
 !
       real    ghatflux
+      logical lnegsaln
       integer k,ka,ktr,nlayer
-      real riv_input
+      real    riv_input
+!
+!diag double precision sumh,sumo,sumn
 !
       real, parameter :: difriv =   60.0e-4  !river diffusion
 !
@@ -3314,20 +3342,55 @@
       call tridcof(diffs,tri,nlayer,tcu,tcc,tcl)
       call tridrhs(hm,s1do,diffs,ghat,ghatflux,tri,nlayer,rhs)
       call tridmat(tcu,tcc,tcl,nlayer,hm,rhs,s1do,s1dn,diffs, i,j)
+! --- detrain negative near-surface salinitites
+      lnegsaln = .false.   
+      do k= 1,nlayer-1
+        if     (s1dn(k).lt.0.0) then
+          s1dn(k+1) = s1dn(k+1) + s1dn(k) * &
+                       ( hm(k) / max( hm(k+1), 0.001 ) )
+          s1dn(k)   = 0.0
+          lnegsaln  = .true.
+        else
+          exit
+        endif
+      enddo
 !
 !diag if (i.eq.itest.and.j.eq.jtest) then
 !diag     write (lp,103) (nstep,i+i0,j+j0,k, &
-!diag     hm(max(1,k-1)),1.e4*difft(k),1.e4*diffs(k), &
-!diag       ghat(k),k=1,nlayer+1)
-!diag     write (lp,104) (nstep,i+i0,j+j0,k, &
-!diag       hm(k),t1do(k),t1dn(k),s1do(k),s1dn(k), &
-!diag       k=1,nlayer)
+!diag     hm(max(1,k)),1.e4*difft(k+1),1.e4*diffs(k+1), &
+!diag       ghat(k+1),k=1,nlayer)
+!diag     if (lnegsaln) then
+!diag       write (lp,114) (nstep,i+i0,j+j0,k, &
+!diag         hm(k),t1do(k),t1dn(k),s1do(k),s1dn(k), &
+!diag         k=1,nlayer)
+!diag     else
+!diag       write (lp,104) (nstep,i+i0,j+j0,k, &
+!diag         hm(k),t1do(k),t1dn(k),s1do(k),s1dn(k), &
+!diag         k=1,nlayer)
+!diag     endif
 !diag     call flush(lp)
- 103    format(25x,'   thick    t diff    s diff   nonlocal' &
-           /(i9,2i5,i3,1x,3f10.2,f11.6))
+!diag     sumh = 0.d0
+!diag     sumo = 0.d0
+!diag     sumn = 0.d0
+!diag     do k= 1,nlayer
+!diag       sumh = sumh + hm(k)
+!diag       sumo = sumo + hm(k) * s1do(k)
+!diag       sumn = sumn + hm(k) * s1dn(k)
+!diag     enddo
+!diag     sumo = sumo / sumh
+!diag     sumn = sumn / sumh
+!diag     write (lp,124) nstep,i+i0,j+j0, &
+!diag       sumh,sumo,sumn,sumn-sumo
+!diag     call flush(lp)
+ 103    format(25x,'    thick     t diff     s diff   nonlocal' &
+           /(i9,2i5,i3,1x,3f11.4,f11.4))
  104    format(25x, &
-           '  thick   t old   t new   s old   s new' &
-           /(i9,2i5,i3,2x,f9.2,4f8.3))
+           '      thick    t old    t new    s old    s new' &
+           /(i9,2i5,i3,2x,f11.4,4f9.4))
+ 114    format(25x, &
+           '      thick    t old    t new    s old    S new' &
+           /(i9,2i5,i3,2x,f11.4,4f9.4))
+ 124    format(i9,2i5,' MN',2x,f11.4,18x,2f9.4,f16.10)
 !diag endif !test
 !
 ! --- standard tracer solution
@@ -3790,3 +3853,4 @@
 !> Nov. 2018 - allow for oneta in swfrac and surface fluxes
 !> Dec  2018 - added /* USE_NUOPC_CESMBETA */ macro and riv_input
 !> Mar  2023 - added /* MASSLESS_1MM */ macro
+!> July 2023 - detrain negative near-surface salinitites
