@@ -56,3 +56,11 @@ KAPPAF_CENTERED	## Thermobaricity correction centered
 STOKES		## Stokes drift
 
 OCEANS2		## master and slave HYCOM in same executable
+
+MOMTUM_CFL	## include an explicit CFL limiter in momtum
+MOMTUM4_CFL	## include an explicit CFL limiter in momtum4
+
+RDNEST_MASK	## mask velocity outliers
+LATBDT_NPLINE3	## update pline every 3 time steps
+
+MASSLESS_1MM	## lowest substantial mass-containing layer > 1mm thick
