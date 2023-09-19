@@ -1359,7 +1359,7 @@
               wflfrz = 0.0     !diagnostic, icloan only
               sflice = r_init
                 si_c = 0.0 !r_init
-                si_h = r_init
+                si_h = 0.0 !r_init
                 si_t = r_init
                 si_u = r_init
                 si_v = r_init
@@ -1884,3 +1884,4 @@
 !> Sep. 2022 - added hybthn
 !> Apr. 2023 - added dx0k
 !> July 2023 - added mtracr and itracr
+!> Sep. 2023 - initialize si_h to zero
