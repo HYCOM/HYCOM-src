@@ -87,8 +87,13 @@
 ! --- -----------------------------------------
 !
       logical, parameter :: lpipe_momtum=.false.      !usually .false.
-
-
+!
+#if defined (USE_NUOPC_CESMBETA)
+      logical, parameter ::  cesmbeta =.true.
+#else
+      logical, parameter ::  cesmbeta =.false.
+#endif
+!
       real,    parameter :: dragw_rho=0.01072d0*1026.0d0  !ice-ocean drag from CICE
       real,    parameter ::     pairc=1013.0d0*100.0d0    !air pressure (Pa)
       real,    parameter ::      rgas=287.1d0           !gas constant (j/kg/k)
@@ -375,7 +380,7 @@
               endif !usur,vsur
 !
               if     (wndflg.eq.2 .or. wndflg.eq.3) then ! tau on p grid
-                if (cpl_taux) then
+                if (cesmbeta .and. cpl_taux) then
                   surtx(i,j) = imp_taux(i,j,1)
                 elseif (natm.eq.2) then
                   surtx(i,j) = taux(i,j,l0)*w0+taux(i,j,l1)*w1
@@ -384,7 +389,7 @@
                              + taux(i,j,l2)*w2+taux(i,j,l3)*w3
                 endif ! cpl_taux
 
-                if (cpl_tauy) then
+                if (cesmbeta .and. cpl_tauy) then
                   surty(i,j) = imp_tauy(i,j,1)
                 elseif (natm.eq.2) then
                   surty(i,j) = tauy(i,j,l0)*w0+tauy(i,j,l1)*w1
@@ -5686,3 +5691,4 @@
 !> Oct. 2019 - placed momtum4_cfl in a CPP macro
 !> Nov. 2019 - added amoflg for U10 vs U10-Uocn
 !> Mar. 2023 - added momtum_cfl in a CPP macro
+!> Dec. 2023 - add cesmbeta as a master switch to cpl_

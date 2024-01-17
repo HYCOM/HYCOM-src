@@ -26,6 +26,12 @@
 !
       logical, parameter ::  ldebug_empbal=.false.   !usually .false.
 !
+#if defined (USE_NUOPC_CESMBETA)
+      logical, parameter ::  cesmbeta =.true.
+#else
+      logical, parameter ::  cesmbeta =.false.
+#endif
+!
       integer i,j,k
       real    emnp,dpemnp,dplay1,onetanew,onetaold, &
               pbanew,pbaold,q,salt1n,salt1o
@@ -38,7 +44,7 @@
             if (SEA_P) then
               if     (ishlf(i,j).eq.1) then  !standard ocean point
                 if ( cpl_swflx  .and. cpl_lwmdnflx .and. cpl_lwmupflx &
-                                .and. cpl_precip    ) then
+                                .and. cpl_precip   .and. cesmbeta ) then
 
                   sstflx(i,j) = (1.0-covice(i,j))*sstflx(i,j)   !relax over ocean
                   surflx(i,j) =     surflx(i,j) + flxice(i,j)   !ocn/ice frac. in coupler
@@ -74,7 +80,7 @@
 !$OMP END PARALLEL DO
       elseif (iceflg.ne.0) then
           if ( cpl_swflx  .and. cpl_lwmdnflx .and. cpl_lwmupflx &
-                          .and. cpl_precip    ) then
+                          .and. cpl_precip   .and. cesmbeta ) then
 ! ---     allow for sea ice
 !$OMP PARALLEL DO PRIVATE(j,i)
             do j=1,jj
@@ -92,7 +98,7 @@
                enddo !i
             enddo
 !$OMP END PARALLEL DO
-          else ! cpl_
+          else
 !$OMP PARALLEL DO PRIVATE(j,i)
             do j=1,jj
                do i=1,ii
@@ -424,6 +430,12 @@
 !
       logical, parameter ::  ldebug_sssbal=.false.   !usually .false.
 !
+#if defined (USE_NUOPC_CESMBETA)
+      logical, parameter ::  cesmbeta =.true.
+#else
+      logical, parameter ::  cesmbeta =.false.
+#endif
+!
       integer i,j,k,ktr,nm,l, iyear,iday,ihour
       real    day365,pwl,q,utotij,vtotij
       real*8  t1mean,s1mean,tmean,smean,pmean,rmean, &
@@ -584,7 +596,7 @@
           if     (lwflag.eq.2 .or. sstflg.gt.2   .or. &
                   icmflg.eq.2 .or. ticegr.eq.0.0     ) then
 ! ---       use seatmp, since it is the best available SST
-            if(cpl_seatmp) then
+            if(cesmbeta .and. cpl_seatmp) then
                temp(i,j,k,n)=temp(i,j,k,n)+delt1*rmu(i,j)* &
                imp_seatmp(i,j,1)/(1.0+delt1*rmu(i,j))
             elseif (natm.eq.2) then
@@ -1009,6 +1021,12 @@
 !
 ! --- thermal forcing of ocean surface, for row j.
 !
+#if defined (USE_NUOPC_CESMBETA)
+      logical, parameter ::  cesmbeta =.true.
+#else
+      logical, parameter ::  cesmbeta =.false.
+#endif
+!
       integer i,ihr,it_a,ilat
       real    radfl,swfl,swflc,sstrlx,wind,airt,vpmx,prcp,xtau,ytau, &
               evap,evape,emnp,esst,sssf, &
@@ -1179,7 +1197,7 @@
 ! ---   wind = wind, or wind-ocean, speed (m/s)
         if     (flxflg.eq.6 .and. amoflg.ne.0) then
           wind=wndocn(i,j)  !magnitude of wind minus ocean current
-        elseif(cpl_wndspd) then
+        elseif(cesmbeta .and. cpl_wndspd) then
           wind=imp_wndspd(i,j,1)
         elseif (natm.eq.2) then
           wind=wndspd(i,j,l0)*w0+wndspd(i,j,l1)*w1
@@ -1190,7 +1208,7 @@
 ! ---   swfl = shortwave radiative thermal flux (W/m^2) +ve into ocean/ice
 ! ---          Qsw includes the atmos. model's surface albedo,
 ! ---          i.e. it already allows for sea-ice&snow where it is observed.
-        if(cpl_swflx) then
+        if(cesmbeta .and. cpl_swflx) then
           swfl=imp_swflx (i,j,1)
         elseif (natm.eq.2) then
           swfl=swflx (i,j,l0)*w0+swflx (i,j,l1)*w1
@@ -1215,7 +1233,7 @@
                   (1.0-xhr)*     xlat *diurnl(ihr,  ilat+1) + &
                        xhr *(1.0-xlat)*diurnl(ihr+1,ilat  ) + &
                        xhr *     xlat *diurnl(ihr+1,ilat+1)
-          if(cpl_swflx) then
+          if(cesmbeta .and. cpl_swflx) then
             swflc = (swscl-1.0)*imp_swflx (i,j,1)
             swfl  =  swscl     *imp_swflx (i,j,1)
           else
@@ -1237,7 +1255,8 @@
         endif !dswflg
 ! ---   radfl= net       radiative thermal flux (W/m^2) +ve into ocean/ice
 ! ---        = Qsw+Qlw across the atmosphere to ocean or sea-ice interface
-        if(cpl_swflx .and. cpl_lwmdnflx .and. cpl_lwmupflx) then
+        if(cesmbeta .and. &
+           cpl_swflx .and. cpl_lwmdnflx .and. cpl_lwmupflx) then
            radfl= imp_swflx (i,j,1) &
                  +imp_lwdflx(i,j,1) &
                  +imp_lwuflx(i,j,1)
@@ -1250,7 +1269,8 @@
         endif !natm
         if     (lwflag.eq.-1) then
 ! ---     input radflx is Qlwdn, convert to Qlw + Qsw
-          if(cpl_swflx .and. cpl_lwmdnflx .and. cpl_lwmupflx ) then
+          if(cesmbeta .and. &
+             cpl_swflx .and. cpl_lwmdnflx .and. cpl_lwmupflx ) then
              radfl= imp_swflx (i,j,1) &
                    +imp_lwdflx(i,j,1) &
 !                   - sb_cst*(temp(i,j,1,n)+tzero)**4
@@ -1268,7 +1288,7 @@
                    ( twall(i,j,1,lc0)*wc0+twall(i,j,1,lc1)*wc1 &
                     +twall(i,j,1,lc2)*wc2+twall(i,j,1,lc3)*wc3)
           else !w.r.t. atmospheric model's sst
-            if(cpl_surtmp) then
+            if(cesmbeta .and. cpl_surtmp) then
                   tdif = tsur - imp_surtmp(i,j,1)
             elseif (natm.eq.2) then
               tdif = tsur - &
@@ -1298,7 +1318,7 @@
         if     (pcipf) then
 ! ---     prcp = precipitation (m/sec; positive into ocean)
 ! ---     note that if empflg==3, this is actually P-E
-          if(cpl_precip) then
+          if(cesmbeta .and. cpl_precip) then
             prcp=imp_precip(i,j,1)
           elseif (natm.eq.2) then
             prcp=precip(i,j,l0)*w0+precip(i,j,l1)*w1
@@ -1308,7 +1328,7 @@
           endif !natm
         endif
         if     (empflg.lt.0) then  !observed (or NWP) SST
-          if (cpl_seatmp) then
+          if (cesmbeta .and. cpl_seatmp) then
             esst = imp_seatmp(i,j,1)
           elseif (natm.eq.2) then
             esst = seatmp(i,j,l0)*w0+seatmp(i,j,l1)*w1
@@ -1318,7 +1338,7 @@
           endif !natm
         endif
         if     (flxflg.ne.3) then
-          if(cpl_airtmp .and. cpl_vapmix) then
+          if(cesmbeta .and. cpl_airtmp .and. cpl_vapmix) then
              airt=imp_airtmp(i,j,1)
              vpmx=imp_vapmix(i,j,1)
           elseif (natm.eq.2) then
@@ -1349,7 +1369,7 @@
         endif
 ! ---   ustar = U* (sqrt(N.m/kg))                 
         if     (ustflg.eq.3) then !ustar from input
-          if(cpl_ustara) then
+          if(cesmbeta .and. cpl_ustara) then
             ustar(i,j)=imp_ustara(i,j,1)
           elseif (natm.eq.2) then
             ustar(i,j)=ustara(i,j,l0)*w0+ustara(i,j,l1)*w1
@@ -1399,14 +1419,14 @@
                   max(0.,0.97*qsatur(esst)-vpmx)
         endif
 ! ---   Latent Heat flux (W/m2)
-        if(cpl_latflx) then
+        if(cesmbeta .and. cpl_latflx) then
             evap=imp_latflx(i,j,1)
         else
             evap=ctl*airdns*evaplh*wind* &
                  max(0.,0.97*qsatur(temp(i,j,1,n))-vpmx)
         endif
 ! ---   Sensible Heat flux (W/m2)
-        if(cpl_sensflx) then
+        if(cesmbeta .and. cpl_sensflx) then
             snsibl=imp_sensflx(i,j,1)
         else
             snsibl=csh*airdns*csubp*wind*(temp(i,j,1,n)-airt)
@@ -1440,13 +1460,13 @@
         endif
 
 ! ---   Latent Heat flux (W/m2)
-        if(cpl_latflx) then
+        if(cesmbeta .and. cpl_latflx) then
            evap=imp_latflx(i,j,1)
         else
            evap   = slat*clh*wind*(0.97*qsatur(temp(i,j,1,n))-vpmx)
         endif
 ! ---   Sensible Heat flux (W/m2)
-        if(cpl_sensflx) then
+        if(cesmbeta .and. cpl_sensflx) then
            snsibl=imp_sensflx(i,j,1)
         else
            snsibl = ssen*csh*wind* tdif
@@ -1542,13 +1562,13 @@
           evape = slat*clh*wind*(0.97*qsatur(esst)-vpmx)
         endif
 ! ---   Latent Heat flux (W/m2)
-        if(cpl_latflx) then
+        if(cesmbeta .and. cpl_latflx) then
            evap=imp_latflx(i,j,1)
         else
            evap   = slat*clh*wind*(0.97*qsatur(temp(i,j,1,n))-vpmx)
         endif
 ! ---   Sensible Heat flux (W/m2)
-        if(cpl_sensflx) then
+        if(cesmbeta .and. cpl_sensflx) then
            snsibl=imp_sensflx(i,j,1)
         else
            snsibl = ssen*csh*wind* tdif
@@ -1648,13 +1668,13 @@
           evape = slat*clh*wind*(qsatur6(esst,pair,sssf)-vpmx)
         endif
 ! ---   Latent Heat flux (W/m2)
-        if(cpl_latflx) then
+        if(cesmbeta .and. cpl_latflx) then
            evap=imp_latflx(i,j,1)
         else
            evap=slat*clh*wind*(qsatur6(temp(i,j,1,n),pair,sssf)-vpmx)
         endif
 ! ---   snsibl = sensible heat flux  (W/m^2) into atmos from ocean.
-        if(cpl_sensflx) then
+        if(cesmbeta .and. cpl_sensflx) then
            snsibl=imp_sensflx(i,j,1)
         else
            snsibl = ssen*csh*wind* tdif
@@ -1750,7 +1770,7 @@
         if     (empflg.lt.0) then
           evape = slat*ce10*wind*(qsatur5(esst,qrair)-vpmx)
         endif
-        if(cpl_latflx) then
+        if(cesmbeta .and. cpl_latflx) then
           evap=imp_latflx(i,j,1)
         else
           evap = slat*ce10*wind*(qsatur5(temp(i,j,1,n),qrair)-vpmx)
@@ -1758,7 +1778,7 @@
 
 ! --- Sensible Heat flux
         ssen   = cpcore*rair
-        if(cpl_sensflx) then
+        if(cesmbeta .and. cpl_sensflx) then
           snsibl=imp_sensflx(i,j,1)
         else
           snsibl = ssen*ch10*wind*(temp(i,j,1,n)-airt)
@@ -1793,7 +1813,7 @@
                     +twall(i,j,1,lc2)*wc2+twall(i,j,1,lc3)*wc3) - &
                    temp(i,j,1,n)
         else  !synoptic sst
-          if(cpl_seatmp) then
+          if(cesmbeta .and. cpl_seatmp) then
             sstdif = imp_seatmp(i,j,1) - temp(i,j,1,n)
           elseif (natm.eq.2) then
             sstdif = ( seatmp(i,j,l0)*w0+seatmp(i,j,l1)*w1) - &
@@ -1825,7 +1845,7 @@
       wtrflx(i,j)=-emnp*rhoref
 ! --- allow for rivers as a precipitation bogas (m/s kg/m**3)
       if     (priver) then
-        if(cpl_orivers.and.cpl_irivers) then
+        if(cesmbeta .and. cpl_orivers.and.cpl_irivers) then
             rivflx(i,j) = (imp_orivers(i,j,1)+imp_irivers(i,j,1)) &
                         * rhoref
         else
@@ -2272,3 +2292,4 @@
 !> Nov. 2019 - added amoflg
 !> May  2021 - bug fix: removed natm from sstflg=1
 !> July 2023 - add parameter frac_clim, usualy 0.5 for original behaviour
+!> Dec. 2023 - add cesmbeta as a master switch to cpl_
