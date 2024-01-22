@@ -54,7 +54,7 @@
       real    xmin(2)
       real    sminny(jdm,2)
       real*8  sump
-      integer i,j,l,lll,ml,nl,mn,lstep1,margin,mbdy,k,icof
+      integer i,j,l,lll,ml,nl,mn,lstep1,margin,mbdy,k,icof,nsclip
 !	 & ,iffstep
       logical ldrag
 !	  data iffstep/0/
@@ -330,12 +330,13 @@
          do j=1-margin,jj+margin
            do i=1-margin,ii+margin
              if (SEA_P) then
-                pbavg(i,j,nl)= &
+                pbavg(i,j,nl) = &
                   ((1.0-wblpf)*pbavg(i,j,ml)+ &
                         wblpf *pbavg(i,j,nl) )- &
                    (1.0+wblpf)*dlt*(flxloc(i+1,j)-flxloc(i,j) + &
                                     flyloc(i,j+1)-flyloc(i,j)  )* &
                                    scp2i(i,j)
+                pbavg(i,j,nl) = max( pbotmin(i,j), pbavg(i,j,nl) )
 !
                 if     (ldrag) then
 !
@@ -407,10 +408,11 @@
             pbvdel =  vbavg(i,j+1,ml)*(depthv(i,j+1)*scvx(i,j+1)) &
                      -vbavg(i,j  ,ml)*(depthv(i,j  )*scvx(i,j  ))
 #endif
-            pbavg(i,j,nl)= &
+            pbavg(i,j,nl) = &
               ((1.-wblpf)*pbavg(i,j,ml)+ &
                    wblpf *pbavg(i,j,nl) )- &
                (1.+wblpf)*dlt*(pbudel + pbvdel)*scp2i(i,j)
+            pbavg(i,j,nl) = max( pbotmin(i,j), pbavg(i,j,nl) )
 !
             if     (ldrag) then
 !
@@ -631,12 +633,13 @@
          do j=1-margin,jj+margin
            do i=1-margin,ii+margin
              if (SEA_P) then
-                pbavg(i,j,nl)= &
+                pbavg(i,j,nl) = &
                   ((1.0-wblpf)*pbavg(i,j,ml)+ &
                         wblpf *pbavg(i,j,nl) )- &
                    (1.0+wblpf)*dlt*(flxloc(i+1,j)-flxloc(i,j) + &
                                     flyloc(i,j+1)-flyloc(i,j)  )* &
                                    scp2i(i,j)
+                pbavg(i,j,nl) = max( pbotmin(i,j), pbavg(i,j,nl) )
 !
                 if     (ldrag) then
 !
@@ -721,10 +724,11 @@
                      -vbavg(i,j  ,ml)*(depthv(i,j  )*scvx(i,j  ))
 
 #endif
-            pbavg(i,j,nl)= &
+            pbavg(i,j,nl) = &
               ((1.-wblpf)*pbavg(i,j,ml)+ &
                    wblpf *pbavg(i,j,nl) )- &
                (1.+wblpf)*dlt*(pbudel + pbvdel)*scp2i(i,j)
+            pbavg(i,j,nl) = max( pbotmin(i,j), pbavg(i,j,nl) )
 !
             if     (ldrag) then
 ! ---         tidal drag tensor on p-grid:
@@ -962,8 +966,8 @@
       do j=1-margin,jj+margin
         do i=1-margin,ii+margin
           if (SEA_P) then
-            oneta(i,j,n)  = max( oneta0, 1.0 + pbavg(i,j,n)/pbot(i,j) )  !t+1
-            oneta(i,j,m)  = max( oneta0, 1.0 + pbavg(i,j,m)/pbot(i,j) )  !t&RA
+            oneta(i,j,n)  = 1.0 + pbavg(i,j,n)/pbot(i,j) !t+1
+            oneta(i,j,m)  = 1.0 + pbavg(i,j,m)/pbot(i,j) !t&RA
           endif 
         enddo !i
       enddo !j
@@ -1193,7 +1197,9 @@
 !
 ! --- check for clipped oneta
 !
-      if     (mod(nstep,3).eq.0 .or. diagno) then
+!     nsclip = 3        !original value
+      nsclip = 9999999  !only when diagno
+      if     (mod(nstep,nsclip).eq.0 .or. diagno) then
 !$OMP   PARALLEL DO PRIVATE(j,i) &
 !$OMP            SCHEDULE(STATIC,jblk) !NOCSD
         do j=1,jj
@@ -1212,12 +1218,13 @@
         xmin(2) = minval(sminny(1:jj,2))
         call xcminr(xmin(1:2))
 !
-        do mn= 1,2
-          if     (xmin(mn).eq.oneta0) then
+!       do mn= 1,2  !original
+        do mn= n,n  !time t+dt only
+          if     (xmin(mn).le.oneta0+epsil) then
            do j=1,jj
               do i=1,ii
                 if (SEA_P) then
-                  if (oneta(i,j,mn).le.oneta0) then
+                  if (oneta(i,j,mn).le.oneta0+epsil) then
                     write (lp,'(i9,a,2i5,i3,a,f9.6)')  &
                       nstep,' i,j,mn =',i+i0,j+j0,mn, &
                       ' clipped oneta after barotp call ', &
@@ -1239,7 +1246,7 @@
           endif
         endif !diagno
 
-      endif !every 3 time steps or diagno
+      endif !every nsclip time steps or diagno
 !
       return
       end subroutine barotp
@@ -1325,3 +1332,4 @@
 !> Aug. 2018 - added btrmas and barotp_init, converted to a module
 !> Feb. 2019 - replaced onetai by 1.0
 !> Sep. 2019 - added oneta0, and oneta diagnostic test
+!> Jan. 2024 - replaced oneta limit (oneta0), with pbot limit (pbotmin)

@@ -10,7 +10,8 @@
       use mod_cb_arrays  ! HYCOM saved arrays
       implicit none
 !
-! --- define water depth (bottom pressure) at  u,v  points and barotp.pot.vort.
+! --- define water depth (bottom pressure) at  u,v points and barotp.pot.vort.
+! --- also calculate pbotmin = pbot * (oneta0-1.0)
 !
       integer i,j,l,margin
 !
@@ -44,6 +45,15 @@
 !
       call xctilr(pbot, 1,1, nbdy,nbdy, halo_ps)
       call xctilr(corio,1,1, nbdy,nbdy, halo_qs)
+!
+!$OMP PARALLEL DO PRIVATE(j,i) &
+!$OMP          SCHEDULE(STATIC,jblk)
+      do j= 1-nbdy,jj+nbdy
+        do i= 1-nbdy,ii+nbdy
+          pbotmin(i,j) = pbot(i,j) * (oneta0 - 1.0)
+        enddo !i
+      enddo !j
+!
 !
 ! --- rhs: pbot+,corio+
 ! --- lhs: depthu, depthv, pvtrop+

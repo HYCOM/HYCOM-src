@@ -204,6 +204,7 @@
        uja,   ujb,     & ! velocities at lateral ..
        via,   vib,     & !       .. neighbor points
        pbot,           & ! bottom pressure at t=0
+       pbotmin,        & ! minimum bottom pressure, pbot*(oneta0-1)
        sgain,          & ! salin.changes from diapyc.mix.
        surtx,          & ! surface net x-stress on p-grid
        surty,          & ! surface net y-stress on p-grid
@@ -1296,6 +1297,7 @@
                  via(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy), &
                  vib(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy), &
                 pbot(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy), &
+             pbotmin(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy), &
                sgain(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy), &
                surtx(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy), &
                surty(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy), &
@@ -1334,6 +1336,7 @@
                  via = r_init
                  vib = r_init
                 pbot = r_init
+             pbotmin = r_init
                sgain = r_init
                surtx = r_init 
                surty = r_init
@@ -1885,3 +1888,4 @@
 !> Apr. 2023 - added dx0k
 !> July 2023 - added mtracr and itracr
 !> Sep. 2023 - initialize si_h to zero
+!> Jan. 2024 - added pbotmin

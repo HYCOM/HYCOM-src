@@ -25,6 +25,7 @@
 ! --- ----------------------------------------------------------
 !
       logical, parameter ::  ldebug_empbal=.false.   !usually .false.
+      real,    parameter ::  emaxfr=0.125  ! max fraction of water evaporated
 !
 #if defined (USE_NUOPC_CESMBETA)
       logical, parameter ::  cesmbeta =.true.
@@ -32,9 +33,9 @@
       logical, parameter ::  cesmbeta =.false.
 #endif
 !
-      integer i,j,k
-      real    emnp,dpemnp,dplay1,onetanew,onetaold, &
-              pbanew,pbaold,q,salt1n,salt1o
+      integer i,j,k,k1
+      real    emnp,dpemnp,dpemnp1,dplay1,onetanew,onetaold, &
+              pbanew,pbaold,q
       real*8  d1,d2,d3,d4,ssum(2),s1(2)
 !
       if     (ishelf.ne.0) then  !sea ice and an ice shelf
@@ -319,10 +320,11 @@
 !!Alex New calculation of epmass, with E-P applied to the top layer
 !!AJW  Modified new epmass calculation to use actual dp rather than h
 !!AJW  updates pbavg, dp and S.1
+!!AJW  When E-P>0 and layer 1 is thin, some may get merged deeper
 !
       if     (epmass) then  !requires btrlfr=.true., see blkdat.F
-!$OMP   PARALLEL DO PRIVATE(j,i,k,emnp,dpemnp,dplay1,onetanew, &
-!$OMP                       onetaold,pbanew,pbaold,q)
+!$OMP   PARALLEL DO PRIVATE(j,i,k,k1,emnp,dpemnp,dpemnp1,dplay1, &
+!$OMP                       onetanew,onetaold,pbanew,pbaold,q)
         do j=1,jj
           do i=1,ii
             if (SEA_P) then
@@ -331,65 +333,95 @@
 ! ---         This only works if pbavg and dp have just been integrated from
 ! ---         the same time, hence btrlfr=false is not allowed
 !
-              emnp     = -wtrflx(i,j)*svref  !m/s
-              pbaold   = pbavg(i,j,n)
-              pbanew   = pbavg(i,j,n) - delt1*emnp*onem  !emnp mass = rho0*vol
-              pbanew   = max(pbanew, -pbot(i,j))
-              onetaold = max( oneta0, 1.0 + pbaold/pbot(i,j) )
-              onetanew = max( oneta0, 1.0 + pbanew/pbot(i,j) )
+              emnp   = -wtrflx(i,j)*svref  !m/s
+              pbaold = pbavg(i,j,n)
+              pbanew = pbaold - emnp*delt1*onem  !emnp mass = rho0*vol
+              if     (.false. .and. i.eq.itest.and.j.eq.jtest) then
+                q       = pbanew
+                dpemnp1 = emnp
+              endif
+              pbanew = max( pbanew, pbotmin(i,j), &
+                            pbaold - emaxfr*(pbot(i,j) + pbaold) )
+              onetaold = 1.0 + pbaold/pbot(i,j)
+              onetanew = 1.0 + pbanew/pbot(i,j)
+              !some evap may have been discarded
+              emnp        = (pbaold - pbanew)/(delt1*onem)
+              wtrflx(i,j) = -emnp/svref
+              if     (.false. .and. i.eq.itest.and.j.eq.jtest) then
+                write(lp,'(i9,a,1p5g12.4)') &
+                  nstep,' pba,emnp = ',pbanew*qonem, &
+                  (pbanew-pbaold)*qonem,(pbanew-q)*qonem, &
+                  emnp,emnp-dpemnp1
+                call flush(lp)
 !
-!             if     (i.eq.itest.and.j.eq.jtest) then
-!               s1(1) = dp(i,j,1,n)*onetaold*saln(i,j,1,n)
-!               ssum(1) = 0.0d0
-!               do k= 1,kk
-!                 ssum(1) = ssum(1) + dp(i,j,k,n)*onetaold*saln(i,j,k,n)
-!               enddo !k
-!             endif !test
+                  s1(1) = dp(i,j,1,n)*onetaold*saln(i,j,1,n)
+                ssum(1) = 0.0d0
+                do k= 1,kk
+                  ssum(1) = ssum(1) + dp(i,j,k,n)*onetaold*saln(i,j,k,n)
+                enddo !k
+              endif
 !
               pbavg(i,j,n) = pbanew
-              oneta(i,j,n) = max(oneta0, 1.0 + pbavg(i,j,n)/pbot(i,j))
+              oneta(i,j,n) = onetanew
               if     (delt1.ne.baclin) then
 ! ---           Robert-Asselin time filter correction
                 pbavg(i,j,m) = pbavg(i,j,m)+0.5*ra2fac*(pbanew-pbaold)
-                oneta(i,j,m) = max(oneta0,1.0 + pbavg(i,j,m)/pbot(i,j))
+                oneta(i,j,m) = 1.0 + pbavg(i,j,m)/pbot(i,j)
               endif
-! ---         treat E-P as a layer above layer 1, merged into layer 1
+! ---         treat E-P as a layer above layer 1, merged into layer 1(,2,...)
 ! ---         E-P salinity is 0 psu, E-P temperature is SST (T.1 is unchanged)
-                          q = onetaold/onetanew
-                     dplay1 = dp(i,j,1,n)*q
-                     dpemnp = (pbanew - pbaold)/onetanew
-                     salt1o = saln(i,j,1,n)*onetaold*dp(i,j,1,n)*qonem  !diagnostic
-              saln(i,j,1,n) = saln(i,j,1,n) + &
-                               (0.0-saln(i,j,1,n))* &
-                               dpemnp/(dplay1 + dpemnp)
-                dp(i,j,1,n) = dplay1 + dpemnp
-                 p(i,j,2  ) = dp(i,j,1,n)
-                     salt1n = saln(i,j,1,n)*onetanew*dp(i,j,1,n)*qonem  !diagnostic
-              do k= 2,kk
+              dpemnp = (pbanew - pbaold)/onetanew  !may be negative (evap)
+                   q = onetaold/onetanew
+              do k1= 1,kk
+                dplay1  = dp(i,j,k1,n)*q
+                dpemnp1 = max( -emaxfr*dplay1, dpemnp ) !evap at most emaxfr of the layer
+                  dp(i,j,k1,n) = dplay1 + dpemnp1
+                   p(i,j,k1+1) = dp(i,j,k1,n) + dp(i,j,k1,n)
+! ---           h.old = dplay1*onetanew, h.new = dp.new*onetanew
+! ---           S.new = S.old*h.old / h.new
+                saln(i,j,k1,n) = saln(i,j,k1,n) * max(epsil, dplay1) &
+                                                / max(epsil, dp(i,j,k1,n))
+                if     (.false. .and. i.eq.itest.and.j.eq.jtest) then
+                  write(lp,'(i9,i3,a,1p5g12.4)') &
+                    nstep,k1,' 1e,dp = ', &
+                    onetanew,dpemnp*qonem,dpemnp1*qonem, &
+                    dplay1*qonem,dp(i,j,k1,n)*qonem
+                  call flush(lp)
+                endif
+                if     (dpemnp1.eq.dpemnp) then
+                  exit  !E-P merged into column
+                elseif (k1.eq.kk) then
+                  exit  !only get here due to roundoff
+                else
+                  dpemnp = dpemnp - dpemnp1
+                endif
+              enddo !k1
+! ---         rest of thicknesses are unchanged, dp' updated
+              do k= k1+1,kk
                 dp(i,j,k,n) = dp(i,j,k,n)*q
                  p(i,j,k+1) = dp(i,j,k,n) + p(i,j,k)
               enddo !k
 !
-!             if     (i.eq.itest.and.j.eq.jtest) then
-!                 s1(2) = dp(i,j,1,n)*onetanew*saln(i,j,1,n)
-!               ssum(2) = 0.0d0
-!               do k= 1,kk
-!                 ssum(2) = ssum(2) + dp(i,j,k,n)*onetanew*saln(i,j,k,n)
-!               enddo !k
-! ---           normalize by onem, layer 1 is often 1 m thick
-!               s1(1) = s1(1)/onem
-!               s1(2) = s1(2)/onem
-!               write(lp,'(a,i9,1p3e16.8)')
-!    &            'epmass1:',nstep,s1(1),s1(2),s1(2)-s1(1)
-! ---           normalize by initial depth
-!               ssum(1) = ssum(1)/pbot(i,j)
-!               ssum(2) = ssum(2)/pbot(i,j)
-!               write(lp,'(a,i9,1p3e16.8)')
-!    &           'epmassd:',nstep,ssum(1),ssum(2),ssum(2)-ssum(1)
-!               write(lp,'(i9,a,3f12.6)')
-!    .            nstep,',oneta   =',onetaold,onetanew,onetaold/onetanew
-!               call flush(lp)
-!             endif !test
+              if     (.false. .and. i.eq.itest.and.j.eq.jtest) then
+                  s1(2) = dp(i,j,1,n)*onetanew*saln(i,j,1,n)
+                ssum(2) = 0.0d0
+                do k= 1,kk
+                  ssum(2) = ssum(2) + dp(i,j,k,n)*onetanew*saln(i,j,k,n)
+                enddo !k
+! ---           normalize by new thickness
+                s1(1) = s1(1)/max(dp(i,j,1,n)*onetanew,epsil)
+                s1(2) = s1(2)/max(dp(i,j,1,n)*onetanew,epsil)
+                write(lp,'(a,i9,1p3e16.7)') &
+                  'epmass1:',nstep,s1(1),s1(2),s1(2)-s1(1)
+! ---           normalize by new depth
+                ssum(1) = ssum(1)/(p(i,j,kk+1)*onetanew)
+                ssum(2) = ssum(2)/(p(i,j,kk+1)*onetanew)
+                write(lp,'(a,i9,1p3e16.7)') &
+                 'epmassd:',nstep,ssum(1),ssum(2),ssum(2)-ssum(1)
+                write(lp,'(i9,a,3f12.6)') &
+                  nstep,',oneta   =',onetaold,onetanew,onetaold/onetanew
+                call flush(lp)
+              endif !test
             endif !ip
           enddo !i
         enddo !j
@@ -403,15 +435,15 @@
       watcum=watcum+d1
       empcum=empcum+d2
 !
-!diag if     (itest.gt.0 .and. jtest.gt.0) then
-!diag   write(lp,'(i9,2i5,a/19x,4f10.4)') &
-!diag     nstep,i0+itest,j0+jtest, &
-!diag     '    sswflx    surflx    sstflx    wtrflx', &
-!diag     sswflx(itest,jtest), &
-!diag     surflx(itest,jtest), &
-!diag     sstflx(itest,jtest), &
-!diag     wtrflx(itest,jtest)
-!diag endif !test
+      if     (.false. .and. itest.gt.0 .and. jtest.gt.0) then
+        write(lp,'(i9,2i5,a/19x,4f10.4)') &
+          nstep,i0+itest,j0+jtest, &
+          '    sswflx    surflx    sstflx    wtrflx', &
+          sswflx(itest,jtest), &
+          surflx(itest,jtest), &
+          sstflx(itest,jtest), &
+          wtrflx(itest,jtest)
+      endif !test
       return
       end subroutine thermf_oi
 
@@ -793,22 +825,22 @@
       enddo
 !$OMP END PARALLEL DO
 !
-!diag if     (itest.gt.0 .and. jtest.gt.0) then
-!diag   write(lp,'(i9,2i5,a/19x,4f10.4)') &
-!diag     nstep,i0+itest,j0+jtest, &
-!diag     '    sstflx     ustar    hekman    surflx', &
-!diag     sstflx(itest,jtest), &
-!diag     ustar( itest,jtest), &
-!diag     hekman(itest,jtest), &
-!diag     surflx(itest,jtest)
-!diag   write(lp,'(i9,2i5,a/19x,4f10.4)') &
-!diag     nstep,i0+itest,j0+jtest, &
-!diag     '    sswflx     wtrflx   rivflx    sssflx', &
-!diag     sswflx(itest,jtest), &
-!diag     wtrflx(itest,jtest), &
-!diag     rivflx(itest,jtest), &
-!diag     sssflx(itest,jtest)
-!diag endif !test
+      if     (.false. .and. itest.gt.0 .and. jtest.gt.0) then
+        write(lp,'(i9,2i5,a/19x,4f10.4)') &
+          nstep,i0+itest,j0+jtest, &
+          '    sstflx     ustar    hekman    surflx', &
+          sstflx(itest,jtest), &
+          ustar( itest,jtest), &
+          hekman(itest,jtest), &
+          surflx(itest,jtest)
+        write(lp,'(i9,2i5,a/19x,4f10.4)') &
+          nstep,i0+itest,j0+jtest, &
+          '    sswflx     wtrflx   rivflx    sssflx', &
+          sswflx(itest,jtest), &
+          wtrflx(itest,jtest), &
+          rivflx(itest,jtest), &
+          sssflx(itest,jtest)
+      endif !test
 !
 ! --- smooth surface fluxes?
 !
@@ -1240,16 +1272,16 @@
             swflc = (swscl-1.0)*swfl  !diurnal correction only
             swfl  =  swscl     *swfl
           endif
-!diag         if     (i.eq.itest.and.j.eq.jtest) then
-!diag           write(lp,'(i9,a,2i5,2f8.5)') &
-!diag             nstep,', hr,lat =',ihr,ilat,xhr,xlat
-!diag           write(lp,'(i9,a,5f8.5)') &
-!diag             nstep,', swscl  =',swscl,diurnl(ihr,  ilat  ), &
-!diag                                      diurnl(ihr,  ilat+1), &
-!diag                                      diurnl(ihr+1,ilat  ), &
-!diag                                      diurnl(ihr+1,ilat+1)
-!diag           call flush(lp)
-!diag         endif !test
+              if     (.false. .and. i.eq.itest.and.j.eq.jtest) then
+                write(lp,'(i9,a,2i5,2f8.5)') &
+                  nstep,', hr,lat =',ihr,ilat,xhr,xlat
+                write(lp,'(i9,a,5f8.5)') &
+                  nstep,', swscl  =',swscl,diurnl(ihr,  ilat  ), &
+                                           diurnl(ihr,  ilat+1), &
+                                           diurnl(ihr+1,ilat  ), &
+                                           diurnl(ihr+1,ilat+1)
+                call flush(lp)
+              endif !test
         else
           swflc = 0.0 !no diurnal correction
         endif !dswflg
@@ -1310,11 +1342,11 @@
           !allow for any diurnal correction
           radfl = radfl + swflc
         endif
-!diag         if     (i.eq.itest.and.j.eq.jtest) then
-!diag           write(lp,'(i9,a,4f8.2)') &
-!diag             nstep,', radfl  =',radfl,swflc,swfl,swfl-swflc
-!diag           call flush(lp)
-!diag         endif !test
+              if     (.false. .and. i.eq.itest.and.j.eq.jtest) then
+                write(lp,'(i9,a,4f8.2)') &
+                  nstep,', radfl  =',radfl,swflc,swfl,swfl-swflc
+                call flush(lp)
+              endif !test
         if     (pcipf) then
 ! ---     prcp = precipitation (m/sec; positive into ocean)
 ! ---     note that if empflg==3, this is actually P-E
@@ -1473,13 +1505,13 @@
         endif
         surflx(i,j) = radfl - snsibl - evap
 !
-!diag   if     (i.eq.itest.and.j.eq.jtest) then
-!diag     write(lp,'(i9,2i5,a,4f8.5)') &
-!diag     nstep,i0+i,j0+j,' cl0,cl,cs,cd    = ',cl0,clh,csh,cd0
-!diag     write(lp,'(i9,2i5,a,2f8.2,f8.5)') &
-!diag     nstep,i0+i,j0+j,' wsph,tdif,ustar = ',wsph,tdif,ustar(i,j)
-!diag     call flush(lp)
-!diag   endif
+        if     (.false. .and. i.eq.itest.and.j.eq.jtest) then
+          write(lp,'(i9,2i5,a,4f8.5)') &
+          nstep,i0+i,j0+j,' cl0,cl,cs,cd    = ',cl0,clh,csh,cd0
+          write(lp,'(i9,2i5,a,2f8.2,f8.5)') &
+          nstep,i0+i,j0+j,' wsph,tdif,ustar = ',wsph,tdif,ustar(i,j)
+          call flush(lp)
+        endif
       elseif (flxflg.eq.4) then
 !
 ! ---   Similar to flxflg.eq.2, but with Cl based on an approximation
@@ -1575,13 +1607,13 @@
         endif
         surflx(i,j) = radfl - snsibl - evap
 !
-!diag   if     (i.eq.itest.and.j.eq.jtest) then
-!diag     write(lp,'(i9,2i5,a,3f8.5)') &
-!diag     nstep,i0+i,j0+j,' cl,cs,cd    = ',clh,csh,cd0
-!diag     write(lp,'(i9,2i5,a,2f8.2,f8.5)') &
-!diag     nstep,i0+i,j0+j,' va,tamst,ustar = ',va,tamts,ustar(i,j)
-!diag     call flush(lp)
-!diag   endif
+        if     (.false. .and. i.eq.itest.and.j.eq.jtest) then
+          write(lp,'(i9,2i5,a,3f8.5)') &
+          nstep,i0+i,j0+j,' cl,cs,cd    = ',clh,csh,cd0
+          write(lp,'(i9,2i5,a,2f8.2,f8.5)') &
+          nstep,i0+i,j0+j,' va,tamst,ustar = ',va,tamts,ustar(i,j)
+          call flush(lp)
+        endif
       elseif (flxflg.eq.6) then
 !
 ! ---   Similar to flxflg.eq.4, but with more pressure dependance,
@@ -1682,13 +1714,13 @@
 ! ---   surflx = thermal energy flux (W/m^2) into ocean
         surflx(i,j) = radfl - snsibl - evap
 !
-!diag   if     (i.eq.itest.and.j.eq.jtest) then
-!diag     write(lp,'(i9,2i5,a,3f8.5)') &
-!diag     nstep,i0+i,j0+j,' cl,cs,cd    = ',clh,csh,cd0
-!diag     write(lp,'(i9,2i5,a,2f8.2,f8.5)') &
-!diag     nstep,i0+i,j0+j,' va,tamst,ustar = ',va,tamts,ustar(i,j)
-!diag     call flush(lp)
-!diag   endif
+        if     (.false. .and. i.eq.itest.and.j.eq.jtest) then
+          write(lp,'(i9,2i5,a,3f8.5)') &
+          nstep,i0+i,j0+j,' cl,cs,cd    = ',clh,csh,cd0
+          write(lp,'(i9,2i5,a,2f8.2,f8.5)') &
+          nstep,i0+i,j0+j,' va,tamst,ustar = ',va,tamts,ustar(i,j)
+          call flush(lp)
+        endif
       elseif (flxflg.eq.5) THEN
 ! ---   CORE v2 Large and Yeager 2009 CLym. Dyn.: The global climatology 
 ! ---    of an interannually varying air-sea flux dataset.
@@ -2293,3 +2325,5 @@
 !> May  2021 - bug fix: removed natm from sstflg=1
 !> July 2023 - add parameter frac_clim, usualy 0.5 for original behaviour
 !> Dec. 2023 - add cesmbeta as a master switch to cpl_
+!> Jan. 2024 - evap with epmass==1 can extend below a thin enough layer 1
+!> Jan. 2024 - evap with epmass==1 may be clipped for small oneta
