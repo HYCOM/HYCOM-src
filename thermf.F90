@@ -24,7 +24,7 @@
 ! ---                 - allow for ice shelves (no surface flux)
 ! --- ----------------------------------------------------------
 !
-      logical, parameter ::  ldebug_empbal=.true.    !usually .false.
+      logical, parameter ::  ldebug_empbal=.false.   !usually .false.
       real,    parameter ::  emaxfr=0.125  ! max fraction of water evaporated
 !
 #if defined (USE_NUOPC_CESMBETA)
