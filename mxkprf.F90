@@ -688,13 +688,17 @@
             sflux1=surflx(i,j)-sswflx(i,j)
             dtemp=(sflux1+(1.-swfrac(k+1))*sswflx(i,j))* &
                   delt1*g*qspcifh*(qdpmm(k)*qoneta)
-            if (epmass) then  !only actual salt flux
+            if     (epmass.eq.1) then  !only actual salt flux
               dsaln= salflx(i,j)* &
-                    delt1*g*        (qdpmm(k)*qoneta)
+                    delt1*g*(qdpmm(k)*qoneta)
+            elseif (epmass.eq.2) then  !river only is mass flux
+              dsaln=(salflx(i,j)- &
+                     (wtrflx(i,j)-rivflx(i,j))*saln(i,j,1,n))* &
+                    delt1*g*(qdpmm(k)*qoneta)
             else  !water flux treated as a virtual salt flux
               dsaln=(salflx(i,j)-wtrflx(i,j)*saln(i,j,1,n))* &
-                    delt1*g*        (qdpmm(k)*qoneta)
-            endif
+                    delt1*g*(qdpmm(k)*qoneta)
+            endif !epmass
 !diag       if (i.eq.itest.and.j.eq.jtest) then
 !diag         write (lp,101) nstep,i+i0,j+j0,k,  &
 !diag           1.0,swfrac(k+1),dtemp,dsaln
@@ -2209,13 +2213,17 @@
             sflux1=surflx(i,j)-sswflx(i,j)
             dtemp=(sflux1+(1.-swfrac(k+1))*sswflx(i,j))* &
                   delt1*g*qspcifh*(qdpmm(k)*qoneta)
-            if (epmass) then  !only actual salt flux
+            if     (epmass.eq.1) then  !only actual salt flux
               dsaln= salflx(i,j)* &
-                    delt1*g*        (qdpmm(k)*qoneta)
+                    delt1*g*(qdpmm(k)*qoneta)
+            elseif (epmass.eq.2) then  !river only is mass flux
+              dsaln=(salflx(i,j)- &
+                     (wtrflx(i,j)-rivflx(i,j))*saln(i,j,1,n))* &
+                    delt1*g*(qdpmm(k)*qoneta)
             else  !water flux treated as a virtual salt flux
               dsaln=(salflx(i,j)-wtrflx(i,j)*saln(i,j,1,n))* &
-                    delt1*g*        (qdpmm(k)*qoneta)
-            endif
+                    delt1*g*(qdpmm(k)*qoneta)
+            endif !epmass
 !diag       if (i.eq.itest .and. j.eq.jtest) then
 !diag         write (lp,102) nstep,i+i0,j+j0,k,  &
 !diag           0.,1.-swfrac(k+1),dtemp,dsaln
@@ -2447,13 +2455,17 @@
             sflux1=surflx(i,j)-sswflx(i,j)
             dtemp=(sflux1+(1.-swfrac(k+1))*sswflx(i,j))* &
                   delt1*g*qspcifh*(qdpmm(k)*qoneta)
-            if (epmass) then  !only actual salt flux
+            if     (epmass.eq.1) then  !only actual salt flux
               dsaln= salflx(i,j)* &
-                    delt1*g*        (qdpmm(k)*qoneta)
+                    delt1*g*(qdpmm(k)*qoneta)
+            elseif (epmass.eq.2) then  !river only is mass flux
+              dsaln=(salflx(i,j)- &
+                     (wtrflx(i,j)-rivflx(i,j))*saln(i,j,1,n))* &
+                    delt1*g*(qdpmm(k)*qoneta)
             else  !water flux treated as a virtual salt flux
               dsaln=(salflx(i,j)-wtrflx(i,j)*saln(i,j,1,n))* &
-                    delt1*g*        (qdpmm(k)*qoneta)
-            endif
+                    delt1*g*(qdpmm(k)*qoneta)
+            endif !epmass
 !diag       if (i.eq.itest.and.j.eq.jtest) then
 !diag         write (lp,101) nstep,i+i0,j+j0,k, &
 !diag           0.,1.-swfrac(k+1),dtemp,dsaln
@@ -3854,3 +3866,4 @@
 !> Dec  2018 - added /* USE_NUOPC_CESMBETA */ macro and riv_input
 !> Mar  2023 - added /* MASSLESS_1MM */ macro
 !> July 2023 - detrain negative near-surface salinitites
+!> May  2024 - added epmass=2 for river only mass exchange

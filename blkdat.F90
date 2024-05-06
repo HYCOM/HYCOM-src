@@ -2168,7 +2168,6 @@
 ! --- pensol      use penetrating solar radiation (input above)
 ! --- pcipf       use E-P forcing (may be redefined in forfun)
 ! --- priver      rivers as a precipitation bogas
-! --- epmass      treat evap-precip as a mass exchange
 !
 ! --- srelax      activate surface salinity        climatological nudging
 ! --- trelax      activate surface temperature     climatological nudging
@@ -2190,7 +2189,10 @@
       call blkinl(relax, 'relax ')
       call blkinl(trcrlx,'trcrlx')
       call blkinl(priver,'priver')
-      call blkinl(epmass,'epmass')
+!
+! --- 'epmass' = E-P mass exchange flag (0=no,1=yes,2=river)
+      call blkini(epmass,'epmass')
+!
       if (mnproc.eq.1) then
       write(lp,*)
       endif !1st tile
@@ -2205,20 +2207,20 @@
                stop '(blkdat)'
       endif
 !
-      if     (epmass .and. .not.thermo) then
+      if     (epmass.ne.0 .and. .not.thermo) then
         if (mnproc.eq.1) then
         write(lp,'(/ a /)')  &
-         &'error - epmass must be .false. for flxflg=0'
+         &'error - epmass must be 0 for flxflg=0'
         call flush(lp)
         endif !1st tile
         call xcstop('(blkdat)')
                stop '(blkdat)'
       endif
 !!Alex add condition epmass.and.btrlfr
-      if     (epmass .and. .not.btrlfr) then
+      if     (epmass.gt.0 .and. .not.btrlfr) then
         if (mnproc.eq.1) then
         write(lp,'(/ a /)') &
-          'error - btrlfr must be .true. for epmass=1'
+          'error - btrlfr must be .true. for epmass>0'
         call flush(lp)
         endif !1st tile
         call xcstop('(blkdat)')
@@ -2808,3 +2810,4 @@
 !> Sep. 2022 - added hybthn
 !> Apr. 2023 - added optional dx0k
 !> July 2023 - added mtracr
+!> May  2024 - added epmass=2 for river only mass exchange

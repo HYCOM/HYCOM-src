@@ -289,8 +289,12 @@
               sflux1=surflx(i,j)-sswflx(i,j)
               dtemp=(sflux1+(1.-swfrac(k+1))*sswflx(i,j))* &
                     delt1*g*qoneta/(spcifh*max(onemm,dp1d(k)))
-              if (epmass) then  !only actual salt flux
+              if     (epmass.eq.1) then  !only actual salt flux
                 dsaln= salflx(i,j)* &
+                      delt1*g*qoneta/max(onemm,dp1d(k))
+              elseif (epmass.eq.2) then  !river only is mass flux
+                dsaln=(salflx(i,j)- &
+                       (wtrflx(i,j)-rivflx(i,j))*saln(i,j,1,n))* &
                       delt1*g*qoneta/max(onemm,dp1d(k))
               else  !water flux treated as a virtual salt flux
                 dsaln=(salflx(i,j)-wtrflx(i,j)*saln(i,j,1,n))* &
@@ -305,8 +309,12 @@
             else !.not.pensol
               dtemp=surflx(i,j)* &
                     delt1*g*qoneta/(spcifh*max(onemm,dp1d(k)))
-              if (epmass) then  !only actual salt flux
+              if     (epmass.eq.1) then  !only actual salt flux
                 dsaln= salflx(i,j)* &
+                      delt1*g*qoneta/max(onemm,dp1d(k))
+              elseif (epmass.eq.2) then  !river only is mass flux
+                dsaln=(salflx(i,j)- &
+                       (wtrflx(i,j)-rivflx(i,j))*saln(i,j,1,n))* &
                       delt1*g*qoneta/max(onemm,dp1d(k))
               else  !water flux treated as a virtual salt flux
                 dsaln=(salflx(i,j)-wtrflx(i,j)*saln(i,j,1,n))* &
@@ -811,3 +819,4 @@
 !> May  2014 - use land/sea masks (e.g. ip) to skip land
 !> Aug. 2018 - added wtrflx, salflx now only actual salt flux
 !> Nov. 2018 - allow for oneta in swfrac and surface fluxes
+!> May  2024 - added epmass=2 for river only mass exchange

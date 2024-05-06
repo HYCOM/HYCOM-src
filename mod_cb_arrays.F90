@@ -305,7 +305,6 @@
 ! --- thermo      use thermodynamic forcing (flxflg>0)
 ! --- windf       use wind stress   forcing (wndflg>0)
 ! --- pcipf       use evap-precip surface salinity flux
-! --- epmass      treat evap-precip as a mass exchange
 ! --- mslprf      use msl presssure forcing
 ! --- priver      use river precip bogas
 ! --- rivera      annual-only river precip bogas
@@ -352,7 +351,7 @@
 !
       logical, save :: &
                     btrlfr,btrmas,diagno,thermo,windf,mslprf, &
-                    pcipf,epmass,priver,rivera,kparan,lbmont, &
+                    pcipf,priver,rivera,kparan,lbmont, &
                     relax,srelax,trelax,trcrlx,relaxf,relaxs,relaxt, &
                     locsig,vsigma,hybrid,isopyc,icegln,hybraf,isopcm, &
                     mxl_no,mxlkta,mxlktb,mxlkrt,pensol, &
@@ -768,6 +767,7 @@
 ! --- 'sstflg' = SST relaxation  flag (0=none,1=clim,2=atmos,3=obs)
 ! --- 'icmflg' = ice mask        flag (0=none,1=clim,2=atmos,3=obs)
 ! --- 'difsmo' = KPROF: number of layers with horiz smooth diff coeffs
+! --- 'epmass' = E-P mass exchange flag (0=no,1=yes,2=river)
 !
 #if defined(RELO)
       real, save, allocatable, dimension(:) ::  &
@@ -803,7 +803,7 @@
                      iversn,iexpt,jerlv0, &
                      iceflg,ishelf,icmflg,wndflg,amoflg,ustflg, &
                      flxflg,empflg,dswflg,albflg,lwflag,sstflg,sssflg, &
-                     empbal,sssbal, &
+                     epmass,empbal,sssbal, &
                      difsmo,disp_count
 !
       real,    parameter :: &
@@ -1889,3 +1889,4 @@
 !> July 2023 - added mtracr and itracr
 !> Sep. 2023 - initialize si_h to zero
 !> Jan. 2024 - added pbotmin
+!> May  2024 - added epmass=2 for river only mass exchange

@@ -419,8 +419,11 @@
 !
       do i=1,ii
       if (SEA_P) then
-        if (epmass) then  !only actual salt flux
+        if      (epmass.eq.1) then  !only actual salt flux
           vsflx(i)= salflx(i,j)
+        elseif (epmass.eq.2) then  !river only is mass flux
+          vsflx(i)=(salflx(i,j)- &
+                    (wtrflx(i,j)-rivflx(i,j))*saln(i,j,1,n))
         else !water flux treated as a virtual salt flux
           vsflx(i)=(salflx(i,j)-wtrflx(i,j)*saln(i,j,1,n))
         endif
@@ -667,3 +670,4 @@
 !> May  2014 - use land/sea masks (e.g. ip) to skip land
 !> Aug. 2018 - added wtrflx, salflx now only actual salt flux
 !> Nov. 2018 - allow for wtrflx in buoyancy flux 
+!> May  2024 - added epmass=2 for river only mass exchange

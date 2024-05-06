@@ -10,6 +10,9 @@ cd $cwd
 #
 # --- set ARCH to the correct value for this machine.
 #
+# --- Generic, GNU Fortran
+#setenv ARCH generic-gnu-relo
+#
 # --- IBM iDataPlex, IBM MPI (very old example)
 #unset echo
 #module swap compiler compiler/intel/12.1.3
@@ -38,24 +41,24 @@ cd $cwd
 #setenv ARCH xc40-intel-relo
 #
 # --- Cray SHASTA, Intel Fortran (cray-mpich/8.1.[12] do not work)
-#unset echo
-#module restore PrgEnv-intel
-#module use --append /p/app/modulefiles
-#module load bct-env
-#module load cray-pals
-#module swap cray-mpich/8.1.4
-#module list
-#set echo
-#setenv ARCH shasta-intel-relo
-#
-# --- HPE SGI, MPI (mpt), Intel Fortran  (mpt/2.17 does not work)
 unset echo
-module purge
-module load compiler/intel/2017.4.196
-module load mpt/2.16
+module restore PrgEnv-intel
+module use --append /p/app/modulefiles
+module load bct-env
+module load cray-pals
+module swap cray-mpich/8.1.4
 module list
 set echo
-setenv ARCH hpe-intel-relo
+setenv ARCH shasta-intel-relo
+#
+# --- HPE SGI, MPI (mpt), Intel Fortran  (mpt/2.17 does not work)
+#unset echo
+#module purge
+#module load compiler/intel/2017.4.196
+#module load mpt/2.16
+#module list
+#set echo
+#setenv ARCH hpe-intel-relo
 #
 setenv TYPE `echo $cwd | awk -F"_" '{print $NF}'`
 echo "ARCH = " $ARCH "  TYPE = " $TYPE
@@ -92,7 +95,9 @@ setenv OCN_KAPP ""
 # -DRDNEST_MASK    : mask velocity outliers
 # -DLATBDT_NPLINE3 : update pline every 3 time steps
 # -DMASSLESS_1MM   : lowest substantial mass-containing layer > 1mm thick
-setenv OCN_MISC ""
+#setenv OCN_MISC ""
+#setenv OCN_MISC "-DMASSLESS_1MM -DRDNEST_MASK -DLATBDT_NPLINE3"
+setenv OCN_MISC "-DMASSLESS_1MM"
 
 # CPP_EXTRAS
 setenv CPP_EXTRAS "${OCN_SIG} ${OCN_EOS} ${OCN_GLB} ${OCN_KAPP} ${OCN_MISC}"
