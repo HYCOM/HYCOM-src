@@ -709,6 +709,7 @@
 ! --- 'thkbot' = thickness of bottom boundary layer (m)
 ! --- 'sigjmp' = minimum density jump across interfaces   (theta units)
 ! --- 'tmljmp' = equivalent temperature jump across the mixed layer (degC)
+! --- 'ocnscl' = scale factor for Uocn in relative wind (0.0 for absolute wind)
 ! --- 'prsbas' = msl pressure is input field + prsbas (Pa)
 ! --- 'salmin' = minimum salinity allowed in an isopycnic layer (psu)
 ! --- 'dx00'   = maximum layer thickness minimum, optional (m)
@@ -792,7 +793,7 @@
                      thkcdw,thkfrz,tfrz_0,tfrz_s,ticegr,hicemn,hicemx, &
                      dx00,dx00f,dx00x, &
                      dp00,dp00f,dp00x,ds00,ds00f,ds00x,dp00i,isotop, &
-                     oneta0,sigjmp,tmljmp,prsbas,emptgt
+                     oneta0,sigjmp,tmljmp,ocnscl,prsbas,emptgt
 !
       integer, save :: &
                      tsofrq,mixfrq,icefrq,icpfrq,nhybrd,nsigma, &
@@ -1890,3 +1891,4 @@
 !> Sep. 2023 - initialize si_h to zero
 !> Jan. 2024 - added pbotmin
 !> May  2024 - added epmass=2 for river only mass exchange
+!> Aug. 2024 - added ocnscl

@@ -471,11 +471,13 @@
                 if     (wndflg.eq.4 .and. flxflg.eq.6) then
                   if     (amoflg.ne.0) then
 ! ---               use wind-current in place of wind for everything
-                    samo  = sqrt( (wndx-usur)**2 + (wndy-vsur)**2 )
+! ---               set ocnscl to 1.0 for full relative wind
+                    samo  = sqrt( (wndx-ocnscl*usur)**2 +&
+                                  (wndy-ocnscl*vsur)**2 )
                     cdw   = 1.0e-3*cd_coarep(samo,vpmx,airt,pair, &
                                              temp(i,j,1,n))
-                    surtx( i,j) = rair*cdw*samo*(wndx-usur)
-                    surty( i,j) = rair*cdw*samo*(wndy-vsur)
+                    surtx( i,j) = rair*cdw*samo*(wndx-ocnscl*usur)
+                    surty( i,j) = rair*cdw*samo*(wndy-ocnscl*vsur)
                     wndocn(i,j) = samo  !save for thermf
                   else
 ! ---               use wind for everything
@@ -489,9 +491,11 @@
                                           temp(i,j,1,n))
                   if     (amoflg.ne.0) then
 ! ---               use wind-current magnitude and direction for stress 
-                    samo = sqrt( (wndx-usur)**2 + (wndy-vsur)**2 )
-                    surtx(i,j) = rair*cdw*samo*(wndx-usur)
-                    surty(i,j) = rair*cdw*samo*(wndy-vsur)
+! ---               set ocnscl to 1.0 for full relative wind
+                    samo = sqrt( (wndx-ocnscl*usur)**2 +&
+                                 (wndy-ocnscl*vsur)**2 )
+                    surtx(i,j) = rair*cdw*samo*(wndx-ocnscl*usur)
+                    surty(i,j) = rair*cdw*samo*(wndy-ocnscl*vsur)
                   else
 ! ---               use wind for everything
                     surtx(i,j) = rair*cdw*wind*wndx
@@ -503,9 +507,11 @@
                                           temp(i,j,1,n))
                   if     (amoflg.ne.0) then
 ! ---               use wind-current magnitude and direction for stress 
-                    samo = sqrt( (wndx-usur)**2 + (wndy-vsur)**2 )
-                    surtx(i,j) = rair*cdw*samo*(wndx-usur)
-                    surty(i,j) = rair*cdw*samo*(wndy-vsur)
+! ---               set ocnscl to 1.0 for full relative wind
+                    samo = sqrt( (wndx-ocnscl*usur)**2 +&
+                                 (wndy-ocnscl*vsur)**2 )
+                    surtx(i,j) = rair*cdw*samo*(wndx-ocnscl*usur)
+                    surty(i,j) = rair*cdw*samo*(wndy-ocnscl*vsur)
                   else
 ! ---               use U10 magnitude and direction for stress 
                     surtx(i,j) = rair*cdw*wind*wndx
@@ -5692,3 +5698,4 @@
 !> Nov. 2019 - added amoflg for U10 vs U10-Uocn
 !> Mar. 2023 - added momtum_cfl in a CPP macro
 !> Dec. 2023 - add cesmbeta as a master switch to cpl_
+!> Aug. 2024 - replace U10-Uocn with U10-ocnscl*Uocn
