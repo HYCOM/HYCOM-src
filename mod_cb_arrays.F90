@@ -657,6 +657,7 @@
 ! ---'qhybrlx' = HYBGEN: relaxation coefficient (inverse baroclinic time steps)
 ! --- 'hybiso' = HYBGEN: Use PCM if layer is within hybiso of target density
 ! --- 'hybthn' = HYBGEN: ratio of layer thicknesses to select the thiner
+! --- 'hybthk' = HYBGEN: thick-thin-thick ratio to expand the thin layer
 ! --- 'visco2' = deformation-dependent Laplacian  viscosity factor
 ! --- 'visco4' = deformation-dependent biharmonic viscosity factor
 ! --- 'facdf4' =       speed-dependent biharmonic viscosity factor
@@ -780,7 +781,7 @@
 !
       real, save :: &
                      thbase,saln0,baclin,batrop, &
-                     qhybrlx,hybiso,hybthn, &
+                     qhybrlx,hybiso,hybthn,hybthk, &
                      visco2,visco4,veldf2,veldf4,facdf4, &
                      temdf2,temdfc,thkdf2,thkdf4,vertmx,diapyc, &
                      tofset,sofset,dtrate,slip,cb,cbar, &
@@ -1892,3 +1893,4 @@
 !> Jan. 2024 - added pbotmin
 !> May  2024 - added epmass=2 for river only mass exchange
 !> Aug. 2024 - added ocnscl
+!> Sep. 2024 - added hybthk

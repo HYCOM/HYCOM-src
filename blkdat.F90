@@ -882,6 +882,9 @@
 ! --- 'hybthn' = HYBGEN: ratio of layer thicknesses to select the thiner
 !                 (1.0 for original behaviour, i.e. key only on thickness;
 !                  5.0 to favor the larger density anomaly over thickness)
+! --- 'hybthk' = HYBGEN: thick-thin-thick ratio to expand the thin layer
+!                 (0.0 for original behaviour, i.e. don't expand,
+!                  0.9 for maximum allowed expansion)
 ! --- 'hybmap' = HYBGEN:  remapper  flag (0=PCM, 1=PLM,    2=PPM,  3=WENO-like)
 ! --- 'hybflg' = HYBGEN:  generator flag (0=T&S, 1=th&S,   2=th&T)
 ! --- 'advflg' = thermal  advection flag (0=T&S, 1=th&S,   2=th&T)
@@ -919,6 +922,7 @@
       call blkinr(hybrlx,'hybrlx','(a6," =",f10.4," time steps")')
       call blkinr(hybiso,'hybiso','(a6," =",f10.4," kg/m^3")')
       call blkinr(hybthn,'hybthn','(a6," =",f10.4," ")')
+      call blkinr(hybthk,'hybthk','(a6," =",f10.4," ")')
       call blkini(hybmap,'hybmap')
       call blkini(hybflg,'hybflg')
       call blkini(advflg,'advflg')
@@ -964,6 +968,16 @@
         call flush(lp)
         endif !1st tile
         call xcstop('(blkdat)')
+               stop '(blkdat)'
+      endif
+!     
+      if (hybthk.lt.0.0 .or. hybthk.gt.0.9) then
+        if (mnproc.eq.1) then
+        write(lp,'(/ a /)')  &
+         &'error - hybthk must be betweeen 0.0 and 0.9'
+        call flush(lp)
+        endif !1st tile
+        call xcstop('(blkdat)') 
                stop '(blkdat)'
       endif
 !
@@ -2832,3 +2846,4 @@
 !> July 2023 - added mtracr
 !> May  2024 - added epmass=2 for river only mass exchange
 !> Aug. 2024 - added ocnscl
+!> Sep. 2024 - added hybthk

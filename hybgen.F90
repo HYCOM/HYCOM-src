@@ -331,7 +331,8 @@
       logical ltop                    !modify top layer
       real    p_hat,p_hat0,p_hat2,p_hat3,hybrlx, &
               delt,deltm,dels,delsm,q,qdep,qtr,qts,thkbop, &
-              zthk,dpthin
+              zthk,dpthin, &
+              dp_top,dp_cen,dp_bot,dp_far,dp_inc
       integer i,k,ka,kp,ktr,fixall,fixlay,nums1d
       character*12 cinfo
 !
@@ -1040,8 +1041,126 @@
 !
 ! ---     do not maintain constant thickness, k > fixlay
 !
-          if     (th3d(i,j,k,n).gt.theta(i,j,k)+epsil .and. &
-                  k.gt.fixlay+1) then 
+          dp_top = p(i,j,k)   - p(i,j,k-1) + epsil
+          dp_cen = p(i,j,k+1) - p(i,j,k)   + epsil
+          if     (k.eq.kdm) then
+            dp_bot = dp_cen  !disables thick-thin test
+            dp_far = dp_cen
+          elseif (k.eq.kdm-1) then
+            dp_bot = p(i,j,k+2) - p(i,j,k+1) + epsil
+            dp_far = dp_bot  !disables thick-2xthin test
+          else
+            dp_bot = p(i,j,k+2) - p(i,j,k+1) + epsil
+            dp_far = p(i,j,k+3) - p(i,j,k+2) + epsil
+          endif 
+          if     ( dp_cen .lt. hybthk*min(dp_top,dp_bot) ) then
+!
+! ---       thick-thin-thick layers with thin < hybthk*thick
+! ---       expand layer k with water from layers k-1 and k+1
+!
+            if     (min(dp_top,dp_bot) .lt. 0.2*max(dp_top,dp_bot) ) then
+! ---         weight by layer thicknesses, increment density is wrong
+              q = dp_top / (dp_top + dp_bot)
+            elseif (theta(i,j,k).gt.th3d(i,j,k-1,n) .and. &
+                    theta(i,j,k).lt.th3d(i,j,k+1,n)      ) then
+! ---         weight by actual densities, increment at theta(i,j,k)
+              q = (theta(i,j,k)-th3d(i,j,k+1,n))/ &
+               (th3d(i,j,k-1,n)-th3d(i,j,k+1,n))
+            else
+! ---         weight by target densities, increment density is approximate
+              q = (theta(i,j,k)-theta(i,j,k+1))/(theta(i,j,k-1)-theta(i,j,k+1))
+            endif
+! ---       allow for thick layers getting thinner
+            if     (dp_top .le. dp_bot) then
+              dp_inc = (hybthk*dp_top - dp_cen)/(1.0+q*hybthk)
+            else
+              dp_inc = (hybthk*dp_bot - dp_cen)/(1.0+(1.0-q)*hybthk)
+            endif
+            p_hat  = p(i,j,k) - q*dp_inc
+            p(i,j,k)=(1.0-qhrlx(k))*p(i,j,k) + &
+                          qhrlx(k) *p_hat
+            p_hat  = p(i,j,k+1) + (1.0-q)*dp_inc
+            p(i,j,k+1)=(1.0-qhrlx(k))*p(i,j,k+1) + &
+                            qhrlx(k) *p_hat
+!
+!diag           if (i.eq.itest .and. j.eq.jtest) then
+!diag             write(lp,'(a,3x,i2.2,4f10.3)') &
+!diag               'hybgen, thk,thnDP:',k,dp_top*qonem,dp_cen*qonem,dp_bot*qonem, &
+!diag                                      hybthk*min(dp_top,dp_bot)*qonem
+!diag             write(lp,'(a,3x,i2.2,f10.6,2f10.3,f10.5)') &
+!diag               'hybgen, thk,thn Q:',k,q,dp_inc*qonem, &
+!diag                (dp_inc+dp_cen)*qonem, &
+!diag                q*th3d(i,j,k-1,n)+(1.0-q)*th3d(i,j,k+1,n)
+!diag             dp_top = p(i,j,          k)    - p(i,j,k-1) + epsil
+!diag             dp_cen = p(i,j,          k+1)  - p(i,j,k)   + epsil
+!diag             dp_bot = p(i,j,min(kdm+1,k+2)) - p(i,j,k+1) + epsil
+!diag             write(lp,'(a,3x,i2.2,4f10.3)') &
+!diag               'hybgen, thk,thnNP:',k,dp_top*qonem,dp_cen*qonem,dp_bot*qonem, &
+!diag                                      hybthk*min(dp_top,dp_bot)*qonem
+!diag             call flush(lp)
+!diag           endif !debug
+!
+          elseif ( dp_cen+dp_bot .lt. hybthk*min(dp_top,dp_far) ) then
+!
+! ---       thick-thin-thin-thick layers with 2xthin < hybthk*thick
+! ---       expand layers k,k+1 with water from layers k-1 and k+2
+! ---       this should be rare
+!
+            if     (min(dp_top,dp_far) .lt. 0.2*max(dp_top,dp_far) ) then
+! ---         weight by layer thicknesses, increment density is wrong
+              q = dp_top / (dp_top + dp_far)
+            elseif (0.5*(theta(i,j,k)+theta(i,j,k+1)).gt.th3d(i,j,k-1,n) .and. &
+                    0.5*(theta(i,j,k)+theta(i,j,k+1)).lt.th3d(i,j,k+2,n)      ) then
+! ---         weight by actual densities, increment at 0.5*(theta(i,j,k)+theta(i,j,k+1))
+              q = (0.5*(theta(i,j,k)+theta(i,j,k+1))-th3d(i,j,k+2,n)) / &
+                  (th3d(i,j,k-1,n)-th3d(i,j,k+2,n))
+            else
+! ---         weight by target densities, increment density is approximate
+              q = (0.5*(theta(i,j,k)+theta(i,j,k+1))-theta(i,j,k+2)) / &
+                  (theta(i,j,k-1)-theta(i,j,k+2))
+            endif
+! ---       allow for thick layers getting thinner
+            if     (dp_top .le. dp_far) then
+              dp_inc = (hybthk*dp_top - (dp_cen+dp_bot))/(1.0+q*hybthk)
+            else
+              dp_inc = (hybthk*dp_far - (dp_cen+dp_bot))/(1.0+(1.0-q)*hybthk)
+            endif
+            p_hat  = p(i,j,k) - q*dp_inc
+            p(i,j,k)=(1.0-qhrlx(k))*p(i,j,k) + &
+                          qhrlx(k) *p_hat
+            p_hat  = p(i,j,k+2) + (1.0-q)*dp_inc
+            p(i,j,k+2)=(1.0-qhrlx(k))*p(i,j,k+2) + &
+                            qhrlx(k) *p_hat
+!
+!diag            if (i.eq.itest .and. j.eq.jtest) then
+!diag             if ( min(dp_top,dp_far) .lt. 0.2*max(dp_top,dp_far)) then
+!diag               write(lp,'(a,3x,i2.2,4f10.3)') &
+!diag                 'hybgen, thk,thnX2:',k,dp_top*qonem, &
+!diag                                        (dp_cen+dp_bot)*qonem,dp_far*qonem, &
+!diag                                        hybthk*min(dp_top,dp_far)*qonem
+!diag             else
+!diag               write(lp,'(a,3x,i2.2,4f10.3)') &
+!diag                 'hybgen, thk,thnD2:',k,dp_top*qonem, &
+!diag                                        (dp_cen+dp_bot)*qonem,dp_far*qonem, &
+!diag                                        hybthk*min(dp_top,dp_far)*qonem
+!diag             endif
+!diag             write(lp,'(a,3x,i2.2,f10.6,2f10.3,f10.5)') &
+!diag                 'hybgen, thk,thn Q:',k,q,dp_inc*qonem, &
+!diag                  (dp_inc+(dp_cen+dp_bot))*qonem, &
+!diag                  q*th3d(i,j,k-1,n)+(1.0-q)*th3d(i,j,k+2,n)
+!diag             dp_top = p(i,j,k)   - p(i,j,k-1) + epsil
+!diag             dp_cen = p(i,j,k+1) - p(i,j,k)   + epsil
+!diag             dp_bot = p(i,j,k+2) - p(i,j,k+1) + epsil
+!diag             dp_far = p(i,j,k+3) - p(i,j,k+2) + epsil
+!diag             write(lp,'(a,3x,i2.2,4f10.3)') &
+!diag               'hybgen, thk,thnNP:',k,dp_top*qonem, &
+!diag                                      (dp_cen+dp_bot)*qonem,dp_far*qonem, &
+!diag                                      hybthk*min(dp_top,dp_far)*qonem
+!diag             call flush(lp)
+!diag           endif !debug
+!
+          elseif (th3d(i,j,k,n).gt.theta(i,j,k)+epsil .and. &
+                  k.gt.fixlay+1) then
 !
 ! ---       water in layer k is too dense
 ! ---       try to dilute with water from layer k-1
@@ -2973,3 +3092,4 @@
 !> July 2023 - added trcflg=802: change in layer temperature due to hybgen
 !> July 2023 - added trcflg=803: change in layer salinity    due to hybgen
 !> Sep. 2024 - dx0k-ed layers are never remapped with PCM
+!> Sep. 2024 - added hybthk
