@@ -1299,10 +1299,12 @@
 !
       enddo !k  vertical coordinate relocation
 
-      do k=1,kk-1
+      do k=2,kk-1
         ! If layer is too thick, move interface up
         if ((p(i,j,k+1)-p(i,j,k)) .gt. dx0k(k)) then
           p(i,j,k+1)=p(i,j,k)+dx0k(k)
+          lcm(k)   = .false.  !dx0k layers are never PCM
+          lcm(k-1) = .false.
 !
 !diag     if (i.eq.itest .and. j.eq.jtest) then
 !diag       write(lp,'(a,i3.2,f8.2)') &
@@ -2970,3 +2972,4 @@
 !> July 2023 - added trcflg=801: change in layer thickness   due to hybgen
 !> July 2023 - added trcflg=802: change in layer temperature due to hybgen
 !> July 2023 - added trcflg=803: change in layer salinity    due to hybgen
+!> Sep. 2024 - dx0k-ed layers are never remapped with PCM
