@@ -1446,7 +1446,7 @@
 !
       mxl_no = mlflag.eq.0
 !
-      if (isopyc .and. mlflag.ne.2) then
+      if (isopyc .and. .not.(mlflag.eq.0 .or. mlflag.eq.2)) then
         if (mnproc.eq.1) then
         write(lp,'(/ a /)')  &
          &'error - isopycnal mode requires KT mixed layer (mlflag=2)'
@@ -2847,3 +2847,4 @@
 !> May  2024 - added epmass=2 for river only mass exchange
 !> Aug. 2024 - added ocnscl
 !> Sep. 2024 - added hybthk
+!> Nov. 2024 - mlflag=0 turns off isopyc mixed layer entirely

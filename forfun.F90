@@ -324,8 +324,16 @@
             enddo !i
           enddo !j
         endif !stroff:else
-!
-      endif				!  windf = .true.
+!      
+      else !.not. windf 
+        do j=1,jj
+          do i=1,ii
+            ustar(i,j) = 0.0
+            surtx(i,j) = 0.0
+            surty(i,j) = 0.0
+          enddo
+        enddo
+      endif  ! windf:else
 !
       if (thermo) then
 !
@@ -445,7 +453,20 @@
 !diag call prtmsk(ip,util1,util2,idm,idm,jdm,  0.,1.0, &
 !diag      'sw radiation (w/m^2 )  ')
 !
-      endif                    !  thermo = .true.
+     else !.not. thermo
+        do j=1,jj
+          do i=1,ii
+            sswflx(i,j) = 0.0
+            mixflx(i,j) = 0.0
+            sstflx(i,j) = 0.0
+            surflx(i,j) = 0.0
+            wtrflx(i,j) = 0.0
+            salflx(i,j) = 0.0  
+            sssflx(i,j) = 0.0
+            rivflx(i,j) = 0.0
+          enddo
+        enddo
+      endif  ! thermo:else
 !
       if     (lwflag.eq.2 .or. sstflg.eq.2   .or. &
               icmflg.eq.2 .or. ticegr.eq.0.0     ) then
@@ -1482,6 +1503,17 @@
             stoc_s(i,j,l) = 0.0
             stoc_u(i,j,l) = 0.0
             stoc_v(i,j,l) = 0.0
+             ustar(i,j)   = 0.0
+             surtx(i,j)   = 0.0
+             surty(i,j)   = 0.0
+            sswflx(i,j)   = 0.0
+            mixflx(i,j)   = 0.0
+            sstflx(i,j)   = 0.0
+            surflx(i,j)   = 0.0
+            wtrflx(i,j)   = 0.0
+            salflx(i,j)   = 0.0
+            sssflx(i,j)   = 0.0
+            rivflx(i,j)   = 0.0
           enddo !i
         enddo !j
       enddo !l
@@ -4964,3 +4996,4 @@
 !> Mar  2021 - skip tracers in nest archive files
 !> Apr  2021 - update the halo of rmu
 !> Nov  2022 - skip oneta in nest archive files
+!> Nov. 2024 - set surface fluxes to zero if not used

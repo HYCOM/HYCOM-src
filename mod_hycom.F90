@@ -1534,6 +1534,13 @@
               bhtflx(i,j) = 0.0
               salflx(i,j) = 0.0
               wtrflx(i,j) = 0.0
+              if (mxl_no) then
+                do k= 1,kk
+                  vcty(i,j,k) = 0.0
+                  dift(i,j,k) = 0.0
+                  difs(i,j,k) = 0.0
+                enddo !k
+              endif !mxl_no
             endif !ip
           enddo !i
           if (isopyc .or. mxlkrt .or. mxl_no) then
@@ -2602,26 +2609,28 @@
            call xctmr1(49)
            call pipe_comparall(m,n, 'hybgen, step')
       else  ! isopyc
+        if     (mxlkrt) then
             call xctmr0(46)
-         call mxkrtm(m,n)
+          call mxkrtm(m,n)
             call xctmr1(46)
             call pipe_comparall(m,n, 'mxkrtm, step')
             call xctmr0(47)
-         call convcm(m,n)
+          call convcm(m,n)
             call xctmr1(47)
             call pipe_comparall(m,n, 'convcm, step')
             call xctmr0(48)
-         call diapf3(m,n)
+          call diapf3(m,n)
             call xctmr1(48)
             call pipe_comparall(m,n, 'diapf3, step')
             call xctmr0(54)
             call xctmr1(54)
-            call xctmr0(56)
-         call asselin_filter(m,n)
-            call xctmr1(56)
-            call pipe_comparall(m,n, 'asseln, step')
-            call xctmr0(49)
-            call xctmr1(49)
+        endif  !isopyc mixed layer
+          call xctmr0(56)
+        call asselin_filter(m,n)
+          call xctmr1(56)
+          call pipe_comparall(m,n, 'asseln, step')
+          call xctmr0(49)
+          call xctmr1(49)
       endif !hybrid:isopyc
 
 #if defined (USE_NUOPC_CESMBETA)
@@ -3563,6 +3572,11 @@
                 mixflx(i,j) = 0.0
                 buoflx(i,j) = 0.0
                 bhtflx(i,j) = 0.0
+                do k= 1,kk
+                  vcty(i,j,k) = 0.0
+                  dift(i,j,k) = 0.0
+                  difs(i,j,k) = 0.0
+                enddo !k
               endif !ip
               if (SEA_U) then
                    umix(i,j) =    u(i,j,1,n)
@@ -4092,3 +4106,5 @@
 !> Sep. 2019 - added oneta0
 !> Nov. 2020 - removed call to MPI_Comm_Dup, duplicative of call in xcspmd
 !> July 2024 - added mtracr
+!> Nov. 2024 - zero vcty,dift,difs when mxl_no
+!> Nov. 2024 - mlflag=0 turns of isopyc mixed layer entirely
