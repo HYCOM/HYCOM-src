@@ -319,7 +319,7 @@
             if (SEA_U) then
               pthkbl=thkdrg*onem                  !thknss of bot. b.l.
               pbop=depthu(i,j)-pthkbl                !top of bot. b.l.
-              phi =max(0.5*(p(i,j,1)+p(i+1,j,1)),pbop)
+              phi =max(0.5*(p(i,j,1)+p(i-1,j,1)),pbop)
               ubot=0.0
               do k=1,kk
                 plo =phi           ! max(0.5*(p(i,j,k)  +p(i-1,j,k)),pbop)
@@ -334,11 +334,11 @@
             if (SEA_V) then
               pthkbl=thkdrg*onem                  !thknss of bot. b.l.
               pbop=depthv(i,j)-pthkbl                !top of bot. b.l.
-              phi =max(0.5*(p(i,j,1)+p(i+1,j,1)),pbop)
+              phi =max(0.5*(p(i,j,1)+p(i,j-1,1)),pbop)
               vbot=0.0
               do k=1,kk
-                plo =phi           ! max(0.5*(p(i,j,k)  +p(i-1,j,k)),pbop)
-                phi =max(min(depthv(i,j),0.5*(p(i,j,k+1)+p(i-1,j,k+1))), &
+                plo =phi           ! max(0.5*(p(i,j,k)  +p(i,j-1,k)),pbop)
+                phi =max(min(depthv(i,j),0.5*(p(i,j,k+1)+p(i,j-1,k+1))), &
                          pbop)
                 vbot=vbot + v(i,j,k,n)*(phi-plo)
               enddo !k
@@ -1332,3 +1332,4 @@
 !> Jan  2013 - added tiddrg and the barotropic and tensor drag options
 !> May  2014 - use land/sea masks (e.g. ip) to skip land
 !> Jul  2017 - generic tide time from model day zero
+!> Dec  2024 - fixed p to v grid indexing bug in tides_detide
