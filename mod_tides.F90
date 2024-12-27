@@ -27,29 +27,37 @@
        tidcon,    & ! 1 digit per constituent (Q1K2P1N2O1K1S2M2), 0=off,1=on
        tidein,    & ! tide input flag: 0=no; 1=yes; 2=sal
        tiddrg,    & ! tidal drag flag: 0:no; -1,1=scalar; 2=tensor
-       nhrly     ! number of valid hourly samples (0 to 49)
+       tidstr,    & ! tidal streaming filter flag: 0:no; 1=yes
+       nhrly        ! number of valid hourly samples (0 to 49)
 !
       logical, save, public  :: &
-       tidgen    ! generic time (don't correct tides for actual year)
+       tidgen       ! generic time (don't correct tides for actual year)
 !
       real*8,  save, public  :: &
-       ramp_orig,  & ! tide ramp origin  (model day)
-       time_8     ! model time for tides
+       ramp_orig, & ! tide ramp origin  (model day)
+       time_8       ! model time for tides
 !
       real,    save, public  :: &
-       tidsal,     & ! scalar self attraction and loading factor (beta)
-       ramp_time  ! tide ramping time (days)
+       tidsal,    & ! scalar self attraction and loading factor (beta)
+       ramp_time    ! tide ramping time (days)
 !
       real,    allocatable, dimension(:,:), &
                save, public  :: &
         etide,    & ! body tide, in m
        untide,    & ! de-tided u-velocity, filtered from uhrly
-       vntide    ! de-tided u-velocity, filtered from vhrly
+       vntide       ! de-tided u-velocity, filtered from vhrly
+!
+      real,    allocatable, dimension(:,:,:), &
+               save, public  :: &
+        uvf,      & ! velocity for u streaming filter
+        usf,      & ! scalar   for u streaming filter
+        vvf,      & ! velocity for v streaming filter
+        vsf         ! scalar   for v streaming filter
 !
       real,    allocatable, dimension(:,:,:), &
                save, public  :: &
        uhrly,     & ! hourly u-velocity samples
-       vhrly     ! hourly v-velocity samples
+       vhrly        ! hourly v-velocity samples
 !
       logical, save, private :: &
        tide_on(ncon)
@@ -58,7 +66,7 @@
                save, private :: &
        atide,     & ! real      complex amplitude coefficents for body tide
        btide,     & ! imaginary complex amplitude coefficents for body tide
-       etidei    ! input body tide, in m
+       etidei       ! input body tide, in m
 
       real,    save, private :: &
         wt0, &
@@ -96,13 +104,18 @@
             tide_on(i) = mod(tidcon1,10) .eq. 1
             tidcon1    =     tidcon1/10  ! shift by one decimal digit
           enddo
+          idyold=-1  !.ne.iday
         endif
 
-        if     (yrflag.eq.3) then
+        if     (.not.tidgen .and. yrflag.eq.3) then
           call  forday(time_8,yrflag,iyear,iday,ihour)
           if     (flag.eq.0) then
             idyold=iday-1  !.ne.iday
           endif
+          if     (.false. .and. mnproc.eq.1) then
+          write(lp,'(a,f16.9,2i4)') 'tides_set: ',time_8,iday,idyold
+          endif !1st tile
+          call xcsync(flush_lp)
 ! ---     update once per model day
           if     (iday.ne.idyold) then  !.or. flag.eq.0
             idyold=iday
@@ -123,20 +136,20 @@
                      - (31+28+31+30+31+30+31+31+30+31+17) &
                      + iday
 
-!           if     (mnproc.eq.1) then
-!           write (lp,*) 'tide_set: calling tides_nodal for a new day'
-!           endif !1st tile
-!           call xcsync(flush_lp)
+!             if     (mnproc.eq.1) then
+!               write (lp,*) 'tides_set: calling tides_nodal for a new day'
+!             endif !1st tile
+!             call xcsync(flush_lp)
             call tides_nodal
-!           if (mnproc.eq.1) then
-!             year8 = iyear + (iday - 1)/365.25d0
-!             write(6,'(a,f11.5,8f8.4)') '#arg8 =',year8,arg8(1:8)
-!             write(6,'(a,f11.5,8f8.4)') '#pu8  =',year8, pu8(1:8)
-!             write(6,'(a,f11.5,8f8.4)') '#pf8  =',year8, pf8(1:8)
-!           endif !1st tile
-            call xcsync(flush_lp)
+!             if (mnproc.eq.1) then
+!               year8 = iyear + (iday - 1)/365.25d0
+!               write(lp,'(a,f16.9,8f8.4)') '#arg8 =',year8, arg8(1:8)
+!               write(lp,'(a,f16.9,8f8.4)') '#pu8  =',year8,  pu8(1:8)
+!               write(lp,'(a,f16.9,8f8.4)') '#pf8  =',timeref,pf8(1:8)
+!             endif !1st tile
+!             call xcsync(flush_lp)
           endif  !iday.ne.idyold (.or. flag.eq.0)
-        endif  !yrflag.eq.3
+        endif  !.not.tidgen & yrflag.eq.3
 
         if(flag.eq.0) then
            if     (mnproc.eq.1) then
@@ -145,7 +158,7 @@
            endif !1st tile
            call xcsync(flush_lp)
 !
-! ---      amp is in m, and omega in 1/day.
+! ---      amp is in m, and omega in radians/day.
 !
            amp  ( 3)=   0.1424079984D+00
            omega( 3)=   0.6300387913D+01  ! K1
@@ -163,7 +176,7 @@
            omega( 5)=   0.1191280642D+02  ! N2
            amp  ( 7)=   0.3087499924D-01
            omega( 7)=   0.1260077583D+02  ! K2
- 
+!
            if     (tidein.eq.1) then
              allocate( etidei(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy,2), &
                         etide(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy)   )
@@ -242,28 +255,51 @@
         endif !flag.eq.0
 
       endif !tidflg.gt.0
- 
+!
       if(flag.eq.0) then
-        if     (.not.allocated(uhrly)) then
-! ---      restart_in did not allocate/input [uv]hrly
-           allocate(  uhrly(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy,49), &
-                      vhrly(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy,49), &
-                     untide(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy), &
-                     vntide(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy)    )
-           call mem_stat_add( 2*(idm+2*nbdy)*(jdm+2*nbdy)*50 )
-           do j= 1-nbdy,jj+nbdy
-             do i= 1-nbdy,ii+nbdy
-               do ihr= 1,49
-                 uhrly(i,j,ihr) = 0.0
-                 vhrly(i,j,ihr) = 0.0
-               enddo !ihr
-             enddo !i
-           enddo  !j
-           nhrly = 0
-        endif  !.not.allocated
-        call tides_detide(1, .false.)  !initialise 49-hour filter
+        if(tidstr.eq.0) then
+          if     (.not.allocated(uhrly)) then
+! ---        restart_in did not input [uv]hrly
+             allocate(  uhrly(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy,49), &
+                        vhrly(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy,49), &
+                       untide(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy), &
+                       vntide(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy)    )
+             call mem_stat_add( 2*(idm+2*nbdy)*(jdm+2*nbdy)*50 )
+             do j= 1-nbdy,jj+nbdy
+               do i= 1-nbdy,ii+nbdy
+                 do ihr= 1,49
+                   uhrly(i,j,ihr) = 0.0
+                   vhrly(i,j,ihr) = 0.0
+                 enddo !ihr
+               enddo !i
+             enddo  !j
+             nhrly = 0
+          endif  !.not.allocated
+          call tides_detide(1, .false.)  !initialise 49-hour filter
+        else  !tidstr.eq.1
+          if     (.not.allocated(uvf)) then
+! ---        restart_in did not input M2 and K1 streaming filters
+             if     (mnproc.eq.1) then
+             write (lp,*) ' now initializing tidal streamoing filter ...'
+             endif !1st tile
+             call xcsync(flush_lp)
+             allocate( uvf(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy,4), &
+                       usf(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy,4), &
+                       vvf(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy,4), &
+                       vsf(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy,4) )
+             call mem_stat_add( 16*(idm+2*nbdy)*(jdm+2*nbdy) )
+             uvf(:,:,:) = 0.0
+             usf(:,:,:) = 0.0
+             vvf(:,:,:) = 0.0
+             vsf(:,:,:) = 0.0
+             if     (mnproc.eq.1) then
+             write (lp,*) ' ...finished initializing tidal streamoing filter ...'
+             endif !1st tile
+             call xcsync(flush_lp)
+          endif  !.not.allocated
+        endif !.not.tidstr:else
       endif !flag.eq.0
-
+!
       return
       end subroutine tides_set
 
@@ -302,6 +338,10 @@
                        1.301912 , 0.5558784,-5.0975680E-02, &
                       -0.4882553,-0.7255653,-0.7325106    , &
                       -0.4786960, 0.0      , 0.0           /
+!
+      if     (tidstr.ne.0) then
+        return  ! streaming filter does not need detided fields
+      endif
 !
       if     (update) then
 ! ---   calculate new hrly fields
@@ -466,6 +506,141 @@
       return
       end subroutine tides_detide
 
+      subroutine tides_filter(n)
+      use mod_cb_arrays  ! HYCOM saved arrays
+      implicit none
+!
+      integer n       !time level index
+!
+! --- asvance M2 and K1 streaming filters
+!
+      integer i,j,k,l
+      real    pthkbl,pbop,phi,plo,ubot,vbot,ft,c1,c2
+!
+! ---  M2 and K1 streaming filters
+!
+! --- The filter detects instantaneous tidal signals in the input using
+! ---  a set of coupled ODEs (the filter equations).  Given a target
+! ---  frequency and width parameter (tidfXX) the filter returns
+! ---  sinusoidal motions near its target frequency.  If tidfM2/K1 is
+! ---  set to 0.1 (0.2), the proportion of diurnal/semi‐diurnal signal
+! ---  that can pass through the M2/K1 filter is about 0.25% (1%).
+!
+! --- Xu, C., & Zaron, E. D. (2024). Detecting instantaneous tidal signals in
+! ---  ocean models utilizing streaming band-pass filters. JAMES.
+!
+      character text*12
+!
+      if     (tidstr.eq.0) then
+        return  ! no streaming filter
+      endif
+!
+      if     (thkdrg.ne.0.0) then
+! ---   average over thkdrg from the bottom on u and v grids
+!$OMP   PARALLEL DO PRIVATE(j,i,k, &
+!$OMP                       pthkbl,pbop,phi,plo,ubot,vbot) &
+!$OMP            SCHEDULE(STATIC,jblk)
+        do j=1,jj
+          do i=1,ii
+            util5(i,j)=0.0 !probably not needed
+            util6(i,j)=0.0 !probably not needed
+          enddo !i
+          do i=1,ii
+          if (SEA_U) then
+            pthkbl=thkdrg*onem                  !thknss of bot. b.l.
+            pbop=depthu(i,j)-pthkbl             !top of bot. b.l.
+            phi =max(0.5*(p(i,j,1)+p(i-1,j,1)),pbop)
+            ubot=0.0
+            do k=1,kk
+              plo =phi           ! max(0.5*(p(i,j,k)  +p(i-1,j,k)),pbop)
+              phi =max(min(depthu(i,j),0.5*(p(i,j,k+1)+p(i-1,j,k+1))), &
+                       pbop)
+              ubot=ubot + u(i,j,k,n)*(phi-plo)
+            enddo !k
+            util5(i,j)=ubot/min(pthkbl,depthu(i,j)) + ubavg(i,j,n)
+          endif !iu
+          enddo !i
+          do i=1,ii
+          if (SEA_V) then
+            pthkbl=thkdrg*onem                  !thknss of bot. b.l.
+            pbop=depthv(i,j)-pthkbl             !top of bot. b.l.
+            phi =max(0.5*(p(i,j,1)+p(i,j-1,1)),pbop)
+            vbot=0.0
+            do k=1,kk
+              plo =phi           ! max(0.5*(p(i,j,k)  +p(i,j-1,k)),pbop)
+              phi =max(min(depthv(i,j),0.5*(p(i,j,k+1)+p(i,j-1,k+1))), &
+                       pbop)
+              vbot=vbot + v(i,j,k,n)*(phi-plo)
+            enddo !k
+            util6(i,j)=vbot/min(pthkbl,depthv(i,j)) + vbavg(i,j,n)
+          endif !iv
+          enddo !i
+        enddo !j
+        call xctilr(util5,1,1, nbdy,nbdy, halo_uv)
+        call xctilr(util6,1,1, nbdy,nbdy, halo_vv)
+      else !thkdrg.eq.0.0
+! ---   barotropic velocity
+        do j=1,jj
+          do i=1,ii
+            util5(i,j)=0.0 !probably not needed
+            util6(i,j)=0.0 !probably not needed
+            if (SEA_U) then
+              util5(i,j)=ubavg(i,j,n)
+            endif !iu
+            if (SEA_V) then
+              util6(i,j)=vbavg(i,j,n)
+            endif !iv
+          enddo !i
+        enddo !j
+        call xctilr(util5,1,1, nbdy,nbdy, halo_pv)
+        call xctilr(util6,1,1, nbdy,nbdy, halo_pv)
+      endif !thkdrg:else
+!
+      do l= 1,4
+        if     (tidfbw(l).gt.0.0) then
+! ---     advance the l-th filter equations (eqn 19 of Xu & Zaron)
+          ft = omega(l) / 86400.d0  !M2,S2,K1,O1
+          c1 = ft * baclin
+          c2 = 1.0 - tidfbw(l) * c1 
+          do j= 1-nbdy,jj+nbdy
+            do i= 1-nbdy,ii+nbdy
+              usf(i,j,l) =        usf(i,j,l) + &
+                           c1 *   uvf(i,j,l)
+              uvf(i,j,l) = c2 *   uvf(i,j,l) - &
+                           c1 * ( usf(i,j,l) - tidfbw(l) * util5(i,j) )
+              vsf(i,j,l) =        vsf(i,j,l) + &
+                           c1 *   vvf(i,j,l)
+              vvf(i,j,l) = c2 *   vvf(i,j,l) - &
+                           c1 * ( vsf(i,j,l) - tidfbw(l) * util6(i,j) )
+            enddo !i
+          enddo  !j
+        endif !tidfbw(l)
+      enddo !l
+!
+      if (debug_tides) then
+        if     (itest.gt.0 .and. jtest.gt.0) then
+          write (lp,'(i9,2i5,3x,a,2f10.6)') &
+            nstep,itest+i0,jtest+j0, &
+              'fm2 = ', &
+               uvf(itest,jtest,1),vvf(itest,jtest,1)
+          write (lp,'(i9,2i5,3x,a,2f10.6)') &
+            nstep,itest+i0,jtest+j0, &
+              'fs2 = ', &
+               uvf(itest,jtest,2),vvf(itest,jtest,2)
+          write (lp,'(i9,2i5,3x,a,2f10.6)') &
+            nstep,itest+i0,jtest+j0, &
+              'fk1 = ', &
+               uvf(itest,jtest,3),vvf(itest,jtest,3)
+          write (lp,'(i9,2i5,3x,a,2f10.6)') &
+            nstep,itest+i0,jtest+j0, &
+              'fo1 = ', &
+               uvf(itest,jtest,4),vvf(itest,jtest,4)
+        endif
+        call xcsync(flush_lp)
+      endif  !debug_tides
+      return
+      end subroutine tides_filter
+
       subroutine tides_force(ll)
       use mod_xc  ! HYCOM communication interface
       use mod_cb_arrays  ! HYCOM saved arrays
@@ -481,7 +656,7 @@
       real*8  timef,timet,timermp
       real    ramp
       real    etide1,etide2,etide3,etide4,etide5,etide6,etide7,etide8
-
+!
 !     ramp-up of tide signal
       ramp   =1.0
       timermp=time_8+(ll*dlt/86400.d0)
@@ -493,8 +668,8 @@
             ramp=0.0
          endif
       endif !ramp_time
-
-      if     (.not.tidgen) then
+!
+     if     (.not.tidgen) then
         call tides_set(1)
       else
         arg8(1:ncon) = 0.0  !no correction for a specific year
@@ -508,7 +683,7 @@
         RETURN
       endif
 !
-      if     (yrflag.eq.3) then
+      if     (.not.tidgen .and. yrflag.eq.3) then
         timet=time_8+(ll*dlt/86400.d0)-timeref    !time from 00Z today
       else
         timet=time_8+(ll*dlt/86400.d0)            !time since model day zero
@@ -883,7 +1058,7 @@
       real*8 ttime
 
 ! from make_a
-! If l_sal=.true. - NO solid Earth correction is applied
+! If l_sal is .true. - NO solid Earth correction is applied
 ! USING beta_SE coefficients
       logical l_sal
       real beta_SE(ncon)
@@ -1333,3 +1508,5 @@
 !> May  2014 - use land/sea masks (e.g. ip) to skip land
 !> Jul  2017 - generic tide time from model day zero
 !> Dec  2024 - fixed p to v grid indexing bug in tides_detide
+!> Dec  2024 - generic tide time bug fixed for yrflag=3
+!> Dec  2024 - added tidstr for tidal streaming filter

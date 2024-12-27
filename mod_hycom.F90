@@ -1441,10 +1441,11 @@
 !
 ! --- tidal drag roughness (m/s)
 !
-      if     (drgscl.ne.0.0) then
+      if     (max(drgscl,maxval(drgscf(:))).ne.0.0) then
         call forfund(tiddrg)    !tidal drag scalar or tensor
       else
         drgten(:,:,:,:)=0.0
+        drgfrh(:,:)    =0.0
       endif
 !
 ! --- "scalar" tidal SAL factor
@@ -2243,6 +2244,9 @@
       if     (tidflg.gt.0 .and. &
               mod(dtime+dsmall,hours1).lt.dsmall2) then
         call tides_detide(n, .true.)  !update 49-hour filter
+      endif
+      if     (tidstr.eq.1) then
+        call tides_filter(n)  !update streaming filters
       endif
       hisurf=mod(dtime+dsmall,ddsurf).lt.dsmall2
       histry=mod(dtime+dsmall,ddiagf).lt.dsmall2 .or. &
@@ -4108,3 +4112,4 @@
 !> July 2024 - added mtracr
 !> Nov. 2024 - zero vcty,dift,difs when mxl_no
 !> Nov. 2024 - mlflag=0 turns of isopyc mixed layer entirely
+!> Dec. 2024 - added streaming tidal filter

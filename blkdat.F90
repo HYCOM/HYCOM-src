@@ -1719,7 +1719,15 @@
 ! --- 'tiddrg' = TIDES: tidal drag flag (0=no;1=scalar;2=tensor)
 ! --- 'thkdrg' = TIDES: thickness of bottom boundary layer for tidal drag (m)
 ! ---             (zero to apply tidal drag to barotropic mode)
-! --- 'drgscl' = TIDES: scale factor for tidal drag
+! --- 'drgscl' = TIDES: scale factor for tidal drag (0.0 when tiddrg=0)
+! --- 'tidfm2' = TIDES: M2 streaming filter bandwidth (0.0 for no filter)
+! --- 'tidfs2' = TIDES: S2 streaming filter bandwidth (0.0 for no filter)
+! --- 'tidfk1' = TIDES: K1 streaming filter bandwidth (0.0 for no filter)
+! --- 'tidfo1' = TIDES: O1 streaming filter bandwidth (0.0 for no filter)
+! --- 'drgscm' = TIDES: scale factor for M2 tidal drag (0.0 when tidfm2=0.0)
+! --- 'drgscs' = TIDES: scale factor for S2 tidal drag (0.0 when tidfs2=0.0)
+! --- 'drgsck' = TIDES: scale factor for K1 tidal drag (0.0 when tidfk1=0.0)
+! --- 'drgsco' = TIDES: scale factor for O1 tidal drag (0.0 when tidfo1=0.0)
 ! --- 'tidgen' = TIDES: generic time (0=F,1=T)
 ! --- 'tidrmp' = TIDES:            ramp time (days)
 ! --- 'tid_t0' = TIDES: origin for ramp time (model day)
@@ -1737,6 +1745,21 @@
       call blkinr(thkdrg,    'thkdrg','(a6," =",f10.4, &
                                    &" m (0 if barotropic)")')
       call blkinr(drgscl,    'drgscl','(a6," =",f10.4," ")')
+!
+      call blkinr(tidfbw(1), 'tidfm2','(a6," =",f10.4," ")')
+      call blkinr(tidfbw(2), 'tidfs2','(a6," =",f10.4," ")')
+      call blkinr(tidfbw(3), 'tidfk1','(a6," =",f10.4," ")')
+      call blkinr(tidfbw(4), 'tidfo1','(a6," =",f10.4," ")')
+      call blkinr(drgscf(1), 'drgscm','(a6," =",f10.4," ")')
+      call blkinr(drgscf(2), 'drgscs','(a6," =",f10.4," ")')
+      call blkinr(drgscf(3), 'drgsck','(a6," =",f10.4," ")')
+      call blkinr(drgscf(4), 'drgsco','(a6," =",f10.4," ")')
+      if     (maxval(tidfbw(:)).gt.0.0) then
+        tidstr = 1
+      else
+        tidstr = 0
+      endif
+!
       call blkinl(tidgen,    'tidgen')
       call blkinr(ramp_time ,'tidrmp','(a6," =",f10.4," days")')
       call blkin8(ramp_orig ,'tid_t0','(a6," =",f10.4," model day")')  !real*8
@@ -1810,10 +1833,82 @@
         call xcstop('(blkdat)')
                stop '(blkdat)'
       endif
-      if     (tiddrg.ne.0 .and. drgscl.le.0.0) then
+      if     (tiddrg.eq.0 .and. tidfbw(1).ne.0.0) then
         if     (mnproc.eq.1) then
         write(lp,'(/ a /)') &
-         &'error - tiddrg>0 must have drgscl>0.0'
+         &'error - tiddrg=0 must have tidfm2=0.0'
+        call flush(lp)
+        endif !1st tile
+        call xcstop('(blkdat)')
+               stop '(blkdat)'
+      endif
+      if     (tiddrg.eq.0 .and. tidfbw(2).ne.0.0) then
+        if     (mnproc.eq.1) then
+        write(lp,'(/ a /)') &
+         &'error - tiddrg=0 must have tidfs2=0.0'
+        call flush(lp)
+        endif !1st tile
+        call xcstop('(blkdat)')
+               stop '(blkdat)'
+      endif
+      if     (tiddrg.eq.0 .and. tidfbw(3).ne.0.0) then
+        if     (mnproc.eq.1) then
+        write(lp,'(/ a /)') &
+         &'error - tiddrg=0 must have tidfk1=0.0'
+        call flush(lp)
+        endif !1st tile
+        call xcstop('(blkdat)')
+               stop '(blkdat)'
+      endif
+      if     (tiddrg.eq.0 .and. tidfbw(4).ne.0.0) then
+        if     (mnproc.eq.1) then
+        write(lp,'(/ a /)') &
+         &'error - tiddrg=0 must have tidfo1=0.0'
+        call flush(lp)
+        endif !1st tile
+        call xcstop('(blkdat)')
+               stop '(blkdat)'
+      endif
+      if     (tidfbw(1).eq.0.0 .and. drgscf(1).ne.0.0) then
+        if     (mnproc.eq.1) then
+        write(lp,'(/ a /)') &
+         &'error - tidfm2=0.0 must have drgscm=0.0'
+        call flush(lp)
+        endif !1st tile
+        call xcstop('(blkdat)')
+               stop '(blkdat)'
+      endif
+      if     (tidfbw(2).eq.0.0 .and. drgscf(2).ne.0.0) then
+        if     (mnproc.eq.1) then
+        write(lp,'(/ a /)') &
+         &'error - tidfs2=0.0 must have drgscs=0.0'
+        call flush(lp)
+        endif !1st tile
+        call xcstop('(blkdat)')
+               stop '(blkdat)'
+      endif
+      if     (tidfbw(3).eq.0.0 .and. drgscf(3).ne.0.0) then
+        if     (mnproc.eq.1) then
+        write(lp,'(/ a /)') &
+         &'error - tidfk1=0.0 must have drgsck=0.0'
+        call flush(lp)
+        endif !1st tile
+        call xcstop('(blkdat)')
+               stop '(blkdat)'
+      endif
+      if     (tidfbw(4).eq.0.0 .and. drgscf(4).ne.0.0) then
+        if     (mnproc.eq.1) then
+        write(lp,'(/ a /)') &
+         &'error - tidfo1=0.0 must have drgsco=0.0'
+        call flush(lp)
+        endif !1st tile
+        call xcstop('(blkdat)')
+               stop '(blkdat)'
+      endif
+      if     (tiddrg.ne.0 .and. max(drgscl,maxval(drgscf(:))).le.0.0) then
+        if     (mnproc.eq.1) then
+        write(lp,'(/ a /)') &
+         &'error - tiddrg>0 must have drgscX>0.0'
         call flush(lp)
         endif !1st tile
         call xcstop('(blkdat)')
@@ -2848,3 +2943,4 @@
 !> Aug. 2024 - added ocnscl
 !> Sep. 2024 - added hybthk
 !> Nov. 2024 - mlflag=0 turns off isopyc mixed layer entirely
+!> Dec. 2024 - added tidfbw and drgscf for streaming tidal filter

@@ -1225,10 +1225,13 @@
               do i=1,ii
                 if (SEA_P) then
                   if (oneta(i,j,mn).le.oneta0+epsil) then
-                    write (lp,'(i9,a,2i5,i3,a,f9.6)')  &
-                      nstep,' i,j,mn =',i+i0,j+j0,mn, &
-                      ' clipped oneta after barotp call ', &
-                      oneta(i,j,mn)
+                    oneclp(i,j) = oneclp(i,j) + 1
+                    if     (oneclp(i,j).eq.1) then  !1st time clipped
+                      write (lp,'(i9,a,2i5,i3,a,f9.6)')  &
+                        nstep,' i,j,mn =',i+i0,j+j0,mn, &
+                        ' clipped oneta after barotp call ', &
+                        oneta(i,j,mn)
+                    endif !oneclp
                   endif !oneta0
                 endif !ip
               enddo !i
@@ -1333,3 +1336,4 @@
 !> Feb. 2019 - replaced onetai by 1.0
 !> Sep. 2019 - added oneta0, and oneta diagnostic test
 !> Jan. 2024 - replaced oneta limit (oneta0), with pbot limit (pbotmin)
+!> Dec. 2024 - added oneclp to reduce the number of clipped oneta messages

@@ -594,10 +594,11 @@
         call rdmonth(util1, 925)
         call xctilr( util1,1,1, nbdy,nbdy, halo_ps)
 ! ---   cast scalar to tensor drag.
-        drgten(1,1,:,:) = drgscl*util1(:,:) !uu
+        drgten(1,1,:,:) = drgscl*util1(:,:) !uu (and vv)
         drgten(1,2,:,:) = 0.0  !uv
         drgten(2,1,:,:) = 0.0  !vu
         drgten(2,2,:,:) = drgscl*util1(:,:) !vv
+        drgfrh(    :,:) =        util1(:,:)
       else
 ! ---   drag tensor filename, 4 fields uu, uv, vv, vu
         call zaiopf(flnmfor(1:lgth)//'tidal.tensor.a', 'old', 925)
@@ -4997,3 +4998,4 @@
 !> Apr  2021 - update the halo of rmu
 !> Nov  2022 - skip oneta in nest archive files
 !> Nov. 2024 - set surface fluxes to zero if not used
+!> Dec. 2024 - added drgfrh for streaming tidal filter

@@ -28,7 +28,7 @@
 !     read in a restart file.
 !     flnmra is the ".a" file, and flnmrb is the ".b" file.
 !
-      logical   lmyin,ltidin,lold
+      logical   lmyin,ltidin,lstream,lold
       integer   i,ios,j,k,kskip,ktr
       character cline*80
 !
@@ -180,7 +180,8 @@
 !
 !     do we have DETIDE arrays in the restart file?
 !
-      ltidin = cline(1:8).eq.'uhrly   '
+      ltidin  = cline(1:8).eq.'uhrly   '
+      lstream = cline(1:8).eq.'uvf     '
 !
       if     (ltidin) then
 !
@@ -204,7 +205,7 @@
         endif
         call restart_inrw(kskip)
 !
-        if (tidflg.gt.0) then
+        if (nhrly.eq.49 .and. tidflg.gt.0 .and. tidstr.eq.0) then
           if     (.not.allocated(uhrly)) then
              allocate(  uhrly(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy,49), &
                         vhrly(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy,49), &
@@ -221,6 +222,9 @@
           endif !allocated:else
           call restart_in3d(uhrly ,nhrly, iu, 'uhrly   ')
           call restart_in3d(vhrly ,nhrly, iv, 'vhrly   ')
+          call xctilr( uhrly, 1,49, nbdy,nbdy, halo_uv)
+          call xctilr( vhrly, 1,49, nbdy,nbdy, halo_vv)
+          call tides_detide(1, .false.)  !recalculate untide,vntide
         else
           if     (mnproc.eq.1) then
           write(lp,'(a)') 'RESTART: skipping DETIDE input fields'
@@ -249,6 +253,62 @@
         call flush(lp)
         endif !1st tile
       endif !ltidin:tidflg
+!
+      if     (lstream) then
+!
+!       Streaming filter in restart file
+!
+        if (tidflg.gt.0 .and.tidstr.eq.1) then
+          if     (.not.allocated(uvf)) then
+             allocate( uvf(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy,4), &
+                       usf(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy,4), &
+                       vvf(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy,4), &
+                       vsf(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy,4) )
+             call mem_stat_add( 16*(idm+2*nbdy)*(jdm+2*nbdy) )
+          else
+            if     (mnproc.eq.1) then
+              write(lp,'(/ a /)') &
+                'error - streaming filter already allocated'
+            endif !1st tile
+            call xcstop('(restart_in)')
+                   stop '(restart_in)'
+          endif !allocated:else
+          call restart_in3d(uvf,4, iu, 'uvf     ')
+          call restart_in3d(usf,4, iu, 'usf     ')
+          call restart_in3d(vvf,4, iv, 'vvf     ')
+          call restart_in3d(vsf,4, iv, 'vsf     ')
+          call xctilr( uvf, 1,4, nbdy,nbdy, halo_uv)
+          call xctilr( usf, 1,4, nbdy,nbdy, halo_uv)
+          call xctilr( vvf, 1,4, nbdy,nbdy, halo_vv)
+          call xctilr( vsf, 1,4, nbdy,nbdy, halo_vv)
+        else
+          if     (mnproc.eq.1) then
+          write(lp,'(a)') 'RESTART: skipping FILTER input fields'
+          call flush(lp)
+          endif !1st tile
+          do k= 1,8
+            call zagetc(cline,ios, uoff+11)
+            if     (ios.ne.0) then
+              if     (mnproc.eq.1) then
+                write(lp,'(/ a,i4,i9 /)') &
+                  'I/O error from zagetc, iunit,ios = ',uoff+11,ios
+              endif !1st tile
+              call xcstop('(restart_in)')
+                     stop '(restart_in)'
+            endif
+!           if     (mnproc.eq.1) then
+!           write(lp,'(a)') cline
+!           endif !1st tile
+            call zaiosk(11)
+          enddo !k
+        endif !tidflg:else
+      elseif (tidflg.gt.0) then
+! ---   FILTER will be allocated/initialized in tides_set
+        if     (mnproc.eq.1) then
+        write(lp,'(a)') 'RESTART: no FILTER fields input'
+        call flush(lp)
+        endif !1st tile
+      endif !lstream:tidflg
 !
       call restart_in3d(ubavg,     3, iu, 'ubavg   ')
       call restart_in3d(vbavg,     3, iv, 'vbavg   ')
@@ -325,6 +385,9 @@
             if     (ltidin) then
               kskip = kskip + 2*nhrly
             endif
+            if     (lstream) then
+              kskip = kskip + 16
+            endif
             call restart_inrw(kskip)
           endif
         else
@@ -341,6 +404,9 @@
           endif
           if     (ltidin) then
             kskip = kskip + 2*nhrly
+          endif
+          if     (lstream) then
+            kskip = kskip + 16
           endif
           call restart_inrw(kskip)
 !
@@ -380,6 +446,9 @@
           if     (ltidin) then
             kskip = kskip + 2*nhrly
           endif
+          if     (lstream) then
+            kskip = kskip + 16
+          endif
           call restart_inrw(kskip)
           call restart_in3d(tml ,    1, ip, 'tml     ')
           call restart_in3d(sml ,    1, ip, 'sml     ')
@@ -398,6 +467,9 @@
           endif
           if     (ltidin) then
             kskip = kskip + 2*nhrly
+          endif
+          if     (lstream) then
+            kskip = kskip + 16
           endif
           call restart_inrw(kskip)
         endif !cline
@@ -735,7 +807,7 @@
         endif !1st tile
       endif !mxlmy
 !
-      if (tidflg.gt.0) then
+      if (tidflg.gt.0 .and. tidstr.eq.0) then
         call zaiowr3(uhrly,   49, iu,.false., xmin,xmax, iunta,.true.)
         call xctilr( uhrly, 1,49, nbdy,nbdy, halo_uv)
         if     (mnproc.eq.1) then
@@ -756,7 +828,38 @@
         enddo
         call flush(iunit)
         endif !1st tile
+        call tides_detide(1, .false.)  !recalculate untide,vntide
       endif !tidflg
+!
+      if (tidflg.gt.0 .and. tidstr.eq.1) then
+        call zaiowr3(uvf, 4, iu,.false., xmin( 1),xmax( 1), iunta,.true.)
+        call zaiowr3(usf, 4, iu,.false., xmin( 5),xmax( 5), iunta,.true.)
+        call zaiowr3(vvf, 4, iv,.false., xmin( 9),xmax( 9), iunta,.true.)
+        call zaiowr3(vsf, 4, iv,.false., xmin(13),xmax(13), iunta,.true.)
+        call xctilr( uvf, 1,4, nbdy,nbdy, halo_uv)
+        call xctilr( usf, 1,4, nbdy,nbdy, halo_uv)
+        call xctilr( vvf, 1,4, nbdy,nbdy, halo_vv)
+        call xctilr( vsf, 1,4, nbdy,nbdy, halo_vv)
+        if     (mnproc.eq.1) then
+          write(iunit,4100) 'uvf     ',1,1,xmin( 1),xmax( 1)
+          write(iunit,4100) 'uvf     ',1,2,xmin( 2),xmax( 2)
+          write(iunit,4100) 'uvf     ',1,3,xmin( 3),xmax( 3)
+          write(iunit,4100) 'uvf     ',1,4,xmin( 4),xmax( 4)
+          write(iunit,4100) 'usf     ',1,1,xmin( 5),xmax( 5)
+          write(iunit,4100) 'usf     ',1,2,xmin( 6),xmax( 6)
+          write(iunit,4100) 'usf     ',1,3,xmin( 7),xmax( 7)
+          write(iunit,4100) 'usf     ',1,4,xmin( 8),xmax( 8)
+          write(iunit,4100) 'vvf     ',1,1,xmin( 9),xmax( 9)
+          write(iunit,4100) 'vvf     ',1,2,xmin(10),xmax(10)
+          write(iunit,4100) 'vvf     ',1,3,xmin(11),xmax(11)
+          write(iunit,4100) 'vvf     ',1,4,xmin(12),xmax(12)
+          write(iunit,4100) 'vsf     ',1,1,xmin(13),xmax(13)
+          write(iunit,4100) 'vsf     ',1,2,xmin(14),xmax(14)
+          write(iunit,4100) 'vsf     ',1,3,xmin(15),xmax(15)
+          write(iunit,4100) 'vsf     ',1,4,xmin(16),xmax(16)
+          call flush(iunit)
+        endif !1st tile
+      endif !tidstr
 !
       call zaiowr3(ubavg,      3, iu,.false., xmin,xmax, iunta,.true.)
       call xctilr( ubavg,    1,3, nbdy,nbdy, halo_uv)
@@ -1139,3 +1242,5 @@
 !> Feb. 2019 - onetai set to 1.0
 !> Feb  2019 - montg_c correction to pbavg (see momtum for correction to psikk)
 !> Feb. 2019 - replaced onetai by 1.0
+!> Dec. 2024 - made [uv]hrly bit for bit reproducable across restarts
+!> Dec. 2024 - added streaming tidal filter, turns off [uv]hrly 

@@ -135,9 +135,9 @@
 !
 ! --- tidal forcing
 !
-      if(tidflg.eq.2 .or. tidflg.eq.3) then
-         hlstep=0
-         call tides_force(hlstep)
+      if     (tidflg.eq.2 .or. tidflg.eq.3) then
+        hlstep=0
+        call tides_force(hlstep)
       endif
 !
 ! --- hydrostatic equation (and surface stress)
@@ -297,14 +297,6 @@
         write (text,'(a9,i3)') 'mslprX l=',l1
         call pipe_compare_sym1(util4, iu,text)
       endif
-!
-!      call dpudpv(dpu(1-nbdy,1-nbdy,1,m),
-!     &            dpv(1-nbdy,1-nbdy,1,m),
-!     &            p,depthu,depthv, max(0,margin-1))
-!CL/RB MPI bug correction 2011-01
-!      call xctilr(dpu(    1-nbdy,1-nbdy,1,1),1,2*kk, 6,6, halo_us)
-!      call xctilr(dpv(    1-nbdy,1-nbdy,1,1),1,2*kk, 6,6, halo_vs)
-
 !
 ! --- account for temporal smoothing of mid-time dpmixl. calculate the vertical
 ! --- excursions of the coordinates immediately above and below the mixed
@@ -1127,7 +1119,7 @@
            dt1inv,phi,plo,pbop,pthkbl,ubot,vbot,pstres, &
            dmontg,dthstr,dragu,dragv,qdpu,qdpv,dpthin, &
            dpun,uhm,uh0,uhp,dpvn,vhm,vh0,vhp,sum_m,sum_n
-      real dp12,dp23,dp123,dp3m1,ql1,ql2,ql3
+      real dp12,dp23,dp123,dp3m1,ql1,ql2,ql3,drgthk,frac
       real cfl,uvclpm,uvclpn,uvkclp(kdm)
       integer i,ia,ib,j,ja,jb,k,ka,l,mbdy,ktop,kmid,kbot,margin
 !
@@ -1538,6 +1530,7 @@
         adrlim = 0.125
       endif
       dt1inv = 1./delt1
+      drgthk = max(0.1,thkdrg)*onem  !tidal drag applied over this thknss
 !
       margin = mbdy - 1
 !
@@ -1573,23 +1566,6 @@
               phi =max(p(i,j,k+1),pbop)
               ubot=ubot + (u(i,j,k,n)+u(i+1,j,k,n))*(phi-plo)
               vbot=vbot + (v(i,j,k,n)+v(i,j+1,k,n))*(phi-plo)
-!RBc Modif RB pour friction avec cl ouvertes
-!RBccc              ubot=ubot + (u(i,j,k,n)+u(i+1,j,k,n))*(phi-plo)
-!RBccc              vbot=vbot + (v(i,j,k,n)+v(i,j+1,k,n))*(phi-plo)
-!RB              if (iuopn(i,j).ge.1) then
-!RB                 ubot=ubot + (unest(i,j,k,1)+u(i+1,j,k,n))*(phi-plo)
-!RB              elseif (iuopn(i+1,j).ge.1) then
-!RB                 ubot=ubot + (u(i,j,k,n)+unest(i+1,j,k,1))*(phi-plo)
-!RB              else
-!RB                 ubot=ubot + (u(i,j,k,n)+u(i+1,j,k,n))*(phi-plo)
-!RB              endif
-!RB              if (ivopn(i,j).ge.1) then
-!RB                 vbot=vbot + (vnest(i,j,k,1)+v(i,j+1,k,n))*(phi-plo)
-!RB              elseif (ivopn(i,j+1).ge.1) then
-!RB                 vbot=vbot + (v(i,j,k,n)+vnest(i,j+1,k,1))*(phi-plo)
-!RB              else
-!RB                 vbot=vbot + (v(i,j,k,n)+v(i,j+1,k,n))*(phi-plo)
-!RB              endif
             enddo !k
             ubot=ubot/min(pthkbl,p(i,j,kk+1)) &
                   + (ubavg(i,j,n)+ubavg(i+1,j,n))
@@ -1609,10 +1585,14 @@
               ustarb(i,j)=sqrt(dall*vmag)
             endif
 !
-! ---       tidal bottom drag, drgten.1.1 is drgscl*rh
+! ---       tidal bottom drag
 !
-            util6(i,j)=max(0.1,thkdrg)*onem  !drag applied over this thknss
-            util5(i,j)=drgten(1,1,i,j)/min(util6(i,j)*qonem,depths(i,j))
+            if     (tidstr.eq.0) then
+! ---         drgten.1.1 is drgscl*rh
+              util5(i,j)=drgten(1,1,i,j)/min(drgthk*qonem,depths(i,j))
+            else
+              util5(i,j)=drgfrh(    i,j)/min(drgthk*qonem,depths(i,j))
+            endif
           endif !ip
         enddo !i
 !
@@ -1882,17 +1862,6 @@
                      wgtja(i,j)*slip*utotn(i,j)
             ujb(i,j)=(1.-wgtjb(i,j))*utotn(i,jb)+ &
                      wgtjb(i,j)*slip*utotn(i,j)
-!RBcRB
-!RB            if (i.ge.1-margin.and.i.le.ii+margin) then
-!RB               if (ivopn(i-1,j).ne.0.and.ivopn(i,j).ne.0) then
-!RB                  uja(i,j)=utotn(i,j)
-!RB               endif
-!RB               if (j.ge.1-margin.and.j.le.jj+margin) then
-!RB                  if (ivopn(i-1,j+1).ne.0.and.ivopn(i,j+1).ne.0) then
-!RB                     ujb(i,j)=utotn(i,j)
-!RB                  endif
-!RB               endif
-!RB            endif
 !
 ! ---       Laplacian of utotn scaled by -0.25*max(scux,scuy)**2
             aspx2 = aspux(i,j)**2
@@ -1915,17 +1884,6 @@
                       wgtia(i,j)*slip*vtotn(i,j)
             vib(i,j)=(1.-wgtib(i,j))*vtotn(ib,j)+ &
                       wgtib(i,j)*slip*vtotn(i,j)
-!RBcRB
-!RB            if (j.ge.1-margin.and.j.le.jj+margin) then
-!RB               if (iuopn(i,j-1).ne.0.and.iuopn(i,j).ne.0) then
-!RB                  via(i,j)=vtotn(i,j)
-!RB               endif
-!RB               if (i.ge.1-margin.and.i.le.ii+margin) then
-!RB                  if (iuopn(i+1,j-1).ne.0.and.iuopn(i+1,j).ne.0) then
-!RB                     vib(i,j)=vtotn(i,j)
-!RB                  endif
-!RB               endif
-!RB            endif
 !
 ! ---       Laplacian of vtotn scaled by -0.25*max(scvx,scvy)**2
             aspx2 = aspvx(i,j)**2
@@ -2074,13 +2032,6 @@
                         wgtja(i,j)*slip*dl2u(i,j)
             dl2ujb(i,j)=(1.-wgtjb(i,j))*dl2u(i,jb)+ &
                         wgtjb(i,j)*slip*dl2u(i,j)
-!RBcRB
-!RB            if (ivopn(i-1,j  ).ne.0.and.ivopn(i,j  ).ne.0) then
-!RB               dl2uja(i,j) =dl2u(i,j)
-!RB            endif
-!RB            if (ivopn(i-1,j+1).ne.0.and.ivopn(i,j+1).ne.0) then
-!RB               dl2ujb(i,j) =dl2u(i,j)
-!RB            endif
           endif !iu
 !
           if (SEA_V) then
@@ -2090,13 +2041,6 @@
                         wgtia(i,j)*slip*dl2v(i, j)
             dl2vib(i,j)=(1.-wgtib(i,j))*dl2v(ib,j)+ &
                         wgtib(i,j)*slip*dl2v(i, j)
-!RBcRB
-!RB            if (iuopn(i,  j-1).ne.0.and.iuopn(i,  j).ne.0) then
-!RB               dl2via(i,j) =dl2v(i,j)
-!RB            endif
-!RB            if (iuopn(i+1,j-1).ne.0.and.iuopn(i+1,j).ne.0) then
-!RB               dl2vib(i,j) =dl2v(i,j)
-!RB            endif
           endif !iv
         enddo !i
       enddo !j
@@ -2334,7 +2278,7 @@
       margin = mbdy - 2
 !
 !$OMP PARALLEL DO PRIVATE(j,ja,jb,i, &
-!$OMP                     q,dpun,uhm,uh0,uhp, &
+!$OMP                     q,dpun,uhm,uh0,uhp,frac, &
 !$OMP                     ptopl,pbotl,pstres,pbop,qdpu,dragu) &
 !$OMP          SCHEDULE(STATIC,jblk)
       do j=1-margin,jj+margin
@@ -2359,14 +2303,14 @@
             endif
 !
 ! ---       top and bottom boundary layer stress
-! ---       drag term is FRAC * Cb * (|v| + c.bar) * onem/dp
+! ---       drag term is FRAC * Cb * (|v| + c.bar)
 ! ---        where FRAC is the fraction of the layer to apply stress too
 !
             pbop=depthu(i,j)-0.5*(thkbop(i,j)+thkbop(i-1,j)) !top of bot. b.l.
             qdpu=1.0/max(dpu(i,j,k,m),onemm)
-            dragu= max(drag(i,j),drag(i-1,j))*qdpu* &
-                      ( max(pbop,    pbotl) &
-                       -max(pbop,min(ptopl,pbotl-onemm)))
+            frac= qdpu*( max(pbop,    pbotl) &
+                        -max(pbop,min(ptopl,pbotl-onemm)))
+            dragu= max(drag(i,j),drag(i-1,j))*frac
             if     (drglim.gt.0.0) then
 !             explicit drag: u.t+1 - u.t-1 = - 2dt*dragu*u.t-1
 !                   limiter: 2dt*dragu <= drglim
@@ -2381,12 +2325,12 @@
                                       -min(pstres,ptopl      )))*qdpu
             endif
 !
-            if     (tidflg.gt.0 .and. drgscl.ne.0.0 &
-                                .and. thkdrg.gt.0.0) then
-              pbop=depthu(i,j)-0.5*(util6(i,j)+util6(i-1,j)) !top of bot. b.l.
-              dragu=0.5*(util5(i,j)+util5(i-1,j))* &
-                        ( max(pbop,    pbotl) &
-                         -max(pbop,min(ptopl,pbotl-onemm)))*qdpu
+            if     (tidflg.gt.0   .and. tidstr.eq.0 .and. &
+                    drgscl.ne.0.0 .and. thkdrg.gt.0.0    ) then
+              pbop=depthu(i,j)-drgthk !top of bot. b.l.
+              frac=qdpu*( max(pbop,    pbotl) &
+                         -max(pbop,min(ptopl,pbotl-onemm)))
+              dragu=0.5*(util5(i,j)+util5(i-1,j))*frac
               if     (drglim.gt.0.0) then
                 stress(i,j)=stress(i,j) &
                             -utotn(i,j)*min(dragu,drglim*dt1inv)
@@ -2402,6 +2346,20 @@
               stresl(i,j)=stresl(i,j) &
                             +untide(i,j)*min(dragu,adrlim*dt1inv)
             endif !tidflg
+!
+            if     (tidstr.eq.1) then
+              pbop=depthu(i,j)-drgthk !top of bot. b.l.
+              frac=qdpu*( max(pbop,    pbotl) &
+                         -max(pbop,min(ptopl,pbotl-onemm)))
+              stresl(i,j)=0.0
+              do l= 1,4
+                if     (drgscf(l).ne.0.0) then
+! ---             u drag from M2 streaming filter
+                  dragu=0.5*(util5(i,j)+util5(i-1,j))*frac*drgscf(l)
+                  stress(i,j)=stress(i,j) - uvf(i,j,l)*dragu
+                endif
+              enddo !l
+            endif !tidstr
 !
 !diag       util4(i,j) = u(i,j,k,n)
 
@@ -2451,8 +2409,8 @@
       do j=1,jj
         do i=1,ii
           if (SEA_P) then
-            if     (tidflg.gt.0 .and. drgscl.ne.0.0 &
-                                .and. thkdrg.gt.0.0) then
+            if     (tidflg.gt.0   .and. tidstr.eq.0 .and. &
+                    drgscl.ne.0.0 .and. thkdrg.gt.0.0    ) then
               displd_mn(i,j) = displd_mn(i,j) +  &
                 rhoref*0.5*qonem*dpo(i,j,k,m)* &
                 (utotn(i+1,j)*stresl(i+1,j)+  &
@@ -2466,7 +2424,7 @@
                 rhoref*0.5*qonem*dpo(i,j,k,m)* &
                   (utotn(i+1,j)*stress(i+1,j)+  &
                    utotn(i,  j)*stress(i,  j) )
-            endif
+            endif !tidflg:else
           endif !ip
         enddo !i
       enddo !j
@@ -2748,7 +2706,7 @@
 !
 !         wtime2(19,k) = wtime()
 !$OMP PARALLEL DO PRIVATE(j,i, &
-!$OMP                     q,dpvn,vhm,vh0,vhp, &
+!$OMP                     q,dpvn,vhm,vh0,vhp,frac, &
 !$OMP                     ptopl,pbotl,pstres,pbop,qdpv,dragv) &
 !$OMP          SCHEDULE(STATIC,jblk)
       do j=1-margin,jj+margin
@@ -2765,14 +2723,14 @@
             endif
 !
 ! ---       top and bottom boundary layer stress
-! ---       bottom drag term is FRAC * Cb * (|v| + c.bar) * onem/dp
+! ---       bottom drag term is FRAC * Cb * (|v| + c.bar)
 ! ---        where FRAC is the fraction of the layer to apply drag too
 !
             pbop=depthv(i,j)-0.5*(thkbop(i,j)+thkbop(i,j-1))  !top of bot. b.l.
             qdpv=1.0/max(dpv(i,j,k,m),onemm)
-            dragv= max(drag(i,j),drag(i,j-1))*qdpv* &
-                      ( max(pbop,    pbotl) &
+            frac=qdpv*( max(pbop,    pbotl) &
                        -max(pbop,min(ptopl,pbotl-onemm)))
+            dragv= max(drag(i,j),drag(i,j-1))*frac
             if     (drglim.gt.0.0) then
               stress(i,j)=-vtotn(i,j)*min(dragv,drglim*dt1inv) + &
                    (stresy(i,j)*svref*(min(pstres,pbotl+onemm) &
@@ -2783,12 +2741,12 @@
                                       -min(pstres,ptopl      )))*qdpv
             endif
 !
-            if     (tidflg.gt.0 .and. drgscl.ne.0.0 &
-                                .and. thkdrg.gt.0.0) then
-              pbop=depthv(i,j)-0.5*(util6(i,j)+util6(i,j-1))  !top of bot. b.l.
-              dragv=0.5*(util5(i,j)+util5(i,j-1))* &
-                        ( max(pbop,    pbotl) &
-                         -max(pbop,min(ptopl,pbotl-onemm)))*qdpv
+            if     (tidflg.gt.0   .and. tidstr.eq.0 .and. &
+                    drgscl.ne.0.0 .and. thkdrg.gt.0.0    ) then
+              pbop=depthv(i,j)-drgthk  !top of bot. b.l.
+              frac=qdpv*( max(pbop,    pbotl) &
+                         -max(pbop,min(ptopl,pbotl-onemm)))
+              dragv=0.5*(util5(i,j)+util5(i,j-1))*frac
               if     (drglim.gt.0.0) then
                 stress(i,j)=stress(i,j) &
                             -vtotn(i,j)*min(dragv,drglim*dt1inv)
@@ -2803,7 +2761,20 @@
                             +vntide(i,j)*min(dragv,adrlim*dt1inv)
               stresl(i,j)=stresl(i,j) &
                             +vntide(i,j)*min(dragv,adrlim*dt1inv)
-      endif !tidflg
+            endif !tidflg
+!
+            if     (tidstr.eq.1) then
+              pbop=depthv(i,j)-drgthk  !top of bot. b.l.
+              frac=qdpv*( max(pbop,    pbotl) &
+                         -max(pbop,min(ptopl,pbotl-onemm)))
+              do l= 1,4
+                if     (drgscf(l).ne.0.0) then
+! ---             v drag from M2 streaming filter
+                  dragv=0.5*(util5(i,j)+util5(i,j-1))*frac*drgscf(l)
+                  stress(i,j)=stress(i,j) - vvf(i,j,l)*dragv
+                endif
+              enddo !l
+            endif !tidstr
 !
 !diag       util4(i,j) = v(i,j,k,n)
             v(i,j,k,n) = vtotn(i,j) + &
@@ -2850,8 +2821,8 @@
       do j=1,jj
         do i=1,ii
           if (SEA_P) then
-            if     (tidflg.gt.0 .and. drgscl.ne.0.0 &
-                                .and. thkdrg.gt.0.0) then
+            if     (tidflg.gt.0   .and. tidstr.eq.0 .and. &
+                    drgscl.ne.0.0 .and. thkdrg.gt.0.0    ) then
               displd_mn(i,j) = displd_mn(i,j) +  &
                 rhoref*0.5*qonem*dpo(i,j,k,m)* &
                 (vtotn(i,j+1)*stresl(i,j+1)+  &
@@ -2865,7 +2836,7 @@
                 rhoref*0.5*qonem*dpo(i,j,k,m)* &
                   (vtotn(i,j+1)*stress(i,j+1)+  &
                    vtotn(i,j)  *stress(i,j)   )
-            endif
+            endif !tidlfg:elee
           endif !ip
         enddo !i
       enddo !j
@@ -3258,7 +3229,7 @@
       real    utotja,utotjb,vtotia,vtotib,wia,wib,wja,wjb
       real    defortot
       real    ulimmax,hmindiff
-      real    s00,s01,s10,s11
+      real    s00,s01,s10,s11,drgthk,frac
       real    xphalf,xmhalf,d4,p4,pip,pim
 !
 !     real*8    wtime
@@ -3980,6 +3951,7 @@
         adrlim = 0.125
       endif
       dt1inv = 1./delt1
+      drgthk = max(0.1,thkdrg)*onem  !tidal drag applied over this thknss
 !
       margin = mbdy - 1
 !
@@ -4032,10 +4004,14 @@
               ustarb(i,j)=sqrt(dall*vmag)
             endif
 !
-! ---       tidal bottom drag, drgten.1.1 is drgscl*rh
+! ---       tidal bottom drag
 !
-            util6(i,j)=max(0.1,thkdrg)*onem  !drag applied over this thknss
-            util5(i,j)=drgten(1,1,i,j)/min(util6(i,j)*qonem,depths(i,j))
+            if     (tidstr.eq.0) then
+! ---         drgten.1.1 is drgscl*rh
+              util5(i,j)=drgten(1,1,i,j)/min(drgthk*qonem,depths(i,j))
+            else
+              util5(i,j)=drgfrh(    i,j)/min(drgthk*qonem,depths(i,j))
+            endif
           endif !ip
         enddo !i
 !         
@@ -5046,7 +5022,7 @@
       margin = mbdy - 5
 !
 !$OMP PARALLEL DO PRIVATE(j,i, &
-!$OMP                     q,dpun,uhm,uh0,uhp, &
+!$OMP                     q,dpun,uhm,uh0,uhp,frac, &
 !$OMP                     ptopl,pbotl,pstres,pbop,qdpu,dragu) &
 !$OMP          SCHEDULE(STATIC,jblk)
       do j=1-margin,jj+margin
@@ -5066,14 +5042,14 @@
             endif
 !             
 ! ---       top and bottom boundary layer stress
-! ---       drag term is FRAC * Cb * (|v| + c.bar) * onem/dp
+! ---       drag term is FRAC * Cb * (|v| + c.bar)
 ! ---        where FRAC is the fraction of the layer to apply stress too
 !
             pbop=depthu(i,j)-0.5*(thkbop(i,j)+thkbop(i-1,j)) !top of bot. b.l.
             qdpu=1.0/max(dpu(i,j,k,m),onemm)
-            dragu= max(drag(i,j),drag(i-1,j))*qdpu* &
-                      ( max(pbop,    pbotl) &
+            frac= qdpu*( max(pbop,    pbotl) &
                        -max(pbop,min(ptopl,pbotl-onemm)))
+            dragu= max(drag(i,j),drag(i-1,j))*frac
             if     (drglim.gt.0.0) then
 !             explicit drag: u.t+1 - u.t-1 = - 2dt*dragu*u.t-1
 !                   limiter: 2dt*dragu <= drglim
@@ -5088,12 +5064,12 @@
                                       -min(pstres,ptopl      )))*qdpu
             endif
 !
-            if     (tidflg.gt.0 .and. drgscl.ne.0.0 &
-                                .and. thkdrg.gt.0.0) then
-              pbop=depthu(i,j)-0.5*(util6(i,j)+util6(i-1,j)) !top of bot. b.l.
-              dragu=0.5*(util5(i,j)+util5(i-1,j))* &
-                        ( max(pbop,    pbotl) &
-                         -max(pbop,min(ptopl,pbotl-onemm)))*qdpu
+            if     (tidflg.gt.0   .and. tidstr.eq.0 .and. &
+                    drgscl.ne.0.0 .and. thkdrg.gt.0.0    ) then
+              pbop=depthu(i,j)-drgthk  !top of bot. b.l.
+              frac=qdpu*( max(pbop,    pbotl) &
+                         -max(pbop,min(ptopl,pbotl-onemm)))
+              dragu=0.5*(util5(i,j)+util5(i-1,j))*frac
               if     (drglim.gt.0.0) then
                 stress(i,j)=stress(i,j) &
                             -utotn(i,j)*min(dragu,drglim*dt1inv)
@@ -5105,6 +5081,20 @@
               stress(i,j)=stress(i,j) &
                             +untide(i,j)*min(dragu,adrlim*dt1inv)
             endif !tidflg
+!
+            if     (tidstr.eq.1) then
+              pbop=depthu(i,j)-drgthk !top of bot. b.l.
+              frac=qdpu*( max(pbop,    pbotl) &
+                         -max(pbop,min(ptopl,pbotl-onemm)))
+              stresl(i,j)=0.0
+              do l= 1,4
+                if     (drgscf(l).ne.0.0) then
+! ---             u drag from M2 streaming filter
+                  dragu=0.5*(util5(i,j)+util5(i-1,j))*frac*drgscf(l)
+                  stress(i,j)=stress(i,j) - uvf(i,j,l)*dragu
+                endif
+              enddo !l
+            endif !tidstr
 !
 !diag       util4(i,j) = u(i,j,k,n)
             u(i,j,k,n) = utotn(i,j) + delt1*( &
@@ -5283,7 +5273,7 @@
       margin = mbdy - 5
 !
 !$OMP PARALLEL DO PRIVATE(j,i, &
-!$OMP                     q,dpvn,vhm,vh0,vhp, &
+!$OMP                     q,dpvn,vhm,vh0,vhp,frac, &
 !$OMP                     ptopl,pbotl,pstres,pbop,qdpv,dragv) &
 !$OMP          SCHEDULE(STATIC,jblk)
       do j=1-margin,jj+margin
@@ -5298,13 +5288,13 @@
             endif
 !
 ! ---       top and bottom boundary layer stress
-! ---       drag term is FRAC * Cb * (|v| + c.bar) * onem/dp
+! ---       drag term is FRAC * Cb * (|v| + c.bar)
 ! ---        where FRAC is the fraction of the layer to apply stress too
             pbop=depthv(i,j)-0.5*(thkbop(i,j)+thkbop(i,j-1))  !top of bot. b.l.
             qdpv=1.0/max(dpv(i,j,k,m),onemm)
-            dragv= max(drag(i,j),drag(i,j-1))*qdpv* &
-                      ( max(pbop,    pbotl) &
+            frac=qdpv*( max(pbop,    pbotl) &
                        -max(pbop,min(ptopl,pbotl-onemm)))
+            dragv= max(drag(i,j),drag(i,j-1))*frac
             if     (drglim.gt.0.0) then
               stress(i,j)=-vtotn(i,j)*min(dragv,drglim*dt1inv) + &
                    (stresy(i,j)*svref*(min(pstres,pbotl+onemm) &
@@ -5315,12 +5305,12 @@
                                       -min(pstres,ptopl      )))*qdpv
             endif
 !
-            if     (tidflg.gt.0 .and. drgscl.ne.0.0 &
-                                .and. thkdrg.gt.0.0) then
-              pbop=depthv(i,j)-0.5*(util6(i,j)+util6(i,j-1))  !top of bot. b.l.
-              dragv=0.5*(util5(i,j)+util5(i,j-1))* &
-                        ( max(pbop,    pbotl) &
-                         -max(pbop,min(ptopl,pbotl-onemm)))*qdpv
+            if     (tidflg.gt.0   .and. tidstr.eq.0 .and. &
+                    drgscl.ne.0.0 .and. thkdrg.gt.0.0    ) then
+              pbop=depthv(i,j)-drgthk  !top of bot. b.l.
+              frac=qdpv*( max(pbop,    pbotl) &
+                         -max(pbop,min(ptopl,pbotl-onemm)))
+              dragv=0.5*(util5(i,j)+util5(i,j-1))*frac
               if     (drglim.gt.0.0) then
                 stress(i,j)=stress(i,j) &
                             -vtotn(i,j)*min(dragv,drglim*dt1inv)
@@ -5332,6 +5322,19 @@
               stress(i,j)=stress(i,j) &
                             +vntide(i,j)*min(dragv,adrlim*dt1inv)
             endif !tidflg
+!
+            if     (tidstr.eq.1) then
+              pbop=depthv(i,j)-drgthk  !top of bot. b.l.
+              frac=qdpv*( max(pbop,    pbotl) &
+                         -max(pbop,min(ptopl,pbotl-onemm)))
+              do l= 1,4
+                if     (drgscf(l).ne.0.0) then
+! ---             v drag from M2 streaming filter
+                  dragv=0.5*(util5(i,j)+util5(i,j-1))*frac*drgscf(l)
+                  stress(i,j)=stress(i,j) - vvf(i,j,l)*dragv
+                endif
+              enddo !l
+            endif !tidstr
 !
 !diag       util4(i,j) = v(i,j,k,n)
             v(i,j,k,n) = vtotn(i,j) + delt1*( &
@@ -5699,3 +5702,4 @@
 !> Mar. 2023 - added momtum_cfl in a CPP macro
 !> Dec. 2023 - add cesmbeta as a master switch to cpl_
 !> Aug. 2024 - replace U10-Uocn with U10-ocnscl*Uocn
+!> Dec. 2024 - added streaming tidal filter

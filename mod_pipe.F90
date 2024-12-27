@@ -15,12 +15,12 @@
                                 ltracer,ltracernan,ltracermax, &
                                 lpipe_fatal,lpipe_anyfailed, &
                                 lnan_anyfailed
-
+!
       real,    save, private :: trcmax(mxtrcr)
 !
       real,    allocatable, dimension(:,:), &
                save, private :: field1,field2,tmask,vmask,amask
-
+ 
       contains
 !
 ! --- this set of routines facilitates output comparison from two HYCOM
@@ -28,6 +28,17 @@
 ! --- output into a named pipe. the other model, the 'master', reads
 ! --- from the pipe and compares.
 ! --- differences are recorded in 'PIPE_base.out'.
+#if defined(OCEANS2)
+!
+! --- In this version master and slave are in the same mpi executable
+! --- and the named pipe is replaced by MPI calls.
+!
+! --- If the file 'PIPE_START' exists on the master or the slave, then it
+! ---  is a single-line plain text file containing an integer
+! ---  specifiying the time step (nstep) to start the comparison, and
+! ---  otherwise all time steps are compared.  This allows comparison
+! ---  after a restart is input or output.
+#endif
 !
 ! --- call 'pipe_fatal_on'  to exit     on differences (this is the default)
 ! --- call 'pipe_fatal_off' to continue on differences
@@ -423,6 +434,11 @@
                 endif
               enddo
             enddo
+            if (fail) then
+              write (lpunit,'(3a)') &
+                'reading for comparison: ',which,' has ERRORs'
+            endif
+            call flush(lpunit)
             lpipe_anyfailed = lpipe_anyfailed .or. fail
             if (lpipe_fatal .and. fail) then  ! exit
               call xchalt('(pipe_compare)')
@@ -954,6 +970,7 @@
 
       subroutine pipe_comparall(m,n, cinfo)
       use mod_cb_arrays  ! HYCOM saved arrays
+      use mod_tides      ! HYCOM tides
 #if defined(STOKES)
       use mod_stokes     ! HYCOM Stokes drift
 #endif
@@ -1445,6 +1462,10 @@
         call xcsync(flush_lp)
       endif !ltracer
 !
+      if     (lpipeio .and. nstep.lt.nstep_start) then
+        return !do nothing
+      endif
+!
       if     (lpipe) then
 !
 ! ---   pipe_compare_sym[12] works for both lsym and lpipeio.
@@ -1474,7 +1495,7 @@
           call pipe_compare_sym1(fswice,ip,txt1)
           txt1='sflice      '
           call pipe_compare_sym1(sflice,ip,txt1)
-        endif
+        endif !ice
         if     (cinfo(1:6).eq.'icloan' .or. &
                 cinfo(1:6).eq.'icecpl' .or. &
                 cinfo(1:6).eq.'thermf'     ) then  !surface fields
@@ -1486,7 +1507,60 @@
           call pipe_compare_sym1(salflx,ip,txt1)
           txt1='wtrflx      '
           call pipe_compare_sym1(wtrflx,ip,txt1)
-        endif
+        endif !surface
+        if     (cinfo(1:6).eq.'ENTERm' .and. tidflg.gt.0) then
+          if     (tidstr.eq.0) then
+            txt1='uhrly( 1)   '
+            txt2='vhrly( 1)   '
+            call pipe_compare_sym2(uhrly(1-nbdy,1-nbdy, 1),iu,txt1, &
+                                   vhrly(1-nbdy,1-nbdy, 1),iv,txt2)
+            txt1='uhrly(49)   '
+            txt2='vhrly(49)   '
+            call pipe_compare_sym2(uhrly(1-nbdy,1-nbdy,49),iu,txt1, &
+                                   vhrly(1-nbdy,1-nbdy,49),iv,txt2)
+            txt1='untide      '
+            txt2='vntide      '
+            call pipe_compare_sym2(untide,iu,txt1, &
+                                   vntide,iv,txt2)
+          else !tidstr.eq.1
+            txt1='uvfm2       '
+            txt2='vvfm2       '
+            call pipe_compare_sym2(uvf(1-nbdy,1-nbdy,1),iu,txt1, &
+                                   vvf(1-nbdy,1-nbdy,1),iv,txt2)
+            txt1='usfm2       '
+            txt2='vsfm2       '
+            call pipe_compare_sym2(usf(1-nbdy,1-nbdy,1),iu,txt1, &
+                                   vsf(1-nbdy,1-nbdy,1),iv,txt2)
+            txt1='uvfs2       '
+            txt2='vvfs2       '
+            call pipe_compare_sym2(uvf(1-nbdy,1-nbdy,2),iu,txt1, &
+                                   vvf(1-nbdy,1-nbdy,2),iv,txt2)
+            txt1='usfs2       '
+            txt2='vsfs2       '
+            call pipe_compare_sym2(usf(1-nbdy,1-nbdy,2),iu,txt1, &
+                                   vsf(1-nbdy,1-nbdy,2),iv,txt2)
+            txt1='uvfk1       '
+            txt2='vvfk1       '
+            call pipe_compare_sym2(uvf(1-nbdy,1-nbdy,3),iu,txt1, &
+                                   vvf(1-nbdy,1-nbdy,3),iv,txt2)
+            txt1='usfk1       '
+            txt2='vsfk1       '
+            call pipe_compare_sym2(usf(1-nbdy,1-nbdy,3),iu,txt1, &
+                                   vsf(1-nbdy,1-nbdy,3),iv,txt2)
+            txt1='uvfo1       '
+            txt2='vvfo1       '
+            call pipe_compare_sym2(uvf(1-nbdy,1-nbdy,4),iu,txt1, &
+                                   vvf(1-nbdy,1-nbdy,4),iv,txt2)
+            txt1='usfo1       '
+            txt2='vsfo1       '
+            call pipe_compare_sym2(usf(1-nbdy,1-nbdy,4),iu,txt1, &
+                                   vsf(1-nbdy,1-nbdy,4),iv,txt2)
+          endif !49-hr or streaming filter
+        endif !tidflg
+        if     (cinfo(1:6).eq.'momtum' .and. tidein.gt.1) then
+          txt1='etide       '
+          call pipe_compare_sym1(etide,ip,txt1)
+        endif !tidein
         do k=1,kk
           write(txt1(10:12),'(i3)') k
           write(txt2(10:12),'(i3)') k
@@ -1551,3 +1625,4 @@
 !> Nov. 2018 - added wtrflx
 !> Feb. 2019 - replaced onetai by 1.0
 !> Sep. 2019 - added oneta0
+!> Dec. 2024 - added checks on tides

@@ -187,14 +187,15 @@
        sssrmx,         & ! maximum SSS difference for relaxation (psu)
        tidepg_mn,      & ! tidal pressure gradient forcing, time mean
        displd_mn,      & ! dissipation from linear    drag, time mean
-       dispqd_mn         ! dissipation from quadratic drag, time mean
+       dispqd_mn,      & ! dissipation from quadratic drag, time mean
+       drgfrh            ! tidal bottom drag rh
 
 #if defined(RELO)
       real, save, allocatable, dimension(:,:,:,:) ::  &
 #else
       real, save, dimension(1:2,1:2,1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy) ::  &
 #endif
-       drgten         ! tidal bottom drag tensor
+       drgten            ! tidal bottom drag tensor
 !
 #if defined(RELO)
       real, save, allocatable, dimension(:,:) ::  &
@@ -490,7 +491,8 @@
 #else
       integer, save, dimension(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy) ::  &
 #endif
-       maskbc         ! mask for nested barotropic boundary condition
+       maskbc,      & ! mask for nested barotropic boundary condition
+       oneclp         ! how may times oneta has been clipped
 !
 ! --- pwp variables
       real, save :: &
@@ -676,7 +678,17 @@
 ! --- 'cb'     = coefficient of quadratic bottom friction
 ! --- 'cbar'   = rms flow speed (m/s) for linear bottom friction law
 ! --- 'drglim' = limiter for explicit friction (1.0 no limiter, 0.0 implicit)
-! --- 'drgscl' = scale factor for tidal drag   (0.0 for no tidal drag)
+! --- tidfbw(4):
+! --- 'tidfm2' = M2 streaming filter bandwidth  (0.0 for no filter)
+! --- 'tidfs2' = S2 streaming filter bandwidth  (0.0 for no filter)
+! --- 'tidfk1' = K1 streaming filter bandwidth  (0.0 for no filter)
+! --- 'tidfo1' = O1 streaming filter bandwidth  (0.0 for no filter)
+! --- drgscf(4):
+! --- 'drgscm' = scale factor for M2 tidal drag (0.0 when tidfm2=0.0)
+! --- 'drgscs' = scale factor for S2 tidal drag (0.0 when tidfs2=0.0)
+! --- 'drgsck' = scale factor for K1 tidal drag (0.0 when tidfk1=0.0)
+! --- 'drgsco' = scale factor for O1 tidal drag (0.0 when tidfo1=0.0)
+! --- 'drgscl' = scale factor for tidal drag (0.0 when tiddrg=0)
 ! --- 'thkdrg' = thickness of bottom boundary layer for tidal drag (m)
 ! --- 'dsurfq' = number of days between model diagnostics at the surface
 ! --- 'diagfq' = number of days between model diagnostics
@@ -785,7 +797,7 @@
                      visco2,visco4,veldf2,veldf4,facdf4, &
                      temdf2,temdfc,thkdf2,thkdf4,vertmx,diapyc, &
                      tofset,sofset,dtrate,slip,cb,cbar, &
-                     drglim,drgscl,thkdrg, &
+                     drgscl,drgscf(4),tidfbw(4),thkdrg,drglim, &
                      dsurfq,diagfq,proffq,tilefq,meanfq, &
                      rstrfq,bnstfq,nestfq, &
                      stfrdt,stfrds,stfrdv,ra2fac,wbaro, &
@@ -1219,8 +1231,9 @@
               sssrmx(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy), &
            tidepg_mn(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy), &
            displd_mn(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy), &
-           dispqd_mn(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy) )
-      call mem_stat_add( 62*(idm+2*nbdy)*(jdm+2*nbdy) )
+           dispqd_mn(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy), &
+              drgfrh(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy) )
+      call mem_stat_add( 63*(idm+2*nbdy)*(jdm+2*nbdy) )
 #endif
                util1 = r_init
                util2 = r_init
@@ -1284,13 +1297,14 @@
            tidepg_mn = r_init
            displd_mn = r_init
            dispqd_mn = r_init
+              drgfrh = r_init
 !
 #if defined(RELO)
       allocate( &
               drgten(1:2,1:2,1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy) )
       call mem_stat_add( 4*(idm+2*nbdy)*(jdm+2*nbdy)*2 )
 #endif
-              drgten = r_init
+              drgten(:,:,:,:) = r_init
 !
 #if defined(RELO)
       allocate( &
@@ -1587,10 +1601,12 @@
 !
 #if defined(RELO)
       allocate( &
-           maskbc(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy) )
-      call mem_stat_add( (idm+2*nbdy)*(jdm+2*nbdy)/2 ) !real=2*int
+           maskbc(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy), &
+           oneclp(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy) )
+      call mem_stat_add( (idm+2*nbdy)*(jdm+2*nbdy) ) !real=2*int
 #endif
            maskbc = -99
+           oneclp =   0  !in intial count
 !
       if (mxlmy) then
 #if defined(RELO)
@@ -1894,3 +1910,5 @@
 !> May  2024 - added epmass=2 for river only mass exchange
 !> Aug. 2024 - added ocnscl
 !> Sep. 2024 - added hybthk
+!> Dec. 2024 - added oneclp to reduce the number of oneta clipped messages
+!> Dec. 2024 - added tidfbw, drgscf and drgfrh for streaming tidal filter
