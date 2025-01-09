@@ -1363,6 +1363,48 @@
         endif !1st tile
       enddo !k
 !
+! --- 'mstrcr' = number of surface tracers
+! --- 'strflg' = surface tracer flag (one per tracer, 701-799)
+! ---              701: disp_ld
+! ---              702: disp_qd 
+! ---              703: oneta
+! ---              704: pbavg
+! 
+      if (mnproc.eq.1) then
+      write(lp,*)
+      endif !1st tile
+      call blkini(mstrcr,'mstrcr')
+!
+      if (mstrcr.gt.mxtrcr) then
+        if (mnproc.eq.1) then
+        write(lp,'(/ a,i3, a /)')  &
+         &'error - maximum mstrcr is',mxtrcr, &
+         &'  (recompile with larger mxtrcr)'
+        call flush(lp)
+        endif !1st tile
+        call xcstop('(blkdat)')
+               stop '(blkdat)'
+      endif
+!
+      istrcr(:) = 0
+      do k= 1,mstrcr
+        call blkini(strcfl(k),'strflg')
+        if     (strcfl(k).lt.701 .or. strcfl(k).gt.799) then
+          if (mnproc.eq.1) then
+          write(lp,'(/ a,i3 /)')  &
+           &'error - unknown surface tracer type for tracer',k
+          call flush(lp)
+          endif !1st tile
+          call xcstop('(blkdat)')
+                 stop '(blkdat)'
+        endif
+        istrcr(strcfl(k)) = k  !index to diagnostic tracer
+        if (mnproc.eq.1) then
+        write(lp,'(a,i3,i4,i4)') '    k,strcfl =',k,strcfl(k), &
+                                                  istrcr(strcfl(k))
+        endif !1st tile
+      enddo !k
+!
 ! --- 'tsofrq' = number of time steps between anti-drift offset calcs
 ! --- 'tofset' = temperature anti-drift offset (degC/century)
 ! --- 'sofset' = salnity     anti-drift offset  (psu/century)
@@ -2944,3 +2986,4 @@
 !> Sep. 2024 - added hybthk
 !> Nov. 2024 - mlflag=0 turns off isopyc mixed layer entirely
 !> Dec. 2024 - added tidfbw and drgscf for streaming tidal filter
+!> Jan. 2025 - added mstrcr

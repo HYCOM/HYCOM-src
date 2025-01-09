@@ -1121,7 +1121,7 @@
            dpun,uhm,uh0,uhp,dpvn,vhm,vh0,vhp,sum_m,sum_n
       real dp12,dp23,dp123,dp3m1,ql1,ql2,ql3,drgthk,frac
       real cfl,uvclpm,uvclpn,uvkclp(kdm)
-      integer i,ia,ib,j,ja,jb,k,ka,l,mbdy,ktop,kmid,kbot,margin
+      integer i,ia,ib,j,ja,jb,k,ka,ktr,l,mbdy,ktop,kmid,kbot,margin
 !
 !     real*8    wtime
 !     external  wtime
@@ -1521,7 +1521,7 @@
 ! --- rhs: dpmixl.m+, taux+, dpu, depthu+, dpv, tauy+
 ! --- lhs: util1, util2, drag, ubrhs, stresx, vbrhs, stresy
 !
-!-----disp_count  = disp_count + 1
+      disp_count  = disp_count + 1
       stresl(:,:) = 0.0
 !
       if     (drglim.gt.0.0) then
@@ -2406,28 +2406,43 @@
 !
 ! --- dissipation per m^2 on p-grid
 !
-      do j=1,jj
-        do i=1,ii
-          if (SEA_P) then
-            if     (tidflg.gt.0   .and. tidstr.eq.0 .and. &
-                    drgscl.ne.0.0 .and. thkdrg.gt.0.0    ) then
-              displd_mn(i,j) = displd_mn(i,j) +  &
+      ktr = istrcr(701)  !displd_mn
+      if     (ktr.ne.0      .and. &
+              tidflg.gt.0   .and. tidstr.eq.0 .and. &
+              drgscl.ne.0.0 .and. thkdrg.gt.0.0    ) then
+        do j=1,jj
+          do i=1,ii
+            if (SEA_P) then
+              stracr(i,j,ktr) = stracr(i,j,ktr) + &
                 rhoref*0.5*qonem*dpo(i,j,k,m)* &
                 (utotn(i+1,j)*stresl(i+1,j)+  &
                  utotn(i,  j)*stresl(i,  j) )
-              dispqd_mn(i,j) = dispqd_mn(i,j) +  &
-                rhoref*0.5*qonem*dpo(i,j,k,m)* &
-                  (utotn(i+1,j)*(stress(i+1,j)-stresl(i+1,j))+  &
-                   utotn(i,  j)*(stress(i,  j)-stresl(i,  j)) )
-            else
-              dispqd_mn(i,j) = dispqd_mn(i,j) +  &
-                rhoref*0.5*qonem*dpo(i,j,k,m)* &
-                  (utotn(i+1,j)*stress(i+1,j)+  &
-                   utotn(i,  j)*stress(i,  j) )
-            endif !tidflg:else
-          endif !ip
-        enddo !i
-      enddo !j
+            endif !ip
+          enddo !i
+        enddo !j
+      endif !displd_mn
+!
+      ktr = istrcr(702)  !dispqd_mn
+      if     (ktr.ne.0) then
+        do j=1,jj
+          do i=1,ii
+            if (SEA_P) then
+              if     (tidflg.gt.0   .and. tidstr.eq.0 .and. &
+                      drgscl.ne.0.0 .and. thkdrg.gt.0.0    ) then
+                stracr(i,j,ktr) = stracr(i,j,ktr) + &
+                  rhoref*0.5*qonem*dpo(i,j,k,m)* &
+                    (utotn(i+1,j)*(stress(i+1,j)-stresl(i+1,j))+  &
+                     utotn(i,  j)*(stress(i,  j)-stresl(i,  j)) )
+              else
+                stracr(i,j,ktr) = stracr(i,j,ktr) + &
+                  rhoref*0.5*qonem*dpo(i,j,k,m)* &
+                    (utotn(i+1,j)*stress(i+1,j)+  &
+                     utotn(i,  j)*stress(i,  j) )
+              endif !tidflg:else
+            endif !ip
+          enddo !i
+        enddo !j
+      endif !dispqd_mn
 !
       if     (lpipe .and. lpipe_momtum .and. k.eq.1) then
 ! ---   compare two model runs.
@@ -2818,28 +2833,43 @@
 !
 ! --- dissipation per m^2 on p-grid
 !
-      do j=1,jj
-        do i=1,ii
-          if (SEA_P) then
-            if     (tidflg.gt.0   .and. tidstr.eq.0 .and. &
-                    drgscl.ne.0.0 .and. thkdrg.gt.0.0    ) then
-              displd_mn(i,j) = displd_mn(i,j) +  &
+      ktr = istrcr(701)  !displd_mn
+      if     (ktr.ne.0      .and. &
+              tidflg.gt.0   .and. tidstr.eq.0 .and. &
+              drgscl.ne.0.0 .and. thkdrg.gt.0.0    ) then
+        do j=1,jj
+          do i=1,ii
+            if (SEA_P) then
+              stracr(i,j,ktr) = stracr(i,j,ktr) + &
                 rhoref*0.5*qonem*dpo(i,j,k,m)* &
                 (vtotn(i,j+1)*stresl(i,j+1)+  &
                  vtotn(i,j)  *stresl(i,j)   )
-              dispqd_mn(i,j) = dispqd_mn(i,j) +  &
-                rhoref*0.5*qonem*dpo(i,j,k,m)* &
-                  (vtotn(i,j+1)*(stress(i,j+1)-stresl(i,j+1))+  &
-                   vtotn(i,j)  *(stress(i,j)  -stresl(i,j)  ) )
-            else
-              dispqd_mn(i,j) = dispqd_mn(i,j) +  &
-                rhoref*0.5*qonem*dpo(i,j,k,m)* &
-                  (vtotn(i,j+1)*stress(i,j+1)+  &
-                   vtotn(i,j)  *stress(i,j)   )
-            endif !tidlfg:elee
-          endif !ip
-        enddo !i
-      enddo !j
+            endif !ip
+          enddo !i
+        enddo !j
+      endif !displd_mn
+!
+      ktr = istrcr(702)  !dispqd_mn
+      if     (ktr.ne.0) then
+        do j=1,jj
+          do i=1,ii
+            if (SEA_P) then
+              if     (tidflg.gt.0   .and. tidstr.eq.0 .and. &
+                      drgscl.ne.0.0 .and. thkdrg.gt.0.0    ) then
+                stracr(i,j,ktr) = stracr(i,j,ktr) + &
+                  rhoref*0.5*qonem*dpo(i,j,k,m)* &
+                    (vtotn(i,j+1)*(stress(i,j+1)-stresl(i,j+1))+  &
+                     vtotn(i,j)  *(stress(i,j)  -stresl(i,j)  ) )
+              else
+                stracr(i,j,ktr) = stracr(i,j,ktr) + &
+                  rhoref*0.5*qonem*dpo(i,j,k,m)* &
+                    (vtotn(i,j+1)*stress(i,j+1)+  &
+                     vtotn(i,j)  *stress(i,j)   )
+              endif !tidflg:else
+            endif !ip
+          enddo !i
+        enddo !j
+      endif !dispqd_mn
 !
 !     if     (lpipe .and. lpipe_momtum .and. k.eq.1) then
       if     (lpipe .and. lpipe_momtum) then
@@ -5703,3 +5733,4 @@
 !> Dec. 2023 - add cesmbeta as a master switch to cpl_
 !> Aug. 2024 - replace U10-Uocn with U10-ocnscl*Uocn
 !> Dec. 2024 - added streaming tidal filter
+!> Jan. 2025 - converted displd_mn and dispqd_mn to surface tracers

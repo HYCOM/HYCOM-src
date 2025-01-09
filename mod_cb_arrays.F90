@@ -4,7 +4,7 @@
       public ! everything is public
 
 #if defined (USE_NUOPC_CESMBETA) || (ESPC_COUPLE)
-#define USE_NUOPC_GENERIC 1 
+#define USE_NUOPC_GENERIC 1
 #endif
 
 !
@@ -31,6 +31,14 @@
             dimension(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy,kdm,2,mxtrcr) ::  &
 #endif
        tracer         ! inert tracers
+
+#if defined(RELO)
+      real, save, allocatable, dimension(:,:,:) ::  &
+#else
+      real, save, &
+            dimension(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy,mxtrcr) ::  &
+#endif
+       stracr         ! surface tracers
 
 #if defined(RELO)
       real, save, allocatable, dimension(:,:,:) ::  &
@@ -94,7 +102,7 @@
 #endif
        psikk,          & ! montg.pot. in bottom layer
        thkk              ! virtual potential density in bottom layer
-!                                                                   
+!
 #if defined(RELO)
       integer, save, allocatable, dimension(:,:) ::  &
 #else
@@ -185,9 +193,6 @@
        diwbot,         & ! background/internal wave diffusivity at the bottom
        diwqh0,         & ! background/internal wave diffusivity vertical scale
        sssrmx,         & ! maximum SSS difference for relaxation (psu)
-       tidepg_mn,      & ! tidal pressure gradient forcing, time mean
-       displd_mn,      & ! dissipation from linear    drag, time mean
-       dispqd_mn,      & ! dissipation from quadratic drag, time mean
        drgfrh            ! tidal bottom drag rh
 
 #if defined(RELO)
@@ -195,7 +200,7 @@
 #else
       real, save, dimension(1:2,1:2,1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy) ::  &
 #endif
-       drgten            ! tidal bottom drag tensor
+       drgten         ! tidal bottom drag tensor
 !
 #if defined(RELO)
       real, save, allocatable, dimension(:,:) ::  &
@@ -398,7 +403,7 @@
 #endif
        akpar,          & ! photosynthetically available radiation coefficent or chlorophyll-a (jerlov=-1)
        rivers            ! river inflow bogused to surface precipitation
- 
+
 #if defined(RELO)
       real, save, allocatable, dimension(:,:) ::  &
 #else
@@ -453,7 +458,7 @@
        un1max,          & ! u-vel.   b.c. at nestwalls, maximum layer 1
        vn1min,          & ! v-vel.   b.c. at nestwalls, minimum layer 1
        vn1max             ! v-vel.   b.c. at nestwalls, maximum layer 1
- 
+
 #if defined(RELO)
       real, save, allocatable, dimension(:,:,:) ::  &
 #else
@@ -484,15 +489,15 @@
 #else
       real, save, dimension(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy,mxtrcr) ::  &
 #endif
-       rmutr          ! weights for tracr.b.c. relax
+       rmutr             ! weights for tracr.b.c. relax
 
 #if defined(RELO)
       integer, save, allocatable, dimension(:,:) ::  &
 #else
       integer, save, dimension(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy) ::  &
 #endif
-       maskbc,      & ! mask for nested barotropic boundary condition
-       oneclp         ! how may times oneta has been clipped
+       maskbc          & ! mask for nested barotropic boundary condition
+      ,oneclp            ! how may times oneta has been clipped
 !
 ! --- pwp variables
       real, save :: &
@@ -683,12 +688,12 @@
 ! --- 'tidfs2' = S2 streaming filter bandwidth  (0.0 for no filter)
 ! --- 'tidfk1' = K1 streaming filter bandwidth  (0.0 for no filter)
 ! --- 'tidfo1' = O1 streaming filter bandwidth  (0.0 for no filter)
-! --- drgscf(4):
+! --- drgscf(4):       
 ! --- 'drgscm' = scale factor for M2 tidal drag (0.0 when tidfm2=0.0)
 ! --- 'drgscs' = scale factor for S2 tidal drag (0.0 when tidfs2=0.0)
 ! --- 'drgsck' = scale factor for K1 tidal drag (0.0 when tidfk1=0.0)
 ! --- 'drgsco' = scale factor for O1 tidal drag (0.0 when tidfo1=0.0)
-! --- 'drgscl' = scale factor for tidal drag (0.0 when tiddrg=0)
+! --- 'drgscl' = scale factor for tidal drag    (0.0 for no tidal drag)
 ! --- 'thkdrg' = thickness of bottom boundary layer for tidal drag (m)
 ! --- 'dsurfq' = number of days between model diagnostics at the surface
 ! --- 'diagfq' = number of days between model diagnostics
@@ -752,8 +757,11 @@
 ! --- 'icpfrq' = number of time steps between sea-ice updates
 ! --- 'ntracr' = number of            tracers (<=mxtrcr)
 ! --- 'mtracr' = number of diagnostic tracers (<=mxtrcr-ntracr)
+! --- 'mstrcr' = number of surface    tracers (<=mxtrcr)
 ! --- 'trcflg' = tracer type flag (one per tracer)
+! --- 'strcfl' = surface tracer type flag (one per surface tracer)
 ! --- 'itracr' = index to model diagnostic tracers (trcflg 801 to 899)
+! --- 'istrcr' = index to model diagnostic tracers (strcfl 701 to 799)
 ! --- 'clmflg' = climatology frequency flag (6=bimonthly,12=monthly)
 ! --- 'dypflg' = KT: diapycnal mixing flag (0=none,1=KPP,2=explicit)
 ! --- 'iniflg' = initial state flag (0=level,1=zonal,2=climatology)
@@ -813,6 +821,7 @@
                      hybmap,hybflg,advflg,advtyp,momtyp,stfflg, &
                      kapref,kapnum, &
                      ntracr,mtracr,trcflg(mxtrcr),itracr(801:899), &
+                            mstrcr,strcfl(mxtrcr),istrcr(701:799), &
                      clmflg,dypflg,iniflg,lbflag,mapflg,yrflag,sshflg, &
                      iversn,iexpt,jerlv0, &
                      iceflg,ishelf,icmflg,wndflg,amoflg,ustflg, &
@@ -822,9 +831,9 @@
 !
       real,    parameter :: &
         g      =   9.806,       & !gravitational acceleration (m/s**2)
-        rhoref =   1000.0,      & !reference value of potential density (kg/m**3)  
+        rhoref =   1000.0,      & !reference value of potential density (kg/m**3)
         svref  =   1.0/rhoref,  & !reference value of specific volume (m**3/kg)
-        onem   = g/svref,       & !one meter in pressure units (Pa) 
+        onem   = g/svref,       & !one meter in pressure units (Pa)
                                   !(/svref instead of *rhoref for compatibility with older version)
         tenm   = onem*10.0, &
         tencm  = onem* 0.1, &
@@ -835,7 +844,7 @@
         hugel  = 2.0**100,     & !large number used to indicate land points
         pi     = 3.14159265358979323846d0, &
         radian = pi/180.0, &
-        qonem  = 1.0/onem 
+        qonem  = 1.0/onem
 !
 ! --- grid point where detailed diagnostics are desired:
       integer, save :: itest,jtest,ittest,jttest
@@ -877,7 +886,7 @@
               cpl_siv
 #if defined(RELO)
       real, target, allocatable,dimension (:,:) :: &
-#else 
+#else
       real, target, dimension (1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy) :: &
 #endif
              sic_import, & !Sea Ice Concentration
@@ -984,25 +993,34 @@
                 montg(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy,kdm,2) )
       call mem_stat_add( 11*(idm+2*nbdy)*(jdm+2*nbdy)*kdm*2 )
 #endif
-                    u = r_init
-                    v = r_init
-                   dp = r_init
-                  dpo = r_init
-                  dpu = r_init
-                  dpv = r_init
-                 temp = r_init
-                 saln = r_init
-                 th3d = r_init
-               thstar = r_init
-                montg = r_init
+                    u(:,:,:,:) = r_init
+                    v(:,:,:,:) = r_init
+                   dp(:,:,:,:) = r_init
+                  dpo(:,:,:,:) = r_init
+                  dpu(:,:,:,:) = r_init
+                  dpv(:,:,:,:) = r_init
+                 temp(:,:,:,:) = r_init
+                 saln(:,:,:,:) = r_init
+                 th3d(:,:,:,:) = r_init
+               thstar(:,:,:,:) = r_init
+                montg(:,:,:,:) = r_init
 !
       if     (ntracr+mtracr.gt.0) then
-#if defined(RELO)    
-        allocate( &  
+#if defined(RELO)
+        allocate( &
               tracer(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy,kdm,2, ntracr+mtracr) )
         call mem_stat_add( (idm+2*nbdy)*(jdm+2*nbdy)*kdm*2*(ntracr+mtracr) )
 #endif
-              tracer = r_init
+              tracer(:,:,:,:,:) = r_init
+      endif
+!
+      if     (mstrcr.gt.0) then
+#if defined(RELO)
+        allocate( &
+              stracr(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy,mstrcr) )
+        call mem_stat_add( (idm+2*nbdy)*(jdm+2*nbdy)*mstrcr )
+#endif
+              stracr(:,:,:) = r_init
       endif
 !
 #if defined(RELO)
@@ -1012,9 +1030,9 @@
                 oth3d(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy,kdm) )
       call mem_stat_add( 3*(idm+2*nbdy)*(jdm+2*nbdy)*kdm )
 #endif
-                otemp = r_init
-                osaln = r_init
-                oth3d = r_init
+                otemp(:,:,:) = r_init
+                osaln(:,:,:) = r_init
+                oth3d(:,:,:) = r_init
 !
       if (mxlmy) then
 #if defined(RELO)
@@ -1023,8 +1041,8 @@
                    oq2l(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy,0:kkmy25+1) )
         call mem_stat_add( 2*(idm+2*nbdy)*(jdm+2*nbdy)*(kkmy25+2) )
 #endif
-                    oq2 = r_init
-                   oq2l = r_init
+                    oq2(:,:,:) = r_init
+                   oq2l(:,:,:) = r_init
       endif !mxlmy
 !
       if     (ntracr.gt.0) then
@@ -1033,7 +1051,7 @@
              otracer(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy,kdm,ntracr) )
         call mem_stat_add( (idm+2*nbdy)*(jdm+2*nbdy)*kdm*ntracr )
 #endif
-             otracer = r_init
+             otracer(:,:,:,:) = r_init
       endif
 !
 #if defined(RELO)
@@ -1041,7 +1059,7 @@
               dpmold(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy) )
       call mem_stat_add( 1*(idm+2*nbdy)*(jdm+2*nbdy) )
 #endif
-              dpmold = r_init
+              dpmold(:,:) = r_init
 !
 #if defined(RELO)
       allocate( &
@@ -1050,9 +1068,9 @@
                    pv(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy,kdm+1) )
       call mem_stat_add( 3*(idm+2*nbdy)*(jdm+2*nbdy)*(kdm+1) )
 #endif
-                    p = r_init
-                   pu = r_init
-                   pv = r_init
+                    p(:,:,:) = r_init
+                   pu(:,:,:) = r_init
+                   pv(:,:,:) = r_init
 !
 #if defined(RELO)
       allocate( &
@@ -1060,8 +1078,8 @@
               diaflx(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy,kdm) )
       call mem_stat_add( 2*(idm+2*nbdy)*(jdm+2*nbdy)*kdm )
 #endif
-               theta = r_init
-              diaflx = r_init
+               theta(:,:,:) = r_init
+              diaflx(:,:,:) = r_init
 !
 #if defined(RELO)
       allocate( &
@@ -1075,14 +1093,14 @@
                skap(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy) )
       call mem_stat_add( 8*(idm+2*nbdy)*(jdm+2*nbdy) )
 #endif
-              corio = r_init
-             srfhgt = r_init
-             steric = r_init
-             sshgmn = r_init
-             thmean = r_init
-            montg_c = 0.0 
-             montg1 = r_init
-               skap = r_init
+              corio(:,:) = r_init
+             srfhgt(:,:) = r_init
+             steric(:,:) = r_init
+             sshgmn(:,:) = r_init
+             thmean(:,:) = r_init
+            montg_c(:,:) = 0.0
+             montg1(:,:) = r_init
+               skap(:,:) = r_init
 !
 #if defined(RELO)
       allocate( &
@@ -1090,15 +1108,15 @@
                 thkk(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy,2) )
       call mem_stat_add( 2*(idm+2*nbdy)*(jdm+2*nbdy)*2 )
 #endif
-               psikk = r_init
-                thkk = r_init
+               psikk(:,:,:) = r_init
+                thkk(:,:,:) = r_init
 !
 #if defined(RELO)
       allocate( &
                kapi(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy) )
       call mem_stat_add( (idm+2*nbdy)*(jdm+2*nbdy)/2 )  !real=2*int
 #endif
-               kapi = -99
+               kapi(:,:) = -99
 !
 #if defined(RELO)
       allocate( &
@@ -1109,11 +1127,11 @@
                 dpav(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy,kdm) )
       call mem_stat_add( 5*(idm+2*nbdy)*(jdm+2*nbdy)*kdm )
 #endif
-                uflx = r_init
-                vflx = r_init
-              uflxav = r_init
-              vflxav = r_init
-                dpav = r_init
+                uflx(:,:,:) = r_init
+                vflx(:,:,:) = r_init
+              uflxav(:,:,:) = r_init
+              vflxav(:,:,:) = r_init
+                dpav(:,:,:) = r_init
 !
 #if defined(RELO)
       allocate( &
@@ -1122,9 +1140,9 @@
                pbavg(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy,3) )
       call mem_stat_add( 3*(idm+2*nbdy)*(jdm+2*nbdy)*3 )
 #endif
-               ubavg = r_init
-               vbavg = r_init
-               pbavg = r_init
+               ubavg(:,:,:) = r_init
+               vbavg(:,:,:) = r_init
+               pbavg(:,:,:) = r_init
 !
 #if defined(RELO)
       allocate( &
@@ -1133,9 +1151,9 @@
             onetamas(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy,2) )
       call mem_stat_add( 3*(idm+2*nbdy)*(jdm+2*nbdy)*2 )
 #endif
-               oneta = 1.0
-              onetao = 1.0
-            onetamas = 1.0
+               oneta(:,:,:) = 1.0
+              onetao(:,:,:) = 1.0
+            onetamas(:,:,:) = 1.0
 !
 #if defined(RELO)
       allocate( &
@@ -1154,19 +1172,19 @@
             onetacnt(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy) )
       call mem_stat_add( 13*(idm+2*nbdy)*(jdm+2*nbdy) )
 #endif
-               ubrhs = r_init
-               vbrhs = r_init
-               utotm = r_init
-               vtotm = r_init
-               utotn = r_init
-               vtotn = r_init
-               uflux = r_init
-               vflux = r_init
-              uflux2 = r_init
-              vflux2 = r_init
-              uflux3 = r_init
-              vflux3 = r_init
-            onetacnt = 1.0
+               ubrhs(:,:) = r_init
+               vbrhs(:,:) = r_init
+               utotm(:,:) = r_init
+               vtotm(:,:) = r_init
+               utotn(:,:) = r_init
+               vtotn(:,:) = r_init
+               uflux(:,:) = r_init
+               vflux(:,:) = r_init
+              uflux2(:,:) = r_init
+              vflux2(:,:) = r_init
+              uflux3(:,:) = r_init
+              vflux3(:,:) = r_init
+            onetacnt(:,:) = 1.0
 !
 #if defined(RELO)
       allocate( &
@@ -1222,82 +1240,76 @@
               pvtrop(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy), &
               depths(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy), &
                 drag(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy), &
-              salfac(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy), &
+              salfac(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy), & 
               topiso(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy), &
                 diws(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy), &
                 diwm(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy), &
               diwbot(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy), &
               diwqh0(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy), &
               sssrmx(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy), &
-           tidepg_mn(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy), &
-           displd_mn(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy), &
-           dispqd_mn(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy), &
               drgfrh(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy) )
-      call mem_stat_add( 63*(idm+2*nbdy)*(jdm+2*nbdy) )
+      call mem_stat_add( 60*(idm+2*nbdy)*(jdm+2*nbdy) )
 #endif
-               util1 = r_init
-               util2 = r_init
-               util3 = r_init
-               util4 = r_init
-               util5 = r_init
-               util6 = r_init
-                plon = r_init
-                plat = r_init
-                qlon = r_init
-                qlat = r_init
-                ulon = r_init
-                ulat = r_init
-                vlon = r_init
-                vlat = r_init
-                pang = r_init
-                scux = r_init
-                scuy = r_init
-                scvx = r_init
-                scvy = r_init
-                scpx = r_init
-                scpy = r_init
-                scqx = r_init
-                scqy = r_init
-                scu2 = r_init
-                scv2 = r_init
-                scp2 = r_init
-                scq2 = r_init
-               scp2i = r_init
-               scq2i = r_init
-               scuxi = r_init
-               scvyi = r_init
-               aspux = r_init
-               aspuy = r_init
-               aspvx = r_init
-               aspvy = r_init
-             veldf2u = r_init
-             veldf2v = r_init
-             veldf4u = r_init
-             veldf4v = r_init
-             thkdf4u = r_init
-             thkdf4v = r_init
-                 cbp = r_init
-               cbarp = r_init
-                pgfx = r_init
-                pgfy = r_init
-               gradx = r_init
-               grady = r_init
-              depthu = r_init
-              depthv = r_init
-              pvtrop = r_init
-              depths = r_init
-                drag = r_init
-              salfac = r_init
-              topiso = r_init
-                diws = r_init
-                diwm = r_init
-              diwbot = r_init
-              diwqh0 = r_init
-              sssrmx = r_init
-           tidepg_mn = r_init
-           displd_mn = r_init
-           dispqd_mn = r_init
-              drgfrh = r_init
+               util1(:,:) = r_init
+               util2(:,:) = r_init
+               util3(:,:) = r_init
+               util4(:,:) = r_init
+               util5(:,:) = r_init
+               util6(:,:) = r_init
+                plon(:,:) = r_init
+                plat(:,:) = r_init
+                qlon(:,:) = r_init
+                qlat(:,:) = r_init
+                ulon(:,:) = r_init
+                ulat(:,:) = r_init
+                vlon(:,:) = r_init
+                vlat(:,:) = r_init
+                pang(:,:) = r_init
+                scux(:,:) = r_init
+                scuy(:,:) = r_init
+                scvx(:,:) = r_init
+                scvy(:,:) = r_init
+                scpx(:,:) = r_init
+                scpy(:,:) = r_init
+                scqx(:,:) = r_init
+                scqy(:,:) = r_init
+                scu2(:,:) = r_init
+                scv2(:,:) = r_init
+                scp2(:,:) = r_init
+                scq2(:,:) = r_init
+               scp2i(:,:) = r_init
+               scq2i(:,:) = r_init
+               scuxi(:,:) = r_init
+               scvyi(:,:) = r_init
+               aspux(:,:) = r_init
+               aspuy(:,:) = r_init
+               aspvx(:,:) = r_init
+               aspvy(:,:) = r_init
+             veldf2u(:,:) = r_init
+             veldf2v(:,:) = r_init
+             veldf4u(:,:) = r_init
+             veldf4v(:,:) = r_init
+             thkdf4u(:,:) = r_init
+             thkdf4v(:,:) = r_init
+                 cbp(:,:) = r_init
+               cbarp(:,:) = r_init
+                pgfx(:,:) = r_init
+                pgfy(:,:) = r_init
+               gradx(:,:) = r_init
+               grady(:,:) = r_init
+              depthu(:,:) = r_init
+              depthv(:,:) = r_init
+              pvtrop(:,:) = r_init
+              depths(:,:) = r_init
+                drag(:,:) = r_init
+              salfac(:,:) = r_init
+              topiso(:,:) = r_init
+                diws(:,:) = r_init
+                diwm(:,:) = r_init
+              diwbot(:,:) = r_init
+              diwqh0(:,:) = r_init
+              sssrmx(:,:) = r_init
+              drgfrh(:,:) = r_init
 !
 #if defined(RELO)
       allocate( &
@@ -1347,49 +1359,49 @@
                si_ty(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy) )
       call mem_stat_add( 36*(idm+2*nbdy)*(jdm+2*nbdy) )
 #endif
-                 uja = r_init
-                 ujb = r_init
-                 via = r_init
-                 vib = r_init
-                pbot = r_init
-             pbotmin = r_init
-               sgain = r_init
-               surtx = r_init 
-               surty = r_init
-              surflx = r_init
-              sswflx = r_init
-              mixflx = r_init
-              sstflx = r_init
-              sssflx = r_init
-              rivflx = r_init
-              salflx = r_init
-              wtrflx = 0.0 
-              buoflx = r_init
-              bhtflx = r_init
-               ustar = r_init
-              ustarb = r_init
-              turgen = r_init
-              thkice = r_init
-              covice = r_init
-              temice = r_init
-              flxice = r_init
-              fswice = r_init
-              wflice = r_init
-              wflfrz = 0.0     !diagnostic, icloan only
-              sflice = r_init
-                si_c = 0.0 !r_init
-                si_h = 0.0 !r_init
-                si_t = r_init
-                si_u = r_init
-                si_v = r_init
-               si_tx = r_init
-               si_ty = r_init
+                 uja(:,:) = r_init
+                 ujb(:,:) = r_init
+                 via(:,:) = r_init
+                 vib(:,:) = r_init
+                pbot(:,:) = r_init
+             pbotmin(:,:) = r_init
+               sgain(:,:) = r_init
+               surtx(:,:) = r_init
+               surty(:,:) = r_init
+              surflx(:,:) = r_init
+              sswflx(:,:) = r_init
+              mixflx(:,:) = r_init
+              sstflx(:,:) = r_init
+              sssflx(:,:) = r_init
+              rivflx(:,:) = r_init
+              salflx(:,:) = r_init
+              wtrflx(:,:) = 0.0
+              buoflx(:,:) = r_init
+              bhtflx(:,:) = r_init
+               ustar(:,:) = r_init
+              ustarb(:,:) = r_init
+              turgen(:,:) = r_init
+              thkice(:,:) = r_init
+              covice(:,:) = r_init
+              temice(:,:) = r_init
+              flxice(:,:) = r_init
+              fswice(:,:) = r_init
+              wflice(:,:) = r_init
+              wflfrz(:,:) = 0.0     !diagnostic, icloan only
+              sflice(:,:) = r_init
+                si_c(:,:) = 0.0 !r_init
+                si_h(:,:) = 0.0 !r_init
+                si_t(:,:) = r_init
+                si_u(:,:) = r_init
+                si_v(:,:) = r_init
+               si_tx(:,:) = r_init
+               si_ty(:,:) = r_init
 !
       if     (flxflg.eq.6) then
 #if defined(RELO)
         allocate(wndocn(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy))
 #endif
-                 wndocn = r_init
+                 wndocn(:,:) = r_init
       endif !flxflg.eq.6
 !
 #if defined(RELO)
@@ -1398,8 +1410,8 @@
              jerlov(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy) )
       call mem_stat_add( (idm+2*nbdy)*(jdm+2*nbdy) ) !real=2*int
 #endif
-              klist = -99
-             jerlov = -99
+              klist(:,:) = -99
+             jerlov(:,:) = -99
 !
 #if defined(RELO)
       allocate( &
@@ -1410,11 +1422,11 @@
                 smlb(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy,2) )
       call mem_stat_add( 5*(idm+2*nbdy)*(jdm+2*nbdy)*2 )
 #endif
-              dpmixl = r_init
-               t1sav = r_init
-               s1sav = r_init
-                tmlb = r_init
-                smlb = r_init
+              dpmixl(:,:,:) = r_init
+               t1sav(:,:,:) = r_init
+               s1sav(:,:,:) = r_init
+                tmlb(:,:,:) = r_init
+                smlb(:,:,:) = r_init
 !
 #if defined(RELO)
       allocate( &
@@ -1429,29 +1441,29 @@
                 vmix(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy) )
       call mem_stat_add( 9*(idm+2*nbdy)*(jdm+2*nbdy) )
 #endif
-              hekman = r_init
-              hmonob = r_init
-                dpbl = r_init
-               dpbbl = r_init
-                tmix = r_init
-                smix = r_init
-               thmix = r_init
-                umix = r_init
-                vmix = r_init
+              hekman(:,:) = r_init
+              hmonob(:,:) = r_init
+                dpbl(:,:) = r_init
+               dpbbl(:,:) = r_init
+                tmix(:,:) = r_init
+                smix(:,:) = r_init
+               thmix(:,:) = r_init
+                umix(:,:) = r_init
+                vmix(:,:) = r_init
 !
 #if defined(RELO)
       allocate( &
               nmlb(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy,2) )
       call mem_stat_add( (idm+2*nbdy)*(jdm+2*nbdy) ) !real=2*int
 #endif
-              nmlb = -99
+              nmlb(:,:,:) = -99
 !
 #if defined(RELO)
       allocate( &
               coeflx(2*lstep+1,2) )
       call mem_stat_add( 2*(2*lstep+1) )
 #endif
-              coeflx = 0.0
+              coeflx(:,:) = 0.0
 !
 #if defined(RELO)
       allocate( &
@@ -1477,24 +1489,24 @@
                rivers(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy,4) )
       call mem_stat_add( 2*(idm+2*nbdy)*(jdm+2*nbdy)*4 )
 #endif
-                 taux = 0.0 ! ESPC r_init 
-                 tauy = 0.0 ! ESPC r_init
-               wndspd = 0.0
-               ustara = 0.0
-               mslprs = 0.0 ! ESPC r_init
-               airtmp = 0.0
-               vapmix = 0.0
-               precip = 0.0
-               radflx = 0.0
-                swflx = 0.0
-               surtmp = 0.0
-               seatmp = 0.0
-               stoc_t = 0.0
-               stoc_s = 0.0
-               stoc_u = 0.0
-               stoc_v = 0.0
-                akpar = 0.0 
-               rivers = 0.0
+                 taux(:,:,:) = 0.0 ! ESPC r_init
+                 tauy(:,:,:) = 0.0 ! ESPC r_init
+               wndspd(:,:,:) = 0.0
+               ustara(:,:,:) = 0.0
+               mslprs(:,:,:) = 0.0 ! ESPC r_init
+               airtmp(:,:,:) = 0.0
+               vapmix(:,:,:) = 0.0
+               precip(:,:,:) = 0.0
+               radflx(:,:,:) = 0.0
+                swflx(:,:,:) = 0.0
+               surtmp(:,:,:) = 0.0
+               seatmp(:,:,:) = 0.0
+               stoc_t(:,:,:) = 0.0
+               stoc_s(:,:,:) = 0.0
+               stoc_u(:,:,:) = 0.0
+               stoc_v(:,:,:) = 0.0
+                akpar(:,:,:) = 0.0
+               rivers(:,:,:) = 0.0
 !
 #if defined(RELO)
       allocate( &
@@ -1503,9 +1515,9 @@
            offlux(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy) )
       call mem_stat_add( 3*(idm+2*nbdy)*(jdm+2*nbdy) )
 #endif
-           offlux =  0.0  
-           oftaux =  0.0 ! ESPC r_init
-           oftauy =  0.0 ! ESPC r_init
+           offlux(:,:) =  0.0
+           oftaux(:,:) =  0.0 ! ESPC r_init
+           oftauy(:,:) =  0.0 ! ESPC r_init
 !
 #if defined(RELO)
       allocate( &
@@ -1513,15 +1525,15 @@
                twall(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy,kkwall,4) )
       call mem_stat_add( 2*(idm+2*nbdy)*(jdm+2*nbdy)*kkwall*4 )
 #endif
-               swall = r_init
-               twall = r_init
+               swall(:,:,:,:) = r_init
+               twall(:,:,:,:) = r_init
 !
 #if defined(RELO)
       allocate( &
                diurnl(0:24,-91:91) )
       call mem_stat_add( 25*193 )
 #endif
-               diurnl = r_init
+               diurnl(:,:) = r_init
 !
       if     (relaxt .or. kkwall.eq.kdm) then
 #if defined(RELO)
@@ -1529,7 +1541,7 @@
                pwall(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy,kdm,4) )
         call mem_stat_add( (idm+2*nbdy)*(jdm+2*nbdy)*kdm*4 )
 #endif
-               pwall = r_init
+               pwall(:,:,:,:) = r_init
       endif
 !
       if     (ntracr.gt.0) then
@@ -1538,7 +1550,7 @@
               trwall(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy,kkwall,4,ntracr) )
         call mem_stat_add( (idm+2*nbdy)*(jdm+2*nbdy)*kkwall*4*ntracr )
 #endif
-              trwall = r_init
+              trwall(:,:,:,:,:) = r_init
       endif
 !
 #if defined(RELO)
@@ -1550,11 +1562,11 @@
                vnest(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy,kknest,2) )
       call mem_stat_add( 5*(idm+2*nbdy)*(jdm+2*nbdy)*kknest*2 )
 #endif
-               pnest = r_init
-               snest = r_init
-               tnest = r_init
-               unest = r_init
-               vnest = r_init
+               pnest(:,:,:,:) = r_init
+               snest(:,:,:,:) = r_init
+               tnest(:,:,:,:) = r_init
+               unest(:,:,:,:) = r_init
+               vnest(:,:,:,:) = r_init
 !
 #if defined(RELO)
       allocate( &
@@ -1565,11 +1577,11 @@
               pbnest(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy,2) )
       call mem_stat_add( 5*(idm+2*nbdy)*(jdm+2*nbdy)*2 )
 #endif
-              ubnest = r_init
-              vbnest = r_init
-              ubpnst = r_init
-              vbpnst = r_init
-              pbnest = r_init
+              ubnest(:,:,:) = r_init
+              vbnest(:,:,:) = r_init
+              ubpnst(:,:,:) = r_init
+              vbpnst(:,:,:) = r_init
+              pbnest(:,:,:) = r_init
 !
 #if defined(RELO)
       allocate( &
@@ -1582,13 +1594,13 @@
                rmus(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy) )
       call mem_stat_add( 7*(idm+2*nbdy)*(jdm+2*nbdy) )
 #endif
-                rmu = r_init
-              rmunp = r_init
-              rmunv = r_init
-             rmunvv = r_init
-             rmutra = r_init
-             rmutra = r_init
-               rmus = r_init  !!Alex
+                rmu(:,:) = r_init
+              rmunp(:,:) = r_init
+              rmunv(:,:) = r_init
+             rmunvv(:,:) = r_init
+             rmutra(:,:) = r_init
+             rmutra(:,:) = r_init
+               rmus(:,:) = r_init  !!Alex
 !
       if     (ntracr.gt.0) then
 #if defined(RELO)
@@ -1596,17 +1608,17 @@
                rmutr(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy,ntracr) )
         call mem_stat_add( (idm+2*nbdy)*(jdm+2*nbdy)*ntracr )
 #endif
-               rmutr = r_init
+               rmutr(:,:,:) = r_init
       endif
 !
 #if defined(RELO)
       allocate( &
            maskbc(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy), &
-           oneclp(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy) )
+           oneclp(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy) ) 
       call mem_stat_add( (idm+2*nbdy)*(jdm+2*nbdy) ) !real=2*int
 #endif
-           maskbc = -99
-           oneclp =   0  !in intial count
+           maskbc(:,:) = -99
+           oneclp(:,:) =   0  !initial count
 !
       if (mxlmy) then
 #if defined(RELO)
@@ -1622,11 +1634,11 @@
                  diftmy(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy,0:kkmy25+1) )
         call mem_stat_add( 3*(idm+2*nbdy)*(jdm+2*nbdy)*(kkmy25+2) )
 #endif
-                     q2 = r_init
-                    q2l = r_init
-                 difqmy = r_init
-                 vctymy = r_init
-                 diftmy = r_init
+                   q2(:,:,:,:) = r_init
+                  q2l(:,:,:,:) = r_init
+                 difqmy(:,:,:) = r_init
+                 vctymy(:,:,:) = r_init
+                 diftmy(:,:,:) = r_init
 #if defined(RELO)
       else
         kkmy25 = -1
@@ -1642,11 +1654,11 @@
                 ghats(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy,kdm+1) )
       call mem_stat_add( 5*(idm+2*nbdy)*(jdm+2*nbdy)*(kdm+1) )
 #endif
-                zgrid = r_init
-                 vcty = r_init
-                 difs = r_init
-                 dift = r_init
-                ghats = r_init
+                zgrid(:,:,:) = r_init
+                 vcty(:,:,:) = r_init
+                 difs(:,:,:) = r_init
+                 dift(:,:,:) = r_init
+                ghats(:,:,:) = r_init
 !
       if     (mxlgiss) then
 #if defined(RELO)
@@ -1657,10 +1669,10 @@
             ssb(-762:762,-762:762) )
         call mem_stat_add( 4*1525*1525 )
 #endif
-          slq2b = r_init
-            smb = r_init
-            shb = r_init
-            ssb = r_init
+          slq2b(:,:) = r_init
+            smb(:,:) = r_init
+            shb(:,:) = r_init
+            ssb(:,:) = r_init
       endif !mxlgiss
 !
 
@@ -1681,17 +1693,17 @@
       call mem_stat_add( 11*(idm+2*nbdy)*(jdm+2*nbdy) )
 #endif
 
-               sic_import = 0.d0
-              sitx_import = 0.d0
-              sity_import = 0.d0
-              siqs_import = 0.d0
-              sifh_import = 0.d0
-              sifs_import = 0.d0
-              sifw_import = 0.d0
-               sit_import = 0.d0
-               sih_import = 0.d0
-               siu_import = 0.d0
-               siv_import = 0.d0
+               sic_import(:,:) = 0.d0
+              sitx_import(:,:) = 0.d0
+              sity_import(:,:) = 0.d0
+              siqs_import(:,:) = 0.d0
+              sifh_import(:,:) = 0.d0
+              sifs_import(:,:) = 0.d0
+              sifw_import(:,:) = 0.d0
+               sit_import(:,:) = 0.d0
+               sih_import(:,:) = 0.d0
+               siu_import(:,:) = 0.d0
+               siv_import(:,:) = 0.d0
 
 #endif /* USE_NUOPC_GENERIC */
 
@@ -1699,19 +1711,19 @@
       allocate( &
                    dhde(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy), &
                    dhdn(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy), &
-                   uml(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy), &
-                   vml(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy), &
+                    uml(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy), &
+                    vml(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy), &
                     tml(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy), &
-                    sml(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy)) 
+                    sml(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy))
       call mem_stat_add( 6*(idm+2*nbdy)*(jdm+2*nbdy) )
 #endif
 
-                dhde = 0.d0
-                dhdn = 0.d0
-                uml = 0.d0
-                vml = 0.d0
-                tml = 0.d0
-                sml = 0.d0
+                dhde(:,:) = 0.d0
+                dhdn(:,:) = 0.d0
+                uml(:,:) = 0.d0
+                vml(:,:) = 0.d0
+                tml(:,:) = 0.d0
+                sml(:,:) = 0.d0
 
 #if defined (USE_NUOPC_CESMBETA)
 #if defined(RELO)
@@ -1727,14 +1739,14 @@
       call mem_stat_add( 8*(idm+2*nbdy)*(jdm+2*nbdy) )
 #endif
 
-                sshm = 0.d0
-                  um = 0.d0
-                  vm = 0.d0
-                 ubm = 0.d0
-                 vbm = 0.d0
-               tavgm = 0.d0
-               savgm = 0.d0
-                frzh = 0.d0
+                sshm(:,:) = 0.d0
+                  um(:,:) = 0.d0
+                  vm(:,:) = 0.d0
+                 ubm(:,:) = 0.d0
+                 vbm(:,:) = 0.d0
+               tavgm(:,:) = 0.d0
+               savgm(:,:) = 0.d0
+                frzh(:,:) = 0.d0
 
 #if defined(RELO)
       allocate( &
@@ -1759,24 +1771,24 @@
       call mem_stat_add( 18*(idm+2*nbdy)*(jdm+2*nbdy)*(2) )
 #  endif
 
-                  imp_taux = 0.d0
-                  imp_tauy = 0.d0
-                  imp_taue = 0.d0
-                  imp_taun = 0.d0
-                imp_wndspd = 0.d0
-                imp_ustara = 0.d0
-                imp_airtmp = 0.d0
-                imp_vapmix = 0.d0
-                 imp_swflx = 0.d0
-                imp_lwdflx = 0.d0
-                imp_lwuflx = 0.d0
-                imp_latflx = 0.d0
-               imp_sensflx = 0.d0
-                imp_precip = 0.d0
-                imp_surtmp = 0.d0
-                imp_seatmp = 0.d0
-               imp_irivers = 0.d0
-               imp_orivers = 0.d0
+                  imp_taux(:,:,:) = 0.d0
+                  imp_tauy(:,:,:) = 0.d0
+                  imp_taue(:,:,:) = 0.d0
+                  imp_taun(:,:,:) = 0.d0
+                imp_wndspd(:,:,:) = 0.d0
+                imp_ustara(:,:,:) = 0.d0
+                imp_airtmp(:,:,:) = 0.d0
+                imp_vapmix(:,:,:) = 0.d0
+                 imp_swflx(:,:,:) = 0.d0
+                imp_lwdflx(:,:,:) = 0.d0
+                imp_lwuflx(:,:,:) = 0.d0
+                imp_latflx(:,:,:) = 0.d0
+               imp_sensflx(:,:,:) = 0.d0
+                imp_precip(:,:,:) = 0.d0
+                imp_surtmp(:,:,:) = 0.d0
+                imp_seatmp(:,:,:) = 0.d0
+               imp_irivers(:,:,:) = 0.d0
+               imp_orivers(:,:,:) = 0.d0
 #endif /* USE_NUOPC_CESMBETA */
 
 #if defined (ESPC_COUPLE)
@@ -1784,8 +1796,8 @@
                    exp_sbhflx(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy), &
                    exp_lthflx(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy) )
       call mem_stat_add( 2*(idm+2*nbdy)*(jdm+2*nbdy) )
-       exp_sbhflx(:,:) = 0.0 
-       exp_lthflx(:,:) = 0.0 
+       exp_sbhflx(:,:) = 0.0
+       exp_lthflx(:,:) = 0.0
 
 #  endif
     ! initialize coupling flags
@@ -1842,28 +1854,28 @@
 !> Apr. 2007 - added dragrh,drglim,drgscl
 !> Apr. 2007 - added srfhgt,montg1
 !> Apr. 2007 - added btrlfr and btrmas
-!> June 2007 - added momtyp and facdf4.
-!> Sep. 2007 - added hybmap, hybiso and isopcm.
-!> Feb. 2008 - added thkdrg.
-!> Feb. 2008 - added sshflg and steric,sshgmn,thmean.
-!> June 2008 - added tilefq.
-!> Mar. 2008 - added dswflg and diurnl.
-!> Dec. 2008 - difsmo is now an integer number of layers.
-!> Jan. 2009 - added arcend.
-!> June 2009 - added sssrmx.
-!> Mar. 2010 - added diwbot.
-!> Apr. 2010 - changed sssrmx to an array.
-!> Apr. 2010 - added diwqh0; removed diwlat.
-!> Apr. 2010 - added proffq.
-!> Nov. 2010 - added wndrep.
-!> Apr. 2011 - added flnmarcs.
-!> Apr. 2011 - added cbarp.
-!> Apr. 2011 - replaced huge with hugel, to avoid clash with intrinsic huge.
-!> July 2011 - added salfac.
+!> June 2007 - added momtyp and facdf4
+!> Sep. 2007 - added hybmap, hybiso and isopcm
+!> Feb. 2008 - added thkdrg
+!> Feb. 2008 - added sshflg and steric,sshgmn,thmean
+!> June 2008 - added tilefq
+!> Mar. 2008 - added dswflg and diurnl
+!> Dec. 2008 - difsmo is now an integer number of layers
+!> Jan. 2009 - added arcend
+!> June 2009 - added sssrmx
+!> Mar. 2010 - added diwbot
+!> Apr. 2010 - changed sssrmx to an array
+!> Apr. 2010 - added diwqh0; removed diwlat
+!> Apr. 2010 - added proffq
+!> Nov. 2010 - added wndrep
+!> Apr. 2011 - added flnmarcs
+!> Apr. 2011 - added cbarp
+!> Apr. 2011 - replaced huge with hugel, to avoid clash with intrinsic huge
+!> July 2011 - added salfac
 !> Aug. 2011 - replaced dpold and dpoldm with dpo
 !> Aug. 2011 - added ra2fac, removed wts[12] and wuv[12]
 !> Aug. 2011 - added hybraf
-!> Sep. 2011 - added cbp.
+!> Sep. 2011 - added cbp
 !> Nov. 2011 - added icpfrq
 !> Jan. 2012 - added thkcdw
 !> Mar. 2012 - replaced dssk with dpns and dsns
@@ -1896,7 +1908,7 @@
 !> Dec. 2018 - added /* USE_NUOPC_CESMBETA */ macro for coupled simulation
 !> Dec. 2018 - added /* USE_NUOPC_GENERIC */ and /* ESPC_COUPLE */ macros
 !> Feb. 2019 - added montg_c
-!> Feb. 2019 - removed onetai 
+!> Feb. 2019 - removed onetai
 !> Sep. 2019 - five arrays moved to momtum_init
 !> Sep. 2019 - added oneta0
 !> Oct. 2019 - added lbmont
@@ -1912,3 +1924,6 @@
 !> Sep. 2024 - added hybthk
 !> Dec. 2024 - added oneclp to reduce the number of oneta clipped messages
 !> Dec. 2024 - added tidfbw, drgscf and drgfrh for streaming tidal filter
+!> Jan. 2025 - added stracr, mstrcr, strcfl and istrcr
+!> Jan. 2025 - converted displd_mn and dispqd_mn to surface tracers
+!> Jan. 2025 - removed tidepg_mn

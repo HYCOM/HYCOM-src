@@ -98,13 +98,14 @@
 # include "stmt_fns.h"
 !
 ! --- write an archive file.
+! --- kkout=0 for surface archive
 !
       character*8  ctype
       character*80 cformat,flnmarcvs
       integer      i,j,k,ktr,ldot,nop,nopa
       real         coord,xmin,xmax
 !
-      if     (kkout.eq.1) then
+      if     (kkout.eq.0) then
         flnmarcvs = flnmarcs
       else
         flnmarcvs = flnmarc
@@ -120,8 +121,7 @@
       endif
       ldot = min(ldot,len(flnmarcvs)-11)  !need 11 characters for archive date
 !
-      if     ((kkout.eq.1 .and. dsurfq.ge.1.0/24.0) .or. &
-              (kkout.gt.1 .and. diagfq.ge.1.0/24.0)     ) then
+      if     (dsurfq.ge.1.0/24.0) then
 ! ---   indicate the archive date
         write(flnmarcvs(ldot+1:ldot+11),'(i4.4,a1,i3.3,a1,i2.2)')  &
          iyear,'_',iday,'_',ihour
@@ -137,7 +137,7 @@
 ! --- no .[ab] files for 1-D cases (<=6x6) or for dsur1p surface cases.
 !
       if     (max(itdm,jtdm).gt.6 .and. &
-              .not.(dsur1p .and. kkout.eq.1)) then  !not 1-D output
+              .not.(dsur1p .and. kkout.eq.0)) then  !not 1-D output
 !
       call zaiopf(flnmarcvs(1:ldot)//'.a', 'new', nopa)
       if     (mnproc.eq.1) then
@@ -160,7 +160,7 @@
       k    =sigver
       coord=thbase
 !
-      if     (kkout.gt.1 .or. l_arch(1)) then
+      if     (kkout.ne.0 .or. l_arch(1)) then
       call zaiowr(montg1,ip,.true., &
                   xmin,xmax, nopa, .false.)
       if     (mnproc.eq.1) then
@@ -170,7 +170,7 @@
       call flush(nop)
       endif !1st tile
       endif !l_arch
-      if     (kkout.gt.1 .or. l_arch(2)) then
+      if     (kkout.ne.0 .or. l_arch(2)) then
       call zaiowr(srfhgt,ip,.true., &
                   xmin,xmax, nopa, .false.)
       if     (mnproc.eq.1) then
@@ -182,7 +182,7 @@
       endif !l_arch
       if     (sshflg.eq.1) then
 ! ---   write out steric SSH.
-        if     (kkout.gt.1 .or. l_arch(3)) then
+        if     (kkout.ne.0 .or. l_arch(3)) then
         call zaiowr(steric,ip,.true., &
                     xmin,xmax, nopa, .false.)
         if     (mnproc.eq.1) then
@@ -193,7 +193,7 @@
         endif !1st tile
         endif !l_arch
       endif !sshflg
-      if     (kkout.gt.1) then  !3-D archives only
+      if     (kkout.ne.0) then  !3-D archives only, but see istrcr(703) below
       call zaiowr(oneta(1-nbdy,1-nbdy,n),ip,.true., &
                   xmin,xmax, nopa, .false.)
       if     (mnproc.eq.1) then
@@ -202,9 +202,9 @@
       coord=0.0
       call flush(nop)
       endif !1st tile
-      endif !kkout>1
+      endif !kkout/=0
 !
-      if     (kkout.gt.1 .or. l_arch(4)) then
+      if     (kkout.ne.0 .or. l_arch(4)) then
       call zaiowr(surflx,ip,.true., xmin,xmax, nopa, .false.)
       if     (mnproc.eq.1) then
       write (nop,117) 'surflx  ',nstep,time,k,coord,xmin,xmax
@@ -213,7 +213,7 @@
       call flush(nop)
       endif !1st tile
       endif !l_arch
-      if     (kkout.gt.1 .or. l_arch(5)) then
+      if     (kkout.ne.0 .or. l_arch(5)) then
       call zaiowr(wtrflx,ip,.true., xmin,xmax, nopa, .false.)
       if     (mnproc.eq.1) then
       write (nop,117) 'wtrflx  ',nstep,time,k,coord,xmin,xmax
@@ -222,7 +222,7 @@
       call flush(nop)
       endif !1st tile
       endif !l_arch
-      if     (kkout.gt.1 .or. l_arch(18)) then
+      if     (kkout.ne.0 .or. l_arch(18)) then
       call zaiowr(salflx,ip,.true., xmin,xmax, nopa, .false.)
       if     (mnproc.eq.1) then
       write (nop,117) 'salflx  ',nstep,time,k,coord,xmin,xmax
@@ -233,7 +233,7 @@
       endif !l_arch
 !
 ! --- surtx and surty only output when selected in archs.input
-      if     (kkout.eq.1 .and. l_arch(19)) then
+      if     (kkout.eq.0 .and. l_arch(19)) then
       call zaiowr(surtx, ip,.true., xmin,xmax, nopa, .false.)
       if     (mnproc.eq.1) then
       write (nop,117) 'surtx   ',nstep,time,k,coord,xmin,xmax
@@ -242,7 +242,7 @@
       call flush(nop)
       endif !1st tile
       endif !l_arch
-      if     (kkout.eq.1 .and. l_arch(20)) then
+      if     (kkout.eq.0 .and. l_arch(20)) then
       call zaiowr(surty, ip,.true., xmin,xmax, nopa, .false.)
       if     (mnproc.eq.1) then
       write (nop,117) 'surty   ',nstep,time,k,coord,xmin,xmax
@@ -252,7 +252,7 @@
       endif !1st tile
       endif !l_arch
 !
-      if     (kkout.gt.1 .or. l_arch(6)) then
+      if     (kkout.ne.0 .or. l_arch(6)) then
       call zaiowr(dpbl,ip,.true., xmin,xmax, nopa, .false.)
       if     (mnproc.eq.1) then
       write (nop,117) 'bl_dpth ',nstep,time,k,coord,xmin,xmax
@@ -261,7 +261,7 @@
       call flush(nop)
       endif !1st tile
       endif !l_arch
-      if     (kkout.gt.1 .or. l_arch(7)) then
+      if     (kkout.ne.0 .or. l_arch(7)) then
       call zaiowr(dpmixl(1-nbdy,1-nbdy,n),ip,.true., &
                   xmin,xmax, nopa, .false.)
       if     (mnproc.eq.1) then
@@ -272,7 +272,7 @@
       endif !1st tile
       endif !l_arch
       if     (iceflg.ne.0) then
-        if     (kkout.gt.1 .or. l_arch(8)) then
+        if     (kkout.ne.0 .or. l_arch(8)) then
         call zaiowr(covice,ip,.true., xmin,xmax, nopa, .false.)
         if     (mnproc.eq.1) then
         write (nop,117) 'covice  ',nstep,time,k,coord,xmin,xmax
@@ -281,7 +281,7 @@
         call flush(nop)
         endif !1st tile
         endif !l_arch
-        if     (kkout.gt.1 .or. l_arch(9)) then
+        if     (kkout.ne.0 .or. l_arch(9)) then
           if     (iceflg.eq.1) then
             call zaiowr(thkice,ip,.true., xmin,xmax, nopa, .false.)
           else  !from coupler
@@ -294,7 +294,7 @@
           call flush(nop)
           endif !1st tile
         endif !l_arch
-        if     (kkout.gt.1 .or. l_arch(10)) then
+        if     (kkout.ne.0 .or. l_arch(10)) then
         call zaiowr(temice,ip,.true., xmin,xmax, nopa, .false.)
         if     (mnproc.eq.1) then
         write (nop,117) 'temice  ',nstep,time,k,coord,xmin,xmax
@@ -307,7 +307,7 @@
 !
 ! --- depth averaged fields
 !
-      if     (kkout.gt.1 .or. l_arch(11)) then
+      if     (kkout.ne.0 .or. l_arch(11)) then
       call zaiowr(ubavg(1-nbdy,1-nbdy,n),iu,.true., &
                   xmin,xmax, nopa, .false.)
       if     (mnproc.eq.1) then
@@ -317,7 +317,7 @@
       call flush(nop)
       endif !1st tile
       endif !l_arch
-      if     (kkout.gt.1 .or. l_arch(12)) then
+      if     (kkout.ne.0 .or. l_arch(12)) then
       call zaiowr(vbavg(1-nbdy,1-nbdy,n),iv,.true., &
                   xmin,xmax, nopa, .false.)
       if     (mnproc.eq.1) then
@@ -328,45 +328,11 @@
       endif !1st tile
       endif !l_arch
 !
-! --- dissipation fields
-!
-      if     (kkout.eq.1 .and. disp_count.gt.0) then
-      displd_mn(:,:) = displd_mn(:,:)/real(disp_count)
-      call zaiowr(displd_mn,ip,.true., xmin,xmax, nopa, .false.)
-      if     (mnproc.eq.1) then
-      k    =0
-      coord=0.0
-      write (nop,117) 'disp_ld ',nstep,time,k,coord,xmin,xmax
-      call flush(nop)
-      endif !1st tile
-      dispqd_mn(:,:) = dispqd_mn(:,:)/real(disp_count)
-      call zaiowr(dispqd_mn,ip,.true., xmin,xmax, nopa, .false.)
-      if     (mnproc.eq.1) then
-      k    =0
-      coord=0.0
-      write (nop,117) 'disp_qd ',nstep,time,k,coord,xmin,xmax
-      call flush(nop)
-      endif !1st tile
-      tidepg_mn(:,:) = tidepg_mn(:,:)/real(disp_count)
-      call zaiowr(tidepg_mn,ip,.true., xmin,xmax, nopa, .false.)
-      if     (mnproc.eq.1) then
-      k    =0
-      coord=0.0
-      write (nop,117) 'tide_pg ',nstep,time,k,coord,xmin,xmax
-      call flush(nop)
-      endif !1st tile
-!
-      displd_mn(:,:) = 0.0
-      dispqd_mn(:,:) = 0.0
-      tidepg_mn(:,:) = 0.0
-      disp_count     = 0
-      endif !linear and quadratic drag dissipation
-!
 ! --- layer loop.
 !
-      do 75 k=1,kkout
+      do 75 k=1,max(kkout,1)
       coord=sigma(k)
-      if     (kkout.gt.1 .or. l_arch(13)) then
+      if     (kkout.ne.0 .or. l_arch(13)) then
       call zaiowr(u(1-nbdy,1-nbdy,k,n),iu,.true., &
                   xmin,xmax, nopa, .false.)
       if     (mnproc.eq.1) then
@@ -374,7 +340,7 @@
       call flush(nop)
       endif !1st tile
       endif !l_arch
-      if     (kkout.gt.1 .or. l_arch(14)) then
+      if     (kkout.ne.0 .or. l_arch(14)) then
       call zaiowr(v(1-nbdy,1-nbdy,k,n),iv,.true., &
                   xmin,xmax, nopa, .false.)
       if     (mnproc.eq.1) then
@@ -382,7 +348,7 @@
       call flush(nop)
       endif !1st tile
       endif !l_arch
-      if     (kkout.gt.1 .or. l_arch(15)) then
+      if     (kkout.ne.0 .or. l_arch(15)) then
       call zaiowr(dp(1-nbdy,1-nbdy,k,n),ip,.true., &
                   xmin,xmax, nopa, .false.)
       if     (mnproc.eq.1) then
@@ -390,7 +356,7 @@
       call flush(nop)
       endif !1st tile
       endif !l_arch
-      if     (kkout.gt.1 .or. l_arch(16)) then
+      if     (kkout.ne.0 .or. l_arch(16)) then
       call zaiowr(temp(1-nbdy,1-nbdy,k,n),ip,.true., &
                   xmin,xmax, nopa, .false.)
       if     (mnproc.eq.1) then
@@ -398,7 +364,7 @@
       call flush(nop)
       endif !1st tile
       endif !l_arch
-      if     (kkout.gt.1 .or. l_arch(17)) then
+      if     (kkout.ne.0 .or. l_arch(17)) then
       call zaiowr(saln(1-nbdy,1-nbdy,k,n),ip,.true., &
                   xmin,xmax, nopa, .false.)
       if     (mnproc.eq.1) then
@@ -409,7 +375,7 @@
 !
 ! --- no tracers or diffusion for single layer case
 !
-      if     (kkout.gt.1) then
+      if     (kkout.ne.0) then
         do ktr= 1,ntracr+mtracr
           call zaiowr(tracer(1-nbdy,1-nbdy,k,n,ktr),ip,.true., &
                       xmin,xmax, nopa, .false.)
@@ -474,7 +440,7 @@
           call flush(nop)
           endif !1st tile
         endif !difout
-      endif !kkout>1
+      endif !kkout/=0
  75   continue
 !
  117  format (a8,' =',i11,f11.3,i3,f7.3,1p2e16.7)
@@ -493,6 +459,72 @@
  118      format (a5,a3,' =',i11,f11.3,i3,f7.3,1p2e16.7)
         enddo
       endif !diaflx
+!        
+! --- surface tracers at end of archs file
+!                    
+      if     (kkout.eq.0 .and. mstrcr.gt.0) then 
+        do ktr= 1,mstrcr 
+          if     (ktr.eq.istrcr(701)) then !disp_ld
+            stracr(:,:,ktr) = stracr(:,:,ktr)/real(disp_count)
+            call zaiowr(stracr(1-nbdy,1-nbdy,ktr),ip,.true., xmin,xmax, &
+                        nopa, .false.)
+            stracr(:,:,ktr) = 0.0
+            if     (mnproc.eq.1) then
+            k    =0
+            coord=0.0
+            write (nop,117) 'disp_ld ',nstep,time,k,coord,xmin,xmax
+            call flush(nop)
+            endif !1st tile
+          elseif (ktr.eq.istrcr(702)) then !disp_qd
+            stracr(:,:,ktr) = stracr(:,:,ktr)/real(disp_count)
+            call zaiowr(stracr(1-nbdy,1-nbdy,ktr),ip,.true., xmin,xmax, &
+                        nopa, .false.)
+            stracr(:,:,ktr) = 0.0
+            if     (mnproc.eq.1) then
+            k    =0
+            coord=0.0
+            write (nop,117) 'disp_ld ',nstep,time,k,coord,xmin,xmax
+            call flush(nop)
+            endif !1st tile
+          elseif (ktr.eq.istrcr(703)) then !oneta
+            call zaiowr(oneta(1-nbdy,1-nbdy,n),ip,.true., &
+                        xmin,xmax, nopa, .false.)
+            if     (mnproc.eq.1) then
+            k    =0
+            coord=0.0
+            write (nop,117) 'oneta   ',nstep,time,k,coord,xmin,xmax
+            call flush(nop)
+            endif !1st tile
+          elseif (ktr.eq.istrcr(704)) then !pbavg
+            do j=1,jj
+              do i=1,ii
+                if     (ip(i,j).ne.0) then
+                  stracr(i,j,ktr) = pbavg(i,j,n)*svref  !pressure units
+                endif !ip
+              enddo !i
+            enddo !j
+            call zaiowr(stracr(1-nbdy,1-nbdy,ktr),ip,.true., xmin,xmax, &
+                        nopa, .false.)
+            if     (mnproc.eq.1) then
+            k    =0
+            coord=0.0
+            write (nop,117) 'pbavg   ',nstep,time,k,coord,xmin,xmax
+            call flush(nop)
+            endif !1st tile
+          else  !generic surface tracer
+            call zaiowr(stracr(1-nbdy,1-nbdy,ktr),ip,.true., xmin,xmax, &
+                        nopa, .false.)
+            if     (mnproc.eq.1) then
+            k    =0
+            coord=0.0
+            write(ctype,'(a6,i2.2)') 'tracer',ktr
+            write (nop,117) ctype,nstep,time,k,coord,xmin,xmax
+            call flush(nop)
+            endif !1st tile
+          endif !istrcr
+        enddo !ktr
+      endif !surface tracers
+      disp_count = 0
 !
       close (unit=nop)
       call zaiocl(nopa)
@@ -707,10 +739,8 @@
         ssha = srfhgt(ipnt,jpnt)
         if     (sshflg.eq.1) then
           sshs = steric(ipnt,jpnt)
-        elseif (sshflg.eq.2) then
-          sshs = montg1(ipnt,jpnt)
         else
-          sshs = ssha  !assume all is steric
+          sshs = montg1(ipnt,jpnt)
         endif
         sshn = ssha - sshs
 !
@@ -1665,3 +1695,7 @@
 !> Feb. 2019 - removed onetai 
 !> July 2023 - added mtracer for diagnostic tracers
 !> July 2023 - added a number 01-99 to tracer output
+!> Jan. 2025 - added surface tracers
+!> Jan. 2025 - converted displd_mn and dispqd_mn to surface tracers
+!> Jan. 2025 - removed tidepg_mn 
+!> Jan. 2025 - kkout==0 for surface archives

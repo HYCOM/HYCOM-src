@@ -1,6 +1,7 @@
       subroutine geopar
       use mod_xc         ! HYCOM communication interface
       use mod_cb_arrays  ! HYCOM saved arrays
+      use mod_tides      ! HYCOM tides
       use mod_za         ! HYCOM I/O interface
 !
 ! --- set up model parameters related to geography
@@ -742,6 +743,14 @@
 ! --- similarly for pbot,dp at neighbors of q points.
 !
       disp_count=0
+      ktr = istrcr(701)
+      if     (ktr.ne.0) then
+        stracr(:,:,ktr) = 0.0  !701: displd_mn
+      endif      
+      ktr = istrcr(702)
+      if     (ktr.ne.0) then  
+        stracr(:,:,ktr) = 0.0  !702: dispqd_mn
+      endif
 !
 !$OMP PARALLEL DO PRIVATE(j,i,k,ktr) &
 !$OMP          SCHEDULE(STATIC,jblk)
@@ -759,10 +768,6 @@
           depthu(i,j)=0.0
           depthv(i,j)=0.0
           pbot(  i,j)=0.0
-!
-          displd_mn(i,j)=0.0
-          dispqd_mn(i,j)=0.0
-          tidepg_mn(i,j)=0.0
 !
           psikk( i,j,1)=0.0
           psikk( i,j,2)=0.0
@@ -1065,3 +1070,4 @@
 !> Aug. 2018 - initialize umix and vmix
 !> Dec. 2018 - add /* USE_NUOPC_CESMBETA */ macro for pang (for coupled simulation)
 !> Apr. 2023 - added dx0k
+!> Jan. 2025 - converted displd_mn and dispqd_mn to surface tracers

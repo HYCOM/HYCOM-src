@@ -3622,7 +3622,7 @@
           write (intvl,'(i3.3)') int(dtime-timav+dsmall)
           endif !1st tile
           if (hisurf) then
-            call archiv(n, 1,  iyear,jday,ihour, intvl)
+            call archiv(n, 0,  iyear,jday,ihour, intvl)
           endif
           if (histry) then
             call archiv(n, kk, iyear,jday,ihour, intvl)
@@ -4113,3 +4113,4 @@
 !> Nov. 2024 - zero vcty,dift,difs when mxl_no
 !> Nov. 2024 - mlflag=0 turns of isopyc mixed layer entirely
 !> Dec. 2024 - added streaming tidal filter
+!> Jan. 2025 - kkout==0 for surface archives

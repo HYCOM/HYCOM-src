@@ -1,9 +1,9 @@
 #
-# --- HYCOM 2.2 makefile 
+# --- HYCOM 3.1 makefile 
 #
 # --- Stand-alone HYCOM, or HYCOM ESMF component, or HYCOM+CICE.
 #
-# --- Tunable parameters in ../config/$(ARCH)_$(TYPE)
+# --- Tunable parameters in config/$(ARCH)_$(TYPE)
 #
 
 .SUFFIXES: 
@@ -16,16 +16,14 @@
 
 include config/$(ARCH)_$(TYPE)
 
-MODS =   mod_dimensions.o mod_xc.o mod_za.o mod_cb_arrays.o mod_pipe.o \
-         mod_incupd.o \
-         mod_floats.o mod_stokes.o mod_tides.o mod_mean.o mod_archiv.o \
-         mod_tsadvc.o mod_momtum.o mod_barotp.o mod_asselin.o mod_restart.o\
+MODS =   mod_dimensions.o mod_xc.o mod_za.o mod_cb_arrays.o mod_tides.o mod_pipe.o \
+         mod_incupd.o mod_floats.o mod_stokes.o mod_mean.o    mod_archiv.o \
+         mod_tsadvc.o mod_momtum.o mod_barotp.o mod_asselin.o mod_restart.o \
          mod_hycom.o
 
-MODD =   mod_dimensions.o mod_xc.o mod_za.o mod_cb_arrays.o mod_pipe.o \
-         mod_incupd.o \
-         mod_floats.o mod_stokes.o mod_tides.o mod_mean.o mod_archiv.o \
-         mod_tsadvc.o mod_momtum.o mod_barotp.o mod_asselin.o mod_restart.o\
+MODD =   mod_dimensions.o mod_xc.o mod_za.o mod_cb_arrays.o mod_tides.o mod_pipe.o \
+         mod_incupd.o mod_floats.o mod_stokes.o mod_mean.o    mod_archiv.o \
+         mod_tsadvc.o mod_momtum.o mod_barotp.o mod_asselin.o mod_restart.o \
          mod_hycom_dummy.o
 
 OBJS =	                   bigrid.o blkdat.o  cnuity.o convec.o \
@@ -72,7 +70,7 @@ diapfl.o:  diapfl.F90  mod_xc.o mod_cb_arrays.o stmt_fns.h          mod_stokes.o
 dpthuv.o:  dpthuv.F90  mod_xc.o mod_cb_arrays.o
 dpudpv.o:  dpudpv.F90  mod_xc.o 
 forfun.o:  forfun.F90  mod_xc.o mod_cb_arrays.o            mod_za.o
-geopar.o:  geopar.F90  mod_xc.o mod_cb_arrays.o stmt_fns.h mod_za.o
+geopar.o:  geopar.F90  mod_xc.o mod_cb_arrays.o stmt_fns.h mod_za.o mod_tides.o
 hybgen.o:  hybgen.F90  mod_xc.o mod_cb_arrays.o stmt_fns.h          mod_pipe.o
 icloan.o:  icloan.F90  mod_xc.o mod_cb_arrays.o stmt_fns.h
 inicon.o:  inicon.F90  mod_xc.o mod_cb_arrays.o stmt_fns.h          mod_pipe.o \
@@ -142,7 +140,8 @@ mod_floats.o: \
         mod_floats.F90 mod_xc.o mod_cb_arrays.o            mod_za.o mod_pipe.o \
 	                                                            mod_stokes.o
 mod_pipe.o: \
-        mod_pipe.F90   mod_xc.o mod_cb_arrays.o                     mod_stokes.o
+        mod_pipe.F90   mod_xc.o mod_cb_arrays.o                     mod_tides.o \
+                                                                    mod_stokes.o
 mod_stokes.o: \
         mod_stokes.F90 mod_xc.o mod_cb_arrays.o            mod_za.o
 mod_tides.o: \

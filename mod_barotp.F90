@@ -54,7 +54,7 @@
       real    xmin(2)
       real    sminny(jdm,2)
       real*8  sump
-      integer i,j,l,lll,ml,nl,mn,lstep1,margin,mbdy,k,icof,nsclip
+      integer i,j,l,lll,ml,nl,mn,lstep1,margin,mbdy,k,ktr,icof,nsclip
 !	 & ,iffstep
       logical ldrag
 !	  data iffstep/0/
@@ -892,8 +892,10 @@
 !
  840  continue  ! lll=1,lstep1,2
 !
-      if     (ldrag) then  !disp_count updated in momtum
-        displd_mn(:,:) = displd_mn(:,:) + displd(:,:)/real(lstep1)
+      ktr = istrcr(701)  !displd_mn
+      if     (ldrag .and. ktr.ne.0) then
+        !disp_count updated in momtum
+        stracr(:,:,ktr) = stracr(:,:,ktr) + displd(:,:)/real(lstep1)
       endif
 !
       if     (lbflag.eq.1) then
@@ -1337,3 +1339,4 @@
 !> Sep. 2019 - added oneta0, and oneta diagnostic test
 !> Jan. 2024 - replaced oneta limit (oneta0), with pbot limit (pbotmin)
 !> Dec. 2024 - added oneclp to reduce the number of clipped oneta messages
+!> Jan. 2025 - converted displd_mn to a surface tracer
