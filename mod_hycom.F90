@@ -2699,7 +2699,7 @@
                 util2(i,j)=(srfhgt(i,j)/g)**2*scp2(i,j)
               endif
                 util3(i,j)=srfhgt(i,j)*scp2(i,j)
-              if     (sshflg.eq.1) then
+              if     (sshflg.eq.1 .or. sshflg.eq.3) then
                 util4(i,j)=steric(i,j)*scp2(i,j)
               else
                 util4(i,j)=montg1(i,j)*scp2(i,j)
@@ -2737,7 +2737,7 @@
                    &''  ('',1pe8.1,'' to '',e8.1,'')'')') &
         nstep,c_ydh, &
         sum/(area*svref*onemm),smin/(svref*onemm),smax/(svref*onemm)
-        if     (sshflg.ne.1) then
+        if     (sshflg.ne.1 .and. sshflg.ne.3) then
           write (lp,'(i9,a, &
                      &'' mean MontgPot (mm):'',f8.2)') &
           nstep,c_ydh, &
@@ -4114,3 +4114,4 @@
 !> Nov. 2024 - mlflag=0 turns of isopyc mixed layer entirely
 !> Dec. 2024 - added streaming tidal filter
 !> Jan. 2025 - kkout==0 for surface archives
+!> Jan. 2025 - Added sshflg=3 for steric SSH and Montg. Potential

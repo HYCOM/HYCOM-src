@@ -600,7 +600,7 @@
 !
 ! --- 'yrflag' = days in year flag   (0=360,1=366,2=366Jan1,3=actual)
 ! ---             (-2=366Jan1 with 732-day forcing repeat)
-! --- 'sshflg' = diagnostic SSH flag (0=SSH,1=SSH&stericSSH,2=SSH&stericMONTG)
+! --- 'sshflg' = diagnostic SSSH flag (0=none,1=stericSSH,2=stericMONTG,3=1+2)
 ! ---             note that sshflg==1 implies reading relax.ssh.a
 ! ---              and that sshflg==2 implies reading relax.montg.a
 ! --- 'dsurfq' = number of days between model diagnostics at the surface
@@ -1751,8 +1751,8 @@
 !
 ! --- 'lbflag' = lateral baro. bndy flag (0=none;nest:2=B-K,4=Flather)
 ! ---             (port: 1=Browning-Kreiss,3=Flather)
-! --- 'lbmont' = baro nesting archives have sshflg=2
-! ---             sshflg=2 is always ok, but is required if lbmont is set
+! --- 'lbmont' = baro nesting archives have sshflg=2 or 3 
+! ---             sshflg=2,3 is always ok, but is required if lbmont is set
 ! --- 'tidflg' = TIDES: tidal forcing flag    (0=no;1=bdy;2=body;3=bdy&body)
 ! --- 'tidein' = TIDES: tide field input flag (0=no;1=yes;2=sal)
 ! --- 'tidcon' = TIDES: 1 digit per constituent (Q1K2P1N2O1K1S2M2), 0=off,1=on
@@ -2084,10 +2084,10 @@
         call xcstop('(blkdat)')
                stop '(blkdat)'
       endif
-      if (lbmont .and. sshflg.ne.2) then
+      if (lbmont .and. sshflg.lt.2) then
         if (mnproc.eq.1) then
         write(lp,'(/ a /)')  &
-          'error - sshflg must be 2 if baro nesting archives have this'
+          'error - sshflg must be 2 or 3 if baro nesting archives have this'
         call flush(lp)
         endif !1st tile
         call xcstop('(blkdat)')
@@ -2987,3 +2987,4 @@
 !> Nov. 2024 - mlflag=0 turns off isopyc mixed layer entirely
 !> Dec. 2024 - added tidfbw and drgscf for streaming tidal filter
 !> Jan. 2025 - added mstrcr
+!> Jan. 2025 - Added sshflg=3 for steric SSH and Montg. Potential

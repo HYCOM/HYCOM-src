@@ -686,7 +686,6 @@
       integer   i,ios,iunit,j,lgth,nrec
 ! ESPC --- add
 #if ! defined(ESPC_ATM) && ! defined(ESPC_NAVGEM) && ! defined(ESPC_DATA_ATM)
-
 !
 ! --- w0 negative on first call only.
       if     (w0.lt.-1.0) then
@@ -965,7 +964,6 @@
 !
 ! ESPC --- add
 # endif
-
         if     (flxoff) then
           call zaiopf(flnmfor(1:lgth)//'forcing.offlux.a', 'old', 916)
           if     (mnproc.eq.1) then  ! .b file from 1st tile only
@@ -988,10 +986,8 @@
             enddo !i
           enddo !j
         endif !flxoff:else
-
 ! ESPC ---add
 #if ! defined(ESPC_ATM) && ! defined(ESPC_NAVGEM) && ! defined(ESPC_DATA_ATM)
-
 !
 ! ---   skip ahead to the start time.
         nrec   = 0
@@ -1802,7 +1798,7 @@
 !
       lgth = len_trim(flnmforw)
 !
-      if     (sshflg.eq.1) then
+      if     (sshflg.eq.1 .or. sshflg.eq.3) then
         if     (mnproc.eq.1) then
         write (lp,*) ' now opening mean SSH   fields ...'
         endif !1st tile
@@ -1830,7 +1826,8 @@
         enddo !j
         call xctilr(thmean,1,1, nbdy,nbdy, halo_ps)
         call xctilr(sshgmn,1,1, nbdy,nbdy, halo_ps)
-      elseif (sshflg.eq.2) then
+      endif !sshflg==1,3
+      if     (sshflg.eq.2 .or. sshflg.eq.3) then
         if     (mnproc.eq.1) then
         write (lp,*) ' now opening mean SSH & Montg. Pot. fields ...'
         endif !1st tile
@@ -1840,8 +1837,8 @@
         open (unit=uoff+915,file=flnmforw(1:lgth)//'relax.montg.b', &
            status='old', action='read')
         endif !1st tile
-        call rdmonth(thmean, 915)
-        call rdmonth(sshgmn, 915)
+        call rdmonth(util1, 915)  !mean montg
+        call rdmonth(util2, 915)  !mean SSH
         if     (mnproc.eq.1) then  ! .b file from 1st tile only
         close (unit=uoff+915)
         endif !1st tile
@@ -1849,15 +1846,14 @@
         do j= 1,jj
           do i= 1,ii
             if     (ip(i,j).eq.1) then
-              montg_c(i,j) = (sshgmn(i,j)-thmean(i,j))*g  !input is mean ssh/montg in m
+              montg_c(i,j) = (util1(i,j)-util2(i,j))*g  !mean montg-ssh in m * g
             else
               montg_c(i,j) = 0.0
             endif
           enddo !i
         enddo !j
         call xctilr(montg_c,1,1, nbdy,nbdy, halo_ps)
-
-      endif !sshflg
+      endif !sshflg=2,3
 !
       if (.not.relaxf) then
         return
@@ -4104,7 +4100,7 @@
         do i=1,ii
           if     (ip(i,j).eq.1) then
             hqpbot = 0.5/pbot(i,j)
-            if     (sshflg.eq.2 .and. .not.lbmont) then
+            if     (sshflg.ge.2 .and. .not.lbmont) then
 !             apply montgomery correction to input pb
               pbnest(i,j,lslot) = (util2(i,j)-util1(i,j)-montg_c(i,j)) &
                                   *rhoref
@@ -4645,7 +4641,7 @@
       close( unit=uoff+920)
       endif
       call zaiocl(920)
-
+!
       if     (meanar) then
         call xctilr(pnest(1-nbdy,1-nbdy,1,lslot),1,kk, 1,1, halo_ps)
       endif
@@ -4999,3 +4995,4 @@
 !> Nov  2022 - skip oneta in nest archive files
 !> Nov. 2024 - set surface fluxes to zero if not used
 !> Dec. 2024 - added drgfrh for streaming tidal filter
+!> Jan. 2025 - Added sshflg=3 for steric SSH and Montg. Potential

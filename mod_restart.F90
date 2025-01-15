@@ -318,7 +318,7 @@
       call restart_in3d(thkk, kapnum, ip, 'thkk    ')  !kapnum 1 or 2
       call restart_in3d(dpmixl,    2, ip, 'dpmixl  ')
 !
-      if (sshflg.eq.2) then
+      if (sshflg.eq.2 .or. sshflg.eq.3) then
 ! ---   montg_c makes montg1 steric SSH, assumes long term mean SSH is all steric
         do j= 1,jj
           do i= 1,ii
@@ -881,7 +881,7 @@
       enddo
       call flush(iunit)
       endif !1st tile
-      if (sshflg.eq.2) then
+      if (sshflg.eq.2 .or. sshflg.eq.3) then
 ! ---   unwind the pbavg correction for compatibility with psikk
         do j= 1,jj
           do i= 1,ii
@@ -894,7 +894,7 @@
         enddo !j
       endif ! sshflg==2
       call zaiowr3(pbavg,      3, ip,.false., xmin,xmax, iunta,.true.)
-      if (sshflg.eq.2) then
+      if (sshflg.eq.2 .or. sshflg.eq.3) then
 ! ---   re-apply the pbavg correction
         do j= 1,jj
           do i= 1,ii
@@ -1244,3 +1244,4 @@
 !> Feb. 2019 - replaced onetai by 1.0
 !> Dec. 2024 - made [uv]hrly bit for bit reproducable across restarts
 !> Dec. 2024 - added streaming tidal filter, turns off [uv]hrly 
+!> Jan. 2025 - Added sshflg=3 for steric SSH and Montg. Potential

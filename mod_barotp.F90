@@ -131,7 +131,7 @@
             elseif (tidflg.gt.0 .and. sshflg.eq.1) then !tides
               gtide(i,j)=-g*etide(i,j) &
                          -salfac(i,j)*(srfhgt(i,j)-steric(i,j))
-            elseif (tidflg.gt.0 .and. sshflg.eq.2) then !tides
+            elseif (tidflg.gt.0 .and. sshflg.ge.2) then !tides
               gtide(i,j)=-g*etide(i,j) &
                          -salfac(i,j)*(srfhgt(i,j)-montg1(i,j))
             else
@@ -1340,3 +1340,4 @@
 !> Jan. 2024 - replaced oneta limit (oneta0), with pbot limit (pbotmin)
 !> Dec. 2024 - added oneclp to reduce the number of clipped oneta messages
 !> Jan. 2025 - converted displd_mn to a surface tracer
+!> Jan. 2025 - Added sshflg=3 for steric SSH and Montg. Potential

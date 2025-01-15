@@ -180,7 +180,7 @@
       call flush(nop)
       endif !1st tile
       endif !l_arch
-      if     (sshflg.eq.1) then
+      if     (sshflg.eq.1 .or. sshflg.eq.3) then
 ! ---   write out steric SSH.
         if     (kkout.ne.0 .or. l_arch(3)) then
         call zaiowr(steric,ip,.true., &
@@ -737,7 +737,7 @@
                 yrflag,iyear,iday,ihour
 !
         ssha = srfhgt(ipnt,jpnt)
-        if     (sshflg.eq.1) then
+        if     (sshflg.eq.1 .or. sshflg.eq.3) then
           sshs = steric(ipnt,jpnt)
         else
           sshs = montg1(ipnt,jpnt)
@@ -1094,7 +1094,7 @@
                   xmin,xmax, nopa, .false.)
       write (nop,117) 'srfhgt  ',nstep,time,0,coord,xmin,xmax
       call flush(nop)
-      if     (sshflg.eq.1) then
+      if     (sshflg.eq.1 .or. sshflg.eq.3) then
 ! ---   write out steric SSH.
         call ztiowr(steric,ip,.true., &
                     xmin,xmax, nopa, .false.)
@@ -1699,3 +1699,4 @@
 !> Jan. 2025 - converted displd_mn and dispqd_mn to surface tracers
 !> Jan. 2025 - removed tidepg_mn 
 !> Jan. 2025 - kkout==0 for surface archives
+!> Jan. 2025 - Added sshflg=3 for steric SSH and Montg. Potential

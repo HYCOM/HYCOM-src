@@ -462,7 +462,7 @@
       write (nop,117) 'srfhgt  ',nmean,time_max,0,coord,xmin,xmax
       call flush(nop)
       endif !1st tile
-      if     (sshflg.eq.1) then
+      if     (sshflg.eq.1 .or. sshflg.eq.3) then
 ! ---   write out steric SSH.
         call zaiowr(steric_m,ip,.true., &
                     xmin,xmax, nopa, .false.)
@@ -687,7 +687,7 @@
                 yrflag, iyear,  iday, ihour
 !
         ssha = srfht_m(itest,jtest)
-        if     (sshflg.eq.1) then
+        if     (sshflg.eq.1 .or. sshflg.eq.3) then
           sshs = steric_m(itest,jtest)
         elseif (sshflg.eq.2) then
           sshs = montg_m(itest,jtest)
@@ -863,3 +863,4 @@
 !> Dec  2018 - archive dp_m/oneta_m
 !> July 2023 - added a number 01-99 to tracer output
 !> July 2023 - added mtracr for diagnostic tracers
+!> Jan. 2025 - Added sshflg=3 for steric SSH and Montg. Potential
