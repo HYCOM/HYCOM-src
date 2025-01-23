@@ -9,7 +9,7 @@
 #endif
       implicit none
 !
-      real      day1,hybrlx,cplifq,frzifq
+      real      day1,hybrlx,cplifq,frzifq,q
       integer   k,kdmblk,mlflag,thflag,trcflg1
       integer   lngblk
       character sigfmt*26
@@ -188,7 +188,7 @@
 !
 ! --- near the surface (i.e. shallower than isotop), layers are always fixed
 ! --- depth (z or sigma).  layer 1 is always fixed, so isotop=0.0 is not
-! --- allowed.  if isotop<0.0 then isotop(1:idm,1:jdm) is a spacially
+! --- allowed.  if isotop<0.0 then isotop(1:idm,1:jdm) is a spatially
 ! --- varying array, input from the file iso.top.[ab].
 !
 ! --- away from the surface, the minimum layer thickness is dp00i.
@@ -547,7 +547,7 @@
 ! --- 'thbase' = reference density (sigma units)
       call blkinr(thbase,'thbase',sigfmt)
 !
-! --- 'vsigma' = spacially varying isopycnal layer target densities (0=F,1=T)
+! --- 'vsigma' = spatially varying isopycnal layer target densities (0=F,1=T)
 ! ---            if true, target densities input from file iso.sigma.[ab]
       if (mnproc.eq.1) then
       write(lp,*)
@@ -896,20 +896,20 @@
 ! --- 'facdf4' =       speed-dependent biharmonic viscosity factor
 ! ---                   (diffusion velocity is facdf4*|v|)
 ! --- 'veldf2' = diffusion velocity (m/s) for Laplacian  momentum dissipation
-! ---             (negative to input spacially varying diffusion velocity)
+! ---             (negative to input spatially varying diffusion velocity)
 ! --- 'veldf4' = diffusion velocity (m/s) for biharmonic momentum dissipation
-! ---             (negative to input spacially varying diffusion velocity)
+! ---             (negative to input spatially varying diffusion velocity)
 ! --- 'thkdf2' = diffusion velocity (m/s) for Laplacian  thickness diffusion
 ! --- 'thkdf4' = diffusion velocity (m/s) for biharmonic thickness diffusion
-! ---             (negative to input spacially varying diffusion velocity)
+! ---             (negative to input spatially varying diffusion velocity)
 ! --- 'temdf2' = diffusion velocity (m/s) for Laplacian  temp/saln diffusion
 ! --- 'temdfc' = temp diffusion conservation (0.0,1.0 all dens,temp resp.)
 ! --- 'vertmx' = diffusion velocity (m/s) for mom.mixing at mix.layr.base
 ! ---             (vertmx only used in MICOM-like isopycnal mode)
 ! --- 'cbar'   = rms flow speed     (m/s) for linear bottom friction
-! ---             (negative to input spacially varying rms flow speed)
+! ---             (negative to input spatially varying rms flow speed)
 ! --- 'cb'     = coefficient of quadratic bottom friction
-! ---             (negative to input spacially varying coefficient)
+! ---             (negative to input spatially varying coefficient)
 ! --- 'drglim' = limiter for explicit friction (1.0 no limiter, 0.0 implicit)
       if (mnproc.eq.1) then
       write(lp,*)
@@ -948,7 +948,7 @@
                                &" m/s (-ve if variable)")')
       call blkinr(cb,    'cb    ','(a6," =",f10.4, &
                                &"     (-ve if variable)")')
-      call blkinr(drglim,'drglim','(a6," =",f10.4," ")')   
+      call blkinr(drglim,'drglim','(a6," =",f10.4," ")')
 !
       if (hybrlx.lt.1.0) then
         if (mnproc.eq.1) then
@@ -970,14 +970,14 @@
         call xcstop('(blkdat)')
                stop '(blkdat)'
       endif
-!     
+!
       if (hybthk.lt.0.0 .or. hybthk.gt.0.9) then
         if (mnproc.eq.1) then
         write(lp,'(/ a /)')  &
          &'error - hybthk must be betweeen 0.0 and 0.9'
         call flush(lp)
         endif !1st tile
-        call xcstop('(blkdat)') 
+        call xcstop('(blkdat)')
                stop '(blkdat)'
       endif
 !
@@ -1179,8 +1179,8 @@
           endif
           call xcstop('(blkdat)')
                  stop   blkdat
-        endif  !max_nsteps_batrop
-      endif  !btrmas
+        endif !max_nsteps_batrop
+      endif !btrmas
 #endif
 !
 ! --- 'thkbot' = thickness of bottom boundary layer (m)
@@ -1332,7 +1332,7 @@
       write(lp,*)
       endif !1st tile
       call blkini(mtracr,'mtracr')
-! 
+!
       if (ntracr+mtracr.gt.mxtrcr) then
         if (mnproc.eq.1) then
         write(lp,'(/ a,i3, a /)')  &
@@ -1366,10 +1366,14 @@
 ! --- 'mstrcr' = number of surface tracers
 ! --- 'strflg' = surface tracer flag (one per tracer, 701-799)
 ! ---              701: disp_ld
-! ---              702: disp_qd 
+! ---              702: disp_qd
 ! ---              703: oneta
 ! ---              704: pbavg
-! 
+! ---              705: hntide
+! ---              706: pbavg_a
+! ---              707: htide
+! ---              708: ns_ssh
+!
       if (mnproc.eq.1) then
       write(lp,*)
       endif !1st tile
@@ -1453,9 +1457,9 @@
 ! --- 'difm0'  = KPP:     max viscosity   due to shear instability (m**2/s)
 ! --- 'difs0'  = KPP:     max diffusivity due to shear instability (m**2/s)
 ! --- 'difmiw' = KPP/MY:  background/internal wave viscosity       (m**2/s)
-! ---             (negative to input spacially varying viscosity)
+! ---             (negative to input spatially varying viscosity)
 ! --- 'difsiw' = KPP/MY:  background/internal wave diffusivity     (m**2/s)
-! ---             (negative to input spacially varying diffusivity)
+! ---             (negative to input spatially varying diffusivity)
 ! --- 'dsfmax' = KPP:     salt fingering diffusivity factor        (m**2/s)
 ! --- 'rrho0'  = KPP:     salt fingering rp=(alpha*delT)/(beta*delS)
 ! --- 'cs'     = KPP:     value for nonlocal flux term
@@ -1658,7 +1662,7 @@
         call xcstop('(blkdat)')
                stop '(blkdat)'
       endif
-#endif   
+#endif
       if (difsiw*difmiw.lt.0.0) then
         if (mnproc.eq.1) then
         write(lp,'(/ 2a /)')  &
@@ -1751,13 +1755,13 @@
 !
 ! --- 'lbflag' = lateral baro. bndy flag (0=none;nest:2=B-K,4=Flather)
 ! ---             (port: 1=Browning-Kreiss,3=Flather)
-! --- 'lbmont' = baro nesting archives have sshflg=2 or 3 
+! --- 'lbmont' = baro nesting archives have sshflg=2 or 3
 ! ---             sshflg=2,3 is always ok, but is required if lbmont is set
 ! --- 'tidflg' = TIDES: tidal forcing flag    (0=no;1=bdy;2=body;3=bdy&body)
 ! --- 'tidein' = TIDES: tide field input flag (0=no;1=yes;2=sal)
 ! --- 'tidcon' = TIDES: 1 digit per constituent (Q1K2P1N2O1K1S2M2), 0=off,1=on
 ! --- 'tidsal' = TIDES: scalar self attraction and loading factor
-! ---             (negative to input spacially varying SAL factor)
+! ---             (negative to input spatially varying SAL factor)
 ! --- 'tiddrg' = TIDES: tidal drag flag (0=no;1=scalar;2=tensor)
 ! --- 'thkdrg' = TIDES: thickness of bottom boundary layer for tidal drag (m)
 ! ---             (zero to apply tidal drag to barotropic mode)
@@ -1773,6 +1777,9 @@
 ! --- 'tidgen' = TIDES: generic time (0=F,1=T)
 ! --- 'tidrmp' = TIDES:            ramp time (days)
 ! --- 'tid_t0' = TIDES: origin for ramp time (model day)
+! --- 'tidnud' = TIDES: tide nudging flag  (0=off;2=49hr;3=filter)
+! --- 'nudrmp' = TIDES:    nudging ramp time (days)
+! --- 'nud_t0' = TIDES: origin for nudg time (model day)
       if (mnproc.eq.1) then
       write(lp,*)
       endif !1st tile
@@ -1785,9 +1792,8 @@
                                    &"  (-ve if variable)")')
       call blkini(tiddrg,    'tiddrg')
       call blkinr(thkdrg,    'thkdrg','(a6," =",f10.4, &
-                                   &" m (0 if barotropic)")')
+                                  &" m (0 if barotropic)")')
       call blkinr(drgscl,    'drgscl','(a6," =",f10.4," ")')
-!
       call blkinr(tidfbw(1), 'tidfm2','(a6," =",f10.4," ")')
       call blkinr(tidfbw(2), 'tidfs2','(a6," =",f10.4," ")')
       call blkinr(tidfbw(3), 'tidfk1','(a6," =",f10.4," ")')
@@ -1805,6 +1811,10 @@
       call blkinl(tidgen,    'tidgen')
       call blkinr(ramp_time ,'tidrmp','(a6," =",f10.4," days")')
       call blkin8(ramp_orig ,'tid_t0','(a6," =",f10.4," model day")')  !real*8
+!
+      call blkini(tidnud,    'tidnud')
+      call blkinr(nudg_time ,'nudrmp','(a6," =",f10.4," days")')
+      call blkin8(nudg_orig ,'nud_t0','(a6," =",f10.4," model day")')  !real*8
 !
       if     (tidflg.lt.0 .or. tidflg.gt.3) then
         if     (mnproc.eq.1) then
@@ -1826,19 +1836,19 @@
       endif
       if     (tidflg.gt.0) then
         if     (abs(nint(3600.0/baclin)-3600.0/baclin).gt.0.01) then
-          if (mnproc.eq.1) then                                     
+          if (mnproc.eq.1) then
           write(lp,'(/ a /)')                                        &
            &'error - baclin not an integer divisor of 1 hour'
-          call flush(lp)                                     
-          endif !1st tile                                    
+          call flush(lp)
+          endif !1st tile
           call xcstop('(blkdat)')
-                 stop '(blkdat)' 
-        else  ! make it exact    
+                 stop '(blkdat)'
+        else  ! make it exact
 !         write(lp,*) 'old baclin = ',baclin
           baclin = 3600.0/nint(3600.0/baclin)
-!         write(lp,*) 'new baclin = ',baclin 
-        endif                                
-      endif                                 
+!         write(lp,*) 'new baclin = ',baclin
+        endif
+      endif
       if     (tidein.lt.0 .or. tidein.gt.2) then
         if     (mnproc.eq.1) then
         write(lp,'(/ a /)') &
@@ -1852,6 +1862,60 @@
         if     (mnproc.eq.1) then
         write(lp,'(/ a /)') &
          &'error - tidein implies input but there is no body tide'
+        call flush(lp)
+        endif !1st tile
+        call xcstop('(blkdat)')
+               stop '(blkdat)'
+      endif
+      if     (tidnud.gt.0 .and. tidflg.eq.0) then
+        if     (mnproc.eq.1) then
+        write(lp,'(/ a /)') &
+         &'error - tidnud must be 0 when there are no tides'
+        call flush(lp)
+        endif !1st tile
+        call xcstop('(blkdat)')
+               stop '(blkdat)'
+      endif
+      if     (tidnud.eq.3) then
+        if     (mnproc.eq.1) then
+        write(lp,'(/ a /)') &
+         &'error - tidnud of 3 not yet implemented'
+        call flush(lp)
+        endif !1st tile
+        call xcstop('(blkdat)')
+               stop '(blkdat)'
+      endif
+      if     (tidnud.ne.0 .and. tidnud.ne.2) then
+        if     (mnproc.eq.1) then
+        write(lp,'(/ a /)') &
+         &'error - tidnud must be 0 or 2'
+        call flush(lp)
+        endif !1st tile
+        call xcstop('(blkdat)')
+               stop '(blkdat)'
+      endif
+      if     (tidnud.ne.2 .and. istrcr(705).ne.0) then
+        if     (mnproc.eq.1) then
+        write(lp,'(/ a /)') &
+         &'error - strflg=705 (hntide) requires tidnud=2'
+        call flush(lp)
+        endif !1st tile
+        call xcstop('(blkdat)')
+               stop '(blkdat)'
+      endif
+      if     (tidnud.ne.2 .and. istrcr(706).ne.0) then
+        if     (mnproc.eq.1) then
+        write(lp,'(/ a /)') &
+         &'error - strflg=706 (pbavg_a) requires tidnud=2'
+        call flush(lp)
+        endif !1st tile
+        call xcstop('(blkdat)')
+               stop '(blkdat)'
+      endif
+      if     (tidnud.eq.0 .and. istrcr(707).ne.0) then
+        if     (mnproc.eq.1) then
+        write(lp,'(/ a /)') &
+         &'error - strflg=707 (htide) requires tidnud>0'
         call flush(lp)
         endif !1st tile
         call xcstop('(blkdat)')
@@ -2161,7 +2225,7 @@
         endif !1st tile
         call xcstop('(blkdat)')
                stop '(blkdat)'
-      endif    
+      endif
       if (abs(empflg).lt.0 .or. abs(empflg).gt.6) then
         if (mnproc.eq.1) then
         write(lp,'(/ a /)')  &
@@ -2335,7 +2399,7 @@
 ! ---  s w i t c h e s    (if set to .true., then...)
 ! ---  (due to a SGI bug: read in an integer with 0=F,1=T)
 ! --- windf       use wind stress forcing (wndflg>0)
-! --- thermo      use thermodynamic forcing 
+! --- thermo      use thermodynamic forcing
 ! --- pensol      use penetrating solar radiation (input above)
 ! --- pcipf       use E-P forcing (may be redefined in forfun)
 ! --- priver      rivers as a precipitation bogas
@@ -2440,7 +2504,7 @@
 ! --- present even if the macro /* STOKES */ is not defined at compile time.
 !
       call blkinl(stdflg,'stdflg')
-      call blkinl(stdsur,'stdsur') 
+      call blkinl(stdsur,'stdsur')
       call blkinl(stdbot,'stdbot')
       call blkinl(stdarc,'stdarc')
       call blkini(nsdzi ,'nsdzi ')
@@ -2481,7 +2545,7 @@
         call xcstop('(blkdat)')
                stop '(blkdat)'
       endif
-#endif   
+#endif
 !
       close(unit=uoff+99)  !file='blkdat.input'
 !
@@ -2603,10 +2667,10 @@
 !
       if     (cvar.ne.cvarin) then
         if (mnproc.eq.1) then
-        write(lp,*) 
+        write(lp,*)
         write(lp,*) 'error in blkinr - input ',cvarin, &
                             &' but should be ',cvar
-        write(lp,*) 
+        write(lp,*)
         call flush(lp)
         endif !1st tile
         call xcstop('(blkinr)')
@@ -2767,10 +2831,10 @@
 !
       if     (cvar.ne.cvarin) then
         if (mnproc.eq.1) then
-        write(lp,*) 
+        write(lp,*)
         write(lp,*) 'error in blkin8 - input ',cvarin, &
                             &' but should be ',cvar
-        write(lp,*) 
+        write(lp,*)
         call flush(lp)
         endif !1st tile
         call xcstop('(blkin8)')
@@ -2798,10 +2862,10 @@
 !
       if     (cvar.ne.cvarin) then
         if (mnproc.eq.1) then
-        write(lp,*) 
+        write(lp,*)
         write(lp,*) 'error in blkini - input ',cvarin, &
                             &' but should be ',cvar
-        write(lp,*) 
+        write(lp,*)
         call flush(lp)
         endif !1st tile
         call xcstop('(blkini)')
@@ -2833,10 +2897,10 @@
 !
       if     (cvar.ne.cvarin) then
         if (mnproc.eq.1) then
-        write(lp,*) 
+        write(lp,*)
         write(lp,*) 'error in blkinl - input ',cvarin, &
                             &' but should be ',cvar
-        write(lp,*) 
+        write(lp,*)
         call flush(lp)
         endif !1st tile
         call xcstop('(blkinl)')
@@ -2871,7 +2935,7 @@
 !> Apr. 2003 - added dp00i, vsigma, and priver
 !> May  2003 - added bldmin, bldmax, flxsmo, and icmflg
 !> June 2003 - added locsig and removed thflag=4
-!> Oct. 2003 - thkdf4 negative now signals spacial variation
+!> Oct. 2003 - thkdf4 negative now signals spatial variation
 !> Nov. 2003 - added advtyp
 !> Jan. 2004 - added latdiw
 !> Jan. 2004 - added bblkpp
@@ -2895,7 +2959,7 @@
 !> Mar. 2007 - added drgscl
 !> Mar. 2007 - added drglim
 !> Mar. 2007 - added tidcon,tidsal,tidgen
-!> Apr. 2007 - implemented meanfq 
+!> Apr. 2007 - implemented meanfq
 !> Apr. 2007 - added btrlfr and btrmas (latter not yet implemented)
 !> May  2007 - added wbaro
 !> June 2007 - moved h1 to momtum
@@ -2917,7 +2981,7 @@
 !> Oct. 2010 - added support for 17-term and 12-term equation of state
 !> Nov. 2010 - added yrflag=-2
 !> Nov. 2010 - empflg negative to use seatmp instead of hycom sst
-!> Apr. 2011 - added negative cbar 
+!> Apr. 2011 - added negative cbar
 !> July 2011 - added negative tidsal
 !> Aug. 2011 - added ra2fac, removed global wts[12] and wuv[12]
 !> Aug. 2011 - added hybraf
@@ -2935,10 +2999,10 @@
 !> Jan. 2013 - added tiddrg, set to 0 or 1 for backwards compatibility
 !> Jan. 2013 - added zero thkdrg to apply tidal drag to barotropic mode
 !> June 2013 - added lbflag=6
-!> July 2013 - added negative (spacially varying) difmiw and difsiw
+!> July 2013 - added negative (spatially varying) difmiw and difsiw
 !> July 2013 - added 3 Stokes Drift Flags: stkflg,stksur,stkbot
 !> Aug. 2013 - added langmr flag for KPP and Stokes Drift
-!> Sep. 2013 - added number of interfaces in Stokes Drift Files 
+!> Sep. 2013 - added number of interfaces in Stokes Drift Files
 !> Oct. 2013 - added jerlv0=-1 to use chlorophyll-based turbidity
 !> Oct. 2013 - fixed srelax used before defined bug
 !> Nov. 2013 - added wndlfg=5 for 10m wind component input, COREv2 stress
@@ -2988,3 +3052,4 @@
 !> Dec. 2024 - added tidfbw and drgscf for streaming tidal filter
 !> Jan. 2025 - added mstrcr
 !> Jan. 2025 - Added sshflg=3 for steric SSH and Montg. Potential
+!> Jan. 2025 - added tidnud to nudge towards the observed tides

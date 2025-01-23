@@ -70,7 +70,7 @@ diapfl.o:  diapfl.F90  mod_xc.o mod_cb_arrays.o stmt_fns.h          mod_stokes.o
 dpthuv.o:  dpthuv.F90  mod_xc.o mod_cb_arrays.o
 dpudpv.o:  dpudpv.F90  mod_xc.o 
 forfun.o:  forfun.F90  mod_xc.o mod_cb_arrays.o            mod_za.o
-geopar.o:  geopar.F90  mod_xc.o mod_cb_arrays.o stmt_fns.h mod_za.o mod_tides.o
+geopar.o:  geopar.F90  mod_xc.o mod_cb_arrays.o stmt_fns.h mod_za.o
 hybgen.o:  hybgen.F90  mod_xc.o mod_cb_arrays.o stmt_fns.h          mod_pipe.o
 icloan.o:  icloan.F90  mod_xc.o mod_cb_arrays.o stmt_fns.h
 inicon.o:  inicon.F90  mod_xc.o mod_cb_arrays.o stmt_fns.h          mod_pipe.o \

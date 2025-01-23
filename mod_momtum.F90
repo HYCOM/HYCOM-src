@@ -31,7 +31,7 @@
         stress,stresx,stresy,dpmx,thkbop, &
         defor1, defor2, &  ! deformation components
         uflux1,vflux1,  &  ! mass fluxes
-        potvor             ! potential vorticity 
+        potvor             ! potential vorticity
 
       contains
 
@@ -137,7 +137,7 @@
 !
       if     (tidflg.eq.2 .or. tidflg.eq.3) then
         hlstep=0
-        call tides_force(hlstep)
+        call tides_body(hlstep)
       endif
 !
 ! --- hydrostatic equation (and surface stress)
@@ -159,8 +159,8 @@
             do k=1,kk
               if (kapref.ne.0) then  !thermobaric
 !
-! ---   sigma-star is virtual potential density, as defined in 
-! ---   Sun et.al. (1999), 'Inclusion of thermobaricity in 
+! ---   sigma-star is virtual potential density, as defined in
+! ---   Sun et.al. (1999), 'Inclusion of thermobaricity in
 ! ---   isopycnic-coordinate ocean models', JPO 29 pp 2719-2729.
 !
 #if defined(KAPPAF_CENTERED)
@@ -209,13 +209,13 @@
 !
               p(i,j,k+1)=p(i,j,k)+dp(i,j,k,m)
 !
-              if     (sshflg.eq.1) then
+              if     (sshflg.eq.1 .or. sshflg.eq.3) then
                 sumth = sumth + dp(i,j,k,m)*th3d(i,j,k,m)
                 sumdp = sumdp + dp(i,j,k,m)
               endif !sshflg
             enddo !k
 !
-            if     (sshflg.eq.1) then
+            if     (sshflg.eq.1 .or. sshflg.eq.3) then
               sumth = sumth / max( sumdp, onemm )  !vertical mean of th3d
               sumdp = sumdp*qonem * g              !depth(m) * g
               steric(i,j) =  sshgmn(i,j) + &
@@ -253,7 +253,7 @@
             endif !kapref
             srfhgt(i,j) = montg1(i,j) + svref*pbavg(i,j,m)
 !
-!diag       if     (sshflg.eq.1) then
+!diag       if     (sshflg.eq.1 .or. sshflg.eq.3) then
 !diag         if     (itest.gt.0 .and. jtest.gt.0) then
 !diag           write (lp,'(i9,2i5,3x,a,2f12.6,f12.2)') &
 !diag             nstep,itest+i0,jtest+j0, &
@@ -366,7 +366,6 @@
                 enddo !k
                 usur  = 0.5*( usur/psur + ubavg(i,  j,n) + &
                                           ubavg(i+1,j,n)  )
-                
                 vsur  = 0.5*( vsur/psur + vbavg(i,j,  n) + &
                                           vbavg(i,j+1,n)  )
               endif !usur,vsur
@@ -482,7 +481,7 @@
                   cdw  = 1.0e-3*cd_coare(wind,vpmx,airt, &
                                           temp(i,j,1,n))
                   if     (amoflg.ne.0) then
-! ---               use wind-current magnitude and direction for stress 
+! ---               use wind-current magnitude and direction for stress
 ! ---               set ocnscl to 1.0 for full relative wind
                     samo = sqrt( (wndx-ocnscl*usur)**2 +&
                                  (wndy-ocnscl*vsur)**2 )
@@ -498,14 +497,14 @@
                   cdw  = 1.0e-3*cd_core2(wind,vpmx,airt, &
                                           temp(i,j,1,n))
                   if     (amoflg.ne.0) then
-! ---               use wind-current magnitude and direction for stress 
+! ---               use wind-current magnitude and direction for stress
 ! ---               set ocnscl to 1.0 for full relative wind
                     samo = sqrt( (wndx-ocnscl*usur)**2 +&
                                  (wndy-ocnscl*vsur)**2 )
                     surtx(i,j) = rair*cdw*samo*(wndx-ocnscl*usur)
                     surty(i,j) = rair*cdw*samo*(wndy-ocnscl*vsur)
                   else
-! ---               use U10 magnitude and direction for stress 
+! ---               use U10 magnitude and direction for stress
                     surtx(i,j) = rair*cdw*wind*wndx
                     surty(i,j) = rair*cdw*wind*wndy
                   endif !amoflg
@@ -661,14 +660,14 @@
                + (as0_10 + as0_11*qva + as0_12*qva**2 + as0_13*qva**3) &
                  *tamts &
                + (as0_20 + as0_21*qva + as0_22*qva**2 + as0_23*qva**3) &
-                 *tamts**2 
+                 *tamts**2
             elseif (tamts.le.-0.75) then
               cd_coare =  &
                  (au0_00 + au0_01* va + au0_02* va**2 + au0_03* va**3) &
                + (au0_10 + au0_11*qva + au0_12*qva**2 + au0_13*qva**3) &
                  *tamts &
                + (au0_20 + au0_21*qva + au0_22*qva**2 + au0_23*qva**3) &
-                 *tamts**2 
+                 *tamts**2
             elseif (tamts.ge. -0.098)  then
               q =  (tamts+0.098)/0.848  !linear between  0.75 and -0.098
               cd_coare = q* &
@@ -691,14 +690,14 @@
                + (as5_10 + as5_11*qva + as5_12*qva**2 + as5_13*qva**3) &
                  *tamts &
                + (as5_20 + as5_21*qva + as5_22*qva**2 + as5_23*qva**3) &
-                 *tamts**2 
+                 *tamts**2
             elseif (tamts.le.-0.75) then
               cd_coare =  &
                  (au5_00 + au5_01* va + au5_02* va**2 + au5_03* va**3) &
                + (au5_10 + au5_11*qva + au5_12*qva**2 + au5_13*qva**3) &
                  *tamts &
                + (au5_20 + au5_21*qva + au5_22*qva**2 + au5_23*qva**3) &
-                 *tamts**2 
+                 *tamts**2
             elseif (tamts.ge. -0.098)  then
               q =  (tamts+0.098)/0.848  !linear between  0.75 and -0.098
               cd_coare = q* &
@@ -830,14 +829,14 @@
                + (as0_10 + as0_11*qva + as0_12*qva**2 + as0_13*qva**3) &
                  *tamts &
                + (as0_20 + as0_21*qva + as0_22*qva**2 + as0_23*qva**3) &
-                 *tamts**2 
+                 *tamts**2
             elseif (tamts.le.-0.75) then
               cd_coarep = &
                  (au0_00 + au0_01* va + au0_02* va**2 + au0_03* va**3) &
                + (au0_10 + au0_11*qva + au0_12*qva**2 + au0_13*qva**3) &
                  *tamts &
                + (au0_20 + au0_21*qva + au0_22*qva**2 + au0_23*qva**3) &
-                 *tamts**2 
+                 *tamts**2
             elseif (tamts.ge. -0.098)  then
               q =  (tamts+0.098)/0.848  !linear between  0.75 and -0.098
               cd_coarep = q* &
@@ -860,14 +859,14 @@
                + (as5_10 + as5_11*qva + as5_12*qva**2 + as5_13*qva**3) &
                  *tamts &
                + (as5_20 + as5_21*qva + as5_22*qva**2 + as5_23*qva**3) &
-                 *tamts**2 
+                 *tamts**2
             elseif (tamts.le.-0.75) then
               cd_coarep =  &
                  (au5_00 + au5_01* va + au5_02* va**2 + au5_03* va**3) &
                + (au5_10 + au5_11*qva + au5_12*qva**2 + au5_13*qva**3) &
                  *tamts &
                + (au5_20 + au5_21*qva + au5_22*qva**2 + au5_23*qva**3) &
-                 *tamts**2 
+                 *tamts**2
             elseif (tamts.ge. -0.098)  then
               q =  (tamts+0.098)/0.848  !linear between  0.75 and -0.098
               cd_coarep = q* &
@@ -920,7 +919,7 @@
 ! --- CORE v2 Large and Yeager 2009 Clim. Dyn.: The global climatology
 ! ---  of an interannually varying air-sea flux dataset.
 ! --- The bulk formulae effectively transform the problem of specifying
-! --- the turbulent surface fluxes (at zi=10m) into one of describing 
+! --- the turbulent surface fluxes (at zi=10m) into one of describing
 ! --- the near surface atmospheric state (wind, temperature and humidity).
 !
 !     write(6,'(a,1p4g14.5)')
@@ -1490,7 +1489,7 @@
 !$OMP          SCHEDULE(STATIC,jblk)
       do j = 1-margin, jj+margin
         do i=1-margin,ii+margin
-          if (SEA_U) then  
+          if (SEA_U) then
             ztop = -(depths(i,j)-depths(i-1,j))
             do k = kk, 1, -1
               zbot        = ztop
@@ -1635,7 +1634,7 @@
                 pstres=0.5*(dpmixl(i,j,m)+dpmixl(i,j-1,m))
               else
                 pstres=dpv(i,j,1,m)
-              endif 
+              endif
 ! ---         units of surty are N/m^2 (i.e. Pa)
               stresy(i,j)=(surty(i,j)+surty(i,j-1))*0.5*g &
                           /(pstres*svref)
@@ -1683,7 +1682,7 @@
 ! ---     spatial weighting function for pressure gradient calculation:
           util1(i,j)=0.0
           util2(i,j)=0.0
-! ---     p.1 
+! ---     p.1
           pnkp( i,j)=0.0
         enddo !i
         enddo !j
@@ -1759,7 +1758,7 @@
                                     max(dpo(i-1,j,k,m),cutoff)
 #endif
             endif
-          endif  
+          endif
 !
           do i=max(1-margin,ifu(j,l)),min(ii+margin,ilu(j,l))
             dpmx(i,j)=max(dpmx(i,j),dpo(i,j,k,m)+dpo(i-1,j,k,m))
@@ -1796,7 +1795,7 @@
                                     max(dpo(i,j,k,m),cutoff)
 #endif
             endif
-          endif  
+          endif
           j=jlv(i,l)+1
           if     (j.ge.1-margin .and. j.le.jj+margin) then
             if      (ivopn(i,j).gt.0) then
@@ -1808,7 +1807,7 @@
                                     max(dpo(i,j-1,k,m),cutoff)
 #endif
             endif
-          endif  
+          endif
         enddo !l
       enddo !i
 !
@@ -2223,7 +2222,7 @@
                 ( dzdx(i,j,k)*  &
                    (usd(i,j,k)*dudzu(i,j,k)+ &
                     vsd_u     *dvdzu(i,j,k) ) )
-#endif            
+#endif
           endif !iu
         enddo !i
       enddo !j
@@ -2265,7 +2264,7 @@
         call pipe_compare_sym1( dudzu(1-nbdy,1-nbdy,k),iu,text)
         write (text,'(a9,i3)') 'dvdzu  k=',k
         call pipe_compare_sym1( dvdzu(1-nbdy,1-nbdy,k),iu,text)
-#endif            
+#endif
       endif
 !
 !         wtime2(14,k) = wtime()
@@ -2653,7 +2652,7 @@
                 ( dzdy(i,j,k)*  &
                     (vsd(i,j,k)*dvdzv(i,j,k)+ &
                      usd_v     *dudzv(i,j,k) ) )
-#endif            
+#endif
           endif !iv
         enddo !i
       enddo !j
@@ -2696,7 +2695,7 @@
         call pipe_compare_sym1( dvdzv(1-nbdy,1-nbdy,k),iu,text)
         write (text,'(a9,i3)') 'dudzv  k=',k
         call pipe_compare_sym1( dudzv(1-nbdy,1-nbdy,k),iu,text)
-#endif            
+#endif
       endif
 !
 !         wtime2(18,k) = wtime()
@@ -2963,7 +2962,7 @@
 !
 ! --- convert from dpv*vtot to vtot to v
 ! --- substitute depth-weighted averages at massless grid points.
-! --- extract barotropic velocities generated during most recent 
+! --- extract barotropic velocities generated during most recent
 ! --- baroclinic time step and use them to force barotropic flow field.
 !
       if     (momtum_cfl) then
@@ -3146,7 +3145,7 @@
 ! ---   Webb, D.J., B.A. de Cuevas, and C.S. Richmond (1998)
 ! ---   Improved Advection Schemes for Ocean Models
 ! ---   J. Atmos. Ocean. Tech. 15 (1998) 1171-1187.
-! ---   http://dx.doi.org/10.1175/1520-0426(1998)015<1171:IASFOM>2.0.CO;2 
+! ---   http://dx.doi.org/10.1175/1520-0426(1998)015<1171:IASFOM>2.0.CO;2
 !
 ! --- The Winther implementation was for locally constant grid spacing,
 ! --- which can be selected at compile time via the momtum4_orig flag.
@@ -3155,7 +3154,7 @@
 ! --- selected at compile time via the momtum4_cfl flag.
 !
 ! --- The splitting of the quadratic upwind interpolation into separate
-! --- advection and diffusion terms allows QUICK to be applied to a 
+! --- advection and diffusion terms allows QUICK to be applied to a
 ! --- leapfrog time step, but SQ must have facdf4=1/16.  MSQ can have
 ! --- any facdf4.
 !
@@ -3451,8 +3450,8 @@
                     d4  = d4  *             1.0/(x5(ir)-x5(is))
                   endif
                 enddo !is
-                scluad(ir,1,i,j) = scluad(ir,1,i,j) + p4 
-                scluad(ir,2,i,j) = (pip-pim)*8.0*d4 
+                scluad(ir,1,i,j) = scluad(ir,1,i,j) + p4
+                scluad(ir,2,i,j) = (pip-pim)*8.0*d4
               enddo !ir
 !
               pip = 1.0
@@ -3470,8 +3469,8 @@
                     d4  = d4  *             1.0/(x5(ir)-x5(is))
                   endif
                 enddo !is
-                scluad(ir,1,i,j) = scluad(ir,1,i,j) - p4 
-                scluad(ir,3,i,j) = (pip-pim)*8.0*d4 
+                scluad(ir,1,i,j) = scluad(ir,1,i,j) - p4
+                scluad(ir,3,i,j) = (pip-pim)*8.0*d4
               enddo !ir
 !
               if     (momtyp.eq.4) then !MSQ
@@ -3573,8 +3572,8 @@
                     d4  = d4  *             1.0/(x5(ir)-x5(is))
                   endif
                 enddo !is
-                scluad(ir,4,i,j) = scluad(ir,4,i,j) + p4 
-                scluad(ir,5,i,j) = (pip-pim)*8.0*d4 
+                scluad(ir,4,i,j) = scluad(ir,4,i,j) + p4
+                scluad(ir,5,i,j) = (pip-pim)*8.0*d4
               enddo !ir
 !
               pip = 1.0
@@ -3592,8 +3591,8 @@
                     d4  = d4  *             1.0/(x5(ir)-x5(is))
                   endif
                 enddo !is
-                scluad(ir,4,i,j) = scluad(ir,4,i,j) - p4 
-                scluad(ir,6,i,j) = (pip-pim)*8.0*d4 
+                scluad(ir,4,i,j) = scluad(ir,4,i,j) - p4
+                scluad(ir,6,i,j) = (pip-pim)*8.0*d4
               enddo !ir
 !
               if     (momtyp.eq.4) then !MSQ
@@ -3705,8 +3704,8 @@
                     d4  = d4  *             1.0/(x5(ir)-x5(is))
                   endif
                 enddo !is
-                sclvad(ir,1,i,j) = sclvad(ir,1,i,j) + p4 
-                sclvad(ir,2,i,j) = (pip-pim)*8.0*d4 
+                sclvad(ir,1,i,j) = sclvad(ir,1,i,j) + p4
+                sclvad(ir,2,i,j) = (pip-pim)*8.0*d4
               enddo !ir
 !
               do ir= -2,1
@@ -3724,8 +3723,8 @@
                   pip = pip * (xmhalf-x5(is+1))
                   pim = pim * (xmhalf-x5(is))
                 enddo !is
-                sclvad(ir,1,i,j) = sclvad(ir,1,i,j) - p4 
-                sclvad(ir,3,i,j) = (pip-pim)*8.0*d4 
+                sclvad(ir,1,i,j) = sclvad(ir,1,i,j) - p4
+                sclvad(ir,3,i,j) = (pip-pim)*8.0*d4
               enddo !ir
 !
               if     (momtyp.eq.4) then !MSQ
@@ -3828,8 +3827,8 @@
                   pip = pip * (xphalf-x5(is+1))
                   pim = pim * (xphalf-x5(is))
                 enddo !is
-                sclvad(ir,4,i,j) = sclvad(ir,4,i,j) + p4 
-                sclvad(ir,5,i,j) = (pip-pim)*8.0*d4 
+                sclvad(ir,4,i,j) = sclvad(ir,4,i,j) + p4
+                sclvad(ir,5,i,j) = (pip-pim)*8.0*d4
               enddo !ir
 !
               do ir= -2,1
@@ -3847,8 +3846,8 @@
                   pip = pip * (xmhalf-x5(is+1))
                   pim = pim * (xmhalf-x5(is))
                 enddo !is
-                sclvad(ir,4,i,j) = sclvad(ir,4,i,j) - p4 
-                sclvad(ir,6,i,j) = (pip-pim)*8.0*d4 
+                sclvad(ir,4,i,j) = sclvad(ir,4,i,j) - p4
+                sclvad(ir,6,i,j) = (pip-pim)*8.0*d4
               enddo !ir
 !
               if     (momtyp.eq.4) then !MSQ
@@ -3989,7 +3988,7 @@
 !$OMP                     phi,plo,pbop,ubot,vbot,vmag,dall,pstres) &
 !$OMP          SCHEDULE(STATIC,jblk)
       do j=1-margin,jj+margin
-!     
+!
         do i=1-margin,ii+margin
           if (SEA_P) then
 !
@@ -4044,7 +4043,7 @@
             endif
           endif !ip
         enddo !i
-!         
+!
 ! ---   store r.h.s. of barotropic u/v eqn. in -ubrhs,vbrhs-
 ! ---   time-interpolate wind stress
 !
@@ -4056,7 +4055,7 @@
               +vbavg(i-1,j,  m)*depthv(i-1,j) &
               +vbavg(i-1,j+1,m)*depthv(i-1,j+1)) &
               *(pvtrop(i,j)+pvtrop(i,j+1))*.125
-!    
+!
             if     (windf) then
               if(hybrid .and. mxlkrt) then
                 pstres=0.5*(dpmixl(i,j,m)+dpmixl(i-1,j,m))
@@ -4079,7 +4078,7 @@
              +ubavg(i,  j-1,m)*depthu(i,j-1) &
              +ubavg(i+1,j-1,m)*depthu(i+1,j-1)) &
              *(pvtrop(i,j)+pvtrop(i+1,j))*.125
-!    
+!
             if     (windf) then
               if(hybrid .and. mxlkrt) then
                 pstres=0.5*(dpmixl(i,j,m)+dpmixl(i,j-1,m))
@@ -4166,7 +4165,7 @@
           endif !ip
         enddo !i
       enddo !j
-!       
+!
 !         wtime2( 2,k) = wtime()
 !
 ! --- rhs: ubavg.m, ubavg.n, dp.m+, dpu
@@ -4194,7 +4193,7 @@
           endif
         enddo !l
       enddo !j
-!     
+!
 !         wtime2( 3,k) = wtime()
 !
 ! --- rhs: vbavg.m, vbavg.n, dp.m+, dpv
@@ -4222,7 +4221,7 @@
           endif
         enddo !l
       enddo !i
-!       
+!
 !         wtime2( 4,k) = wtime()
 !$OMP PARALLEL DO PRIVATE(j,i) &
 !$OMP          SCHEDULE(STATIC,jblk)
@@ -4397,7 +4396,7 @@
                                 (pu(i,j-1,k+1)-depthu(i,j)) &
                                   /max(pu(i,j-1,k+1)-pu(i,j-1,k), &
                                        epsil)))
-              utotjb = (1.0-wjb)*utotn(i,j) 
+              utotjb = (1.0-wjb)*utotn(i,j)
             else  !disable u difference
               utotja = utotn(i,j)
               utotjb = utotn(i,j)
@@ -4456,7 +4455,7 @@
 ! ---         Griffies, S., M., and W. Hallberg, R.,
 ! ---         Biharmonic friction with a Smagorinsky-like viscosity
 ! ---         for use in large-scale eddy-permitting ocean models,
-! ---         Mon. Wea. Rev., 128(8), 2935-2946, 2000. 
+! ---         Mon. Wea. Rev., 128(8), 2935-2946, 2000.
             visc2p(i,j)=max(veldf2u(i,j),     & !veldf2p
                             visco2*defortot)
             visc4p(i,j)=max(veldf4u(i,j),     & !veldf4p
@@ -5070,7 +5069,7 @@
             else
               pstres=dpu(i,j,1,m)
             endif
-!             
+!
 ! ---       top and bottom boundary layer stress
 ! ---       drag term is FRAC * Cb * (|v| + c.bar)
 ! ---        where FRAC is the fraction of the layer to apply stress too
@@ -5493,7 +5492,7 @@
       call dpudpv(dpu(1-nbdy,1-nbdy,1,n), &
                   dpv(1-nbdy,1-nbdy,1,n), &
                   p,depthu,depthv, margin,max(0,margin-1))
-!    
+!
 ! --- convert from dpv*vtot to vtot to v
 ! --- substitute depth-weighted averages at massless grid points.
 ! --- extract barotropic velocities generated during most recent
@@ -5693,7 +5692,7 @@
 !> Jan. 2013 - added gtide for tidal body forcing
 !> May  2013 - removed thbase from montg.kk
 !> July 2013 - vamax set to 34 m/s
-!> Sep. 2013 - optionally added Stokes drift 
+!> Sep. 2013 - optionally added Stokes drift
 !> Nov. 2013 - wndflg=5 for calculating wind stress using cd_core2
 !> Jan. 2014 - tv is in Kelvin (cd_core2)
 !> Jan. 2014 - added gslpr for atmospheric pressure forcing
@@ -5734,3 +5733,4 @@
 !> Aug. 2024 - replace U10-Uocn with U10-ocnscl*Uocn
 !> Dec. 2024 - added streaming tidal filter
 !> Jan. 2025 - converted displd_mn and dispqd_mn to surface tracers
+!> Jan. 2025 - Added sshflg=3 for steric SSH and Montg. Potential

@@ -28,22 +28,31 @@
        tidein,    & ! tide input flag: 0=no; 1=yes; 2=sal
        tiddrg,    & ! tidal drag flag: 0:no; -1,1=scalar; 2=tensor
        tidstr,    & ! tidal streaming filter flag: 0:no; 1=yes
-       nhrly        ! number of valid hourly samples (0 to 49)
+       tidnud,    & ! tide nudging flag (0=off;2=49hr;3=filter)
+       mhrly,     & ! number of valid hourly hbaro    samples (0 to 49)
+       nhrly        ! number of valid hourly velocity samples (0 to 49)
 !
       logical, save, public  :: &
        tidgen       ! generic time (don't correct tides for actual year)
 !
       real*8,  save, public  :: &
        ramp_orig, & ! tide ramp origin  (model day)
+       nudg_orig, & ! nudging   origin  (model day)
        time_8       ! model time for tides
 !
       real,    save, public  :: &
-       tidsal,    & ! scalar self attraction and loading factor (beta)
-       ramp_time    ! tide ramping time (days)
+       tidsal,    & ! scalar self attraction and loading factor
+       ramp_time, & ! tide    ramping time (days)
+       nudg_time, & ! nudging ramping time (days)
+       nudfbw(4)    ! M2,S2,K1,O1 nudging streaming filter bandwidth
 !
       real,    allocatable, dimension(:,:), &
                save, public  :: &
+       salfac,    & ! spatialy varying "scalar" SAL factor
+       hnudge,    & ! spatialy varying h-tide nudging coefficent (1/s)
         etide,    & ! body tide, in m
+        htide,    & ! observed hbaro tide, in m
+       hntide,    & ! de-tided hbaro,      filtered from hhrly
        untide,    & ! de-tided u-velocity, filtered from uhrly
        vntide       ! de-tided u-velocity, filtered from vhrly
 !
@@ -56,6 +65,7 @@
 !
       real,    allocatable, dimension(:,:,:), &
                save, public  :: &
+       hhrly,     & ! hourly hbaro      samples
        uhrly,     & ! hourly u-velocity samples
        vhrly        ! hourly v-velocity samples
 !
@@ -64,20 +74,23 @@
 !
       real,    allocatable, dimension(:,:,:), &
                save, private :: &
+       atidh,     & ! real      complex amplitude coefficents for obs. h-tide
+       btidh,     & ! imaginary complex amplitude coefficents for obs. h-tide
        atide,     & ! real      complex amplitude coefficents for body tide
        btide,     & ! imaginary complex amplitude coefficents for body tide
        etidei       ! input body tide, in m
-
+!
       real,    save, private :: &
         wt0, &
         wt1
-
+!
       real*8,  save, private :: &
         amp(ncon),omega(ncon),timeref, &
         pu8(ncon),pf8(ncon),arg8(ncon),time_mjd
-
+!
       contains
-
+!
+!
       subroutine tides_set(flag)
       use mod_cb_arrays  ! HYCOM saved arrays
       implicit none
@@ -89,15 +102,15 @@
       integer iyear,idyold,iday,ihour,inty
       integer i,ihr,j,k,nleap,tidcon1
       real*8  t,h0,s0,p0,db,year8
-      real*8  rad 
+      real*8  rad
       real    alpha2q1,alpha2o1,alpha2p1,alpha2k1
       real    alpha2m2,alpha2s2,alpha2n2,alpha2k2
       real    diur_cos,diur_sin,semi_cos,semi_sin
       data rad/  0.0174532925199432d0 /
       save idyold,rad
-
+!
       if     (tidflg.gt.0) then
-
+!
         if(flag.eq.0) then
           tidcon1 = tidcon
           do i =1,ncon
@@ -106,7 +119,7 @@
           enddo
           idyold=-1  !.ne.iday
         endif
-
+!
         if     (.not.tidgen .and. yrflag.eq.3) then
           call  forday(time_8,yrflag,iyear,iday,ihour)
           if     (flag.eq.0) then
@@ -120,22 +133,22 @@
           if     (iday.ne.idyold) then  !.or. flag.eq.0
             idyold=iday
 !
-!           time_mjd is in modified julian days, with zero on Nov 17 0:00 1858 
+!           time_mjd is in modified julian days, with zero on Nov 17 0:00 1858
 !           timeref  is in HYCOM    julian days, with zero on Dec 31 0:00 1900
- 
+!
             nleap = (iyear-1901)/4
             if(iyear.lt.1900)then
               inty = (iyear-1857)/4
             else
               inty = ((iyear-1857)/4)-1 !there was no leap year in 1900
             endif
-
+!
             timeref  = 365.d0*(iyear-1901) + nleap  &
                      + iday
             time_mjd = 365.d0*(iyear-1858) + inty  &
                      - (31+28+31+30+31+30+31+31+30+31+17) &
                      + iday
-
+!
 !             if     (mnproc.eq.1) then
 !               write (lp,*) 'tides_set: calling tides_nodal for a new day'
 !             endif !1st tile
@@ -150,7 +163,7 @@
 !             call xcsync(flush_lp)
           endif  !iday.ne.idyold (.or. flag.eq.0)
         endif  !.not.tidgen & yrflag.eq.3
-
+!
         if(flag.eq.0) then
            if     (mnproc.eq.1) then
            write (lp,*) ' now initializing tidal body forcing ...'
@@ -177,7 +190,14 @@
            amp  ( 7)=   0.3087499924D-01
            omega( 7)=   0.1260077583D+02  ! K2
 !
+           allocate( salfac(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy) )
+           call mem_stat_add( 1*(idm+2*nbdy)*(jdm+2*nbdy) )
+           salfac(:,:) = 0.0
+!
            if     (tidein.eq.1) then
+!
+! ---        read in tidal forcing in time space, rarely used
+!
              allocate( etidei(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy,2), &
                         etide(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy)   )
              call mem_stat_add( 3*(idm+2*nbdy)*(jdm+2*nbdy) )
@@ -187,22 +207,45 @@
              wt1 = -99.0
              call tides_forfun(time_8)
            else
+             if     (tidnud.ne.0) then
+!              input observed h tidal complex amplitudes
+               allocate( hnudge(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy) )
+               call mem_stat_add( 1*(idm+2*nbdy)*(jdm+2*nbdy) )
+!
+               hnudge(:,:) = 0.0
+!
+               allocate( atidh(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy,ncon), &
+                         btidh(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy,ncon), &
+                         htide(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy) )
+               call mem_stat_add( 2*(idm+2*nbdy)*(jdm+2*nbdy)*ncon )
+               call mem_stat_add( 1*(idm+2*nbdy)*(jdm+2*nbdy) )
+!
+               atidh(:,:,:) = 0.0
+               btidh(:,:,:) = 0.0
+               htide(:,:) = 0.0
+!
+               call tides_forfun_obs
+             endif !nudging
+!
              allocate( atide(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy,ncon), &
                        btide(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy,ncon), &
                        etide(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy)      )
              call mem_stat_add( 2*(idm+2*nbdy)*(jdm+2*nbdy)*ncon )
              call mem_stat_add(   (idm+2*nbdy)*(jdm+2*nbdy) )
+!
+             etide(i,j) = 0.0
+!
              if     (tidein.eq.2) then
                call tides_forfun_sal  !input tidal SAL complex amplitudes
 ! ---          subtract SAL forcing
                atide(:,:,:) = -atide(:,:,:)
                btide(:,:,:) = -btide(:,:,:)
-             else
+             else  !scalar SAL
                atide(:,:,:) = 0.0
                btide(:,:,:) = 0.0
              endif
-
-! ---        alpha2=(1+k-h)g; Love numbers k,h  taken from 
+!
+! ---        alpha2=(1+k-h)g; Love numbers k,h  taken from
 ! ---                         Foreman et al. JGR,98,2509-2532,1993
              alpha2q1=1.0+0.298-0.603
              alpha2o1=1.0+0.298-0.603
@@ -211,53 +254,69 @@
              alpha2m2=1.0+0.302-0.609
              alpha2s2=alpha2m2
              alpha2n2=alpha2m2
-             alpha2k2=alpha2m2         
-!$OMP      PARALLEL DO PRIVATE(j,i,semi_cos,semi_sin,diur_cos,diur_sin) &
-!$OMP               SCHEDULE(STATIC,jblk)
-           do j= 1-nbdy,jj+nbdy
-             do i= 1-nbdy,ii+nbdy
-               semi_cos=cos(rad*plat(i,j))**2*cos(rad*2*plon(i,j))
-               semi_sin=cos(rad*plat(i,j))**2*sin(rad*2*plon(i,j))
-               diur_cos=sin(2.*rad*plat(i,j))*cos(rad*plon(i,j))
-               diur_sin=sin(2.*rad*plat(i,j))*sin(rad*plon(i,j))
-
-               atide(i,j,3)=atide(i,j,3)+amp(3)*alpha2k1*diur_cos
-               btide(i,j,3)=btide(i,j,3)+amp(3)*alpha2k1*diur_sin
-               atide(i,j,4)=atide(i,j,4)+amp(4)*alpha2o1*diur_cos
-               btide(i,j,4)=btide(i,j,4)+amp(4)*alpha2o1*diur_sin
-               atide(i,j,6)=atide(i,j,6)+amp(6)*alpha2p1*diur_cos
-               btide(i,j,6)=btide(i,j,6)+amp(6)*alpha2p1*diur_sin
-               atide(i,j,8)=atide(i,j,8)+amp(8)*alpha2q1*diur_cos
-               btide(i,j,8)=btide(i,j,8)+amp(8)*alpha2q1*diur_sin
-
-               atide(i,j,1)=atide(i,j,1)+amp(1)*alpha2m2*semi_cos
-               btide(i,j,1)=btide(i,j,1)+amp(1)*alpha2m2*semi_sin
-               atide(i,j,2)=atide(i,j,2)+amp(2)*alpha2s2*semi_cos
-               btide(i,j,2)=btide(i,j,2)+amp(2)*alpha2s2*semi_sin
-               atide(i,j,5)=atide(i,j,5)+amp(5)*alpha2n2*semi_cos
-               btide(i,j,5)=btide(i,j,5)+amp(5)*alpha2n2*semi_sin
-               atide(i,j,7)=atide(i,j,7)+amp(7)*alpha2k2*semi_cos
-               btide(i,j,7)=btide(i,j,7)+amp(7)*alpha2k2*semi_sin
-
-               etide(i,j)  = 0.0
-            enddo !i
-          enddo  !j
-
-          call xctilr(atide(1-nbdy,1-nbdy,1),1,ncon, nbdy,nbdy, halo_ps)
-          call xctilr(btide(1-nbdy,1-nbdy,1),1,ncon, nbdy,nbdy, halo_ps)
+             alpha2k2=alpha2m2
+!$OMP        PARALLEL DO PRIVATE(j,i,semi_cos,semi_sin,diur_cos,diur_sin) &
+!$OMP                 SCHEDULE(STATIC,jblk)
+             do j= 1-nbdy,jj+nbdy
+               do i= 1-nbdy,ii+nbdy
+                 semi_cos=cos(rad*plat(i,j))**2*cos(rad*2*plon(i,j))
+                 semi_sin=cos(rad*plat(i,j))**2*sin(rad*2*plon(i,j))
+                 diur_cos=sin(2.*rad*plat(i,j))*cos(rad*plon(i,j))
+                 diur_sin=sin(2.*rad*plat(i,j))*sin(rad*plon(i,j))
+!
+                 atide(i,j,3)=atide(i,j,3)+amp(3)*alpha2k1*diur_cos
+                 btide(i,j,3)=btide(i,j,3)+amp(3)*alpha2k1*diur_sin
+                 atide(i,j,4)=atide(i,j,4)+amp(4)*alpha2o1*diur_cos
+                 btide(i,j,4)=btide(i,j,4)+amp(4)*alpha2o1*diur_sin
+                 atide(i,j,6)=atide(i,j,6)+amp(6)*alpha2p1*diur_cos
+                 btide(i,j,6)=btide(i,j,6)+amp(6)*alpha2p1*diur_sin
+                 atide(i,j,8)=atide(i,j,8)+amp(8)*alpha2q1*diur_cos
+                 btide(i,j,8)=btide(i,j,8)+amp(8)*alpha2q1*diur_sin
+!
+                 atide(i,j,1)=atide(i,j,1)+amp(1)*alpha2m2*semi_cos
+                 btide(i,j,1)=btide(i,j,1)+amp(1)*alpha2m2*semi_sin
+                 atide(i,j,2)=atide(i,j,2)+amp(2)*alpha2s2*semi_cos
+                 btide(i,j,2)=btide(i,j,2)+amp(2)*alpha2s2*semi_sin
+                 atide(i,j,5)=atide(i,j,5)+amp(5)*alpha2n2*semi_cos
+                 btide(i,j,5)=btide(i,j,5)+amp(5)*alpha2n2*semi_sin
+                 atide(i,j,7)=atide(i,j,7)+amp(7)*alpha2k2*semi_cos
+                 btide(i,j,7)=btide(i,j,7)+amp(7)*alpha2k2*semi_sin
+              enddo !i
+            enddo  !j
+!
+            call xctilr(atide(1-nbdy,1-nbdy,1),1,ncon, nbdy,nbdy, halo_ps)
+            call xctilr(btide(1-nbdy,1-nbdy,1),1,ncon, nbdy,nbdy, halo_ps)
           endif !tidein.eq.1:else
-
+!
           if     (mnproc.eq.1) then
           write (lp,*) ' ...finished initializing tidal body forcing'
           endif !1st tile
           call xcsync(flush_lp)
-
+!
         endif !flag.eq.0
-
+!
       endif !tidflg.gt.0
 !
-      if(flag.eq.0) then
-        if(tidstr.eq.0) then
+      if     (flag.eq.0) then
+        if     (tidnud.eq.2) then
+          if     (.not.allocated(hhrly)) then
+! ---       restart_in did not input hhrly
+            allocate(  hhrly(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy,49), &
+                      hntide(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy)    )
+            call mem_stat_add( 50*(idm+2*nbdy)*(jdm+2*nbdy) )
+            do j= 1-nbdy,jj+nbdy
+              do i= 1-nbdy,ii+nbdy
+                do ihr= 1,49
+                  hhrly(i,j,ihr) = 0.0
+                 enddo !ihr
+              enddo !i
+            enddo  !j
+            mhrly = 0
+          endif  !.not.allocated
+          call tides_dehtide(1, .false.)  !initialise 49-hour filter
+        endif !nudging
+!
+        if     (tidstr.eq.0) then
           if     (.not.allocated(uhrly)) then
 ! ---        restart_in did not input [uv]hrly
              allocate(  uhrly(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy,49), &
@@ -278,9 +337,9 @@
           call tides_detide(1, .false.)  !initialise 49-hour filter
         else  !tidstr.eq.1
           if     (.not.allocated(uvf)) then
-! ---        restart_in did not input M2 and K1 streaming filters
+! ---        restart_in did not input streaming bottom velocity filters
              if     (mnproc.eq.1) then
-             write (lp,*) ' now initializing tidal streamoing filter ...'
+             write (lp,*) ' now initializing tidal streaming filter ...'
              endif !1st tile
              call xcsync(flush_lp)
              allocate( uvf(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy,4), &
@@ -293,7 +352,7 @@
              vvf(:,:,:) = 0.0
              vsf(:,:,:) = 0.0
              if     (mnproc.eq.1) then
-             write (lp,*) ' ...finished initializing tidal streamoing filter ...'
+             write (lp,*) ' ...finished initializing tidal streaming filter ...'
              endif !1st tile
              call xcsync(flush_lp)
           endif  !.not.allocated
@@ -302,7 +361,8 @@
 !
       return
       end subroutine tides_set
-
+!
+!
       subroutine tides_detide(n, update)
       use mod_cb_arrays  ! HYCOM saved arrays
       implicit none
@@ -324,7 +384,7 @@
 !
 ! --- the filter is the convolution of a 21 hr (10 point) 2nd-order
 ! ---  Savitzky-Golay smoothing filter and a 24.842 hr boxcar filter.
-! --- it passes 0.02% of semi-diurnal and 3.2% of diurnal tides 
+! --- it passes 0.02% of semi-diurnal and 3.2% of diurnal tides
 ! ---  (1.2% of the total tides).
 !
       real    f2hrly(0:24)
@@ -421,8 +481,8 @@
               enddo !ihr
                 uhrly(i,j,49) = util5(i,j)
                 vhrly(i,j,49) = util6(i,j)
-                usum = usum + fhrly(49)*uhrly(i,j,49) 
-                vsum = vsum + fhrly(49)*vhrly(i,j,49) 
+                usum = usum + fhrly(49)*uhrly(i,j,49)
+                vsum = vsum + fhrly(49)*vhrly(i,j,49)
               untide(i,j) = usum
               vntide(i,j) = vsum
             enddo !i
@@ -454,13 +514,13 @@
         endif !nhrly:else
       else !.not.update -> initialize
 ! ---   normalize the filter weights
-        fsum = f2hrly(0)            
-        do ihr=1,24                 
+        fsum = f2hrly(0)
+        do ihr=1,24
           fsum = fsum + 2.0*f2hrly(ihr)
-        enddo                          
-        fc = 1.0/fsum                  
+        enddo
+        fc = 1.0/fsum
         fhrly(25) = fc*f2hrly(0)
-        do ihr=1,24  
+        do ihr=1,24
           fhrly(25+ihr) = fc*f2hrly(ihr)
           fhrly(25-ihr) = fc*f2hrly(ihr)
         enddo
@@ -489,7 +549,7 @@
           enddo  !j
         endif !nhrly:else
       endif !update:initialize
-
+!
       if (debug_tides) then
         if     (itest.gt.0 .and. jtest.gt.0) then
           write (lp,'(i9,2i5,3x,a,i2.2,a,2f10.6)') &
@@ -505,19 +565,271 @@
       endif  !debug_tides
       return
       end subroutine tides_detide
-
+!
+!
+      subroutine tides_dehtide(n, update)
+      use mod_cb_arrays  ! HYCOM saved arrays
+      implicit none
+!
+      integer n       !time level index
+      logical update  !.true. -> update hrly filter; .false. -> initialization
+!
+! --- form 49-hour filter of pbaso
+!
+      integer i,ihr,j,k
+      real    fc
+      real*8  hsum,fsum
+!
+      real    fhrly(49)
+      save    fhrly
+!
+! --- a diurnal low pass filter,
+! ---  covering 49 hours and lagged by 24 hours.
+!
+! --- the filter is the convolution of a 21 hr (10 point) 2nd-order
+! ---  Savitzky-Golay smoothing filter and a 24.842 hr boxcar filter.
+! --- it passes 0.02% of semi-diurnal and 3.2% of diurnal tides
+! ---  (1.2% of the total tides).
+!
+      real    f2hrly(0:24)
+      save    f2hrly
+      data    f2hrly / 9.297873 , &
+                       9.297873 , 9.338932 , 9.835878     , &
+                       10.04647 , 10.00111 , 9.730179     , &
+                       9.264084 , 8.633219 , 7.867976     , &
+                       6.998751 , 6.055939 , 5.069937     , &
+                       4.071137 , 3.089936 , 2.156729     , &
+                       1.301912 , 0.5558784,-5.0975680E-02, &
+                      -0.4882553,-0.7255653,-0.7325106    , &
+                      -0.4786960, 0.0      , 0.0           /
+!
+      if     (update) then
+! ---   calculate new hrly fields
+        if     (mhrly.eq.49) then
+! ---     shift fields one hour, save new hour, form 49-hour filter
+          do j= 1-nbdy,jj+nbdy
+            do i= 1-nbdy,ii+nbdy
+              hsum = 0.0
+              do ihr= 1,48
+                hhrly(i,j,ihr) = hhrly(i,j,ihr+1)
+                hsum = hsum + fhrly(ihr)*hhrly(i,j,ihr)
+              enddo !ihr
+                hhrly(i,j,49) = pbavg(i,j,n)
+                hsum = hsum + fhrly(49)*hhrly(i,j,49)
+              hntide(i,j) = hsum
+            enddo !i
+          enddo  !j
+        else
+! ---     save one more hour
+          mhrly = mhrly + 1
+          do j= 1-nbdy,jj+nbdy
+            do i= 1-nbdy,ii+nbdy
+              hhrly(i,j,mhrly) = pbavg(i,j,n)
+              if     (mhrly.eq.49) then
+! ---           form 49-hour filter
+                hsum = fhrly(1)*hhrly(i,j,1)
+                do ihr= 2,49
+                  hsum = hsum + fhrly(ihr)*hhrly(i,j,ihr)
+                enddo !ihr
+                hntide(i,j) = hsum
+              else
+! ---           not enough hours for 49-hour filter yet
+                hntide(i,j) = 0.0
+              endif !mhrly
+            enddo !i
+          enddo  !j
+        endif !mhrly:else
+      else !.not.update -> initialize
+! ---   normalize the filter weights
+        fsum = f2hrly(0)
+        do ihr=1,24
+          fsum = fsum + 2.0*f2hrly(ihr)
+        enddo
+        fc = 1.0/fsum
+        fhrly(25) = fc*f2hrly(0)
+        do ihr=1,24
+          fhrly(25+ihr) = fc*f2hrly(ihr)
+          fhrly(25-ihr) = fc*f2hrly(ihr)
+        enddo
+!
+        if     (mhrly.eq.49) then
+! ---     form 49-hour filter, from restart input
+          do j= 1-nbdy,jj+nbdy
+            do i= 1-nbdy,ii+nbdy
+              hsum = fhrly(1)*hhrly(i,j,1)
+              do ihr= 2,49
+                hsum = hsum + fhrly(ihr)*hhrly(i,j,ihr)
+              enddo !ihr
+              hntide(i,j) = hsum
+            enddo !i
+          enddo  !j
+        else
+! ---     not enough hours for 49-hour filter from restart input
+          do j= 1-nbdy,jj+nbdy
+            do i= 1-nbdy,ii+nbdy
+              hntide(i,j) = 0.0
+            enddo !i
+          enddo  !j
+        endif !mhrly:else
+      endif !update:initialize
+!
+      if (debug_tides) then
+        if     (itest.gt.0 .and. jtest.gt.0) then
+          write (lp,'(i9,2i5,3x,a,i2.2,a,f10.6)') &
+            nstep,itest+i0,jtest+j0, &
+              ' hr',mhrly,' = ', &
+               hhrly(itest,jtest,mhrly)
+          write (lp,'(i9,2i5,3x,a,f10.6)') &
+            nstep,itest+i0,jtest+j0, &
+              'hntide = ', &
+               hntide(itest,jtest)
+        endif
+        call xcsync(flush_lp)
+      endif  !debug_tides
+      return
+      end subroutine tides_dehtide
+!
+!
+      subroutine tides_observed(ll)
+      use mod_xc  ! HYCOM communication interface
+      use mod_cb_arrays  ! HYCOM saved arrays
+      implicit none
+!
+      integer ll
+!
+! --- calculate observed tides
+!
+      integer i,j,l
+      real*8  timef,timet,timermp
+      real    ramp,ft,c1,c2
+      real    htide1,htide2,htide3,htide4,htide5,htide6,htide7,htide8
+!
+!     ramp-up of tide signal
+      ramp   =1.0
+      timermp=time_8+(ll*dlt/86400.d0)
+      if(ramp_time.gt.0.0 ) then
+         if(timermp .ge.ramp_orig)then
+            timermp=(timermp-ramp_orig)/ramp_time
+            ramp=ramp*(1.0-exp(-5.0*timermp))
+         else
+            ramp=0.0
+         endif
+      endif !ramp_time
+!
+      if     (.not.tidgen) then
+        call tides_set(1)
+      else
+        arg8(1:ncon) = 0.0  !no correction for a specific year
+         pu8(1:ncon) = 0.0  !no correction for a specific year
+         pf8(1:ncon) = 1.0  !no correction for a specific year
+      endif  !standard:generic
+!
+! --- Early return?
+!
+      if     (tidnud.eq.0) then
+        RETURN
+      endif
+!
+      if     (yrflag.eq.3) then
+        timet=time_8+(ll*dlt/86400.d0)-timeref    !time from 00Z today
+      else
+        timet=time_8+(ll*dlt/86400.d0)            !time since model day zero
+      endif
+!     if     (mnproc.eq.1) then
+!       write(lp,'(a,f8.4,2f12.5)')
+!    &    'tides_ports: ramp,time =',ramp,dtime,timet
+!     endif
+!
+      htide1 = 0.0
+      htide2 = 0.0
+      htide3 = 0.0
+      htide4 = 0.0
+      htide5 = 0.0
+      htide6 = 0.0
+      htide7 = 0.0
+      htide8 = 0.0
+!$OMP PARALLEL DO PRIVATE(j,i, &
+!$OMP          htide1,htide2,htide3,htide4,htide5,htide6,htide7,htide8, &
+!$OMP          SCHEDULE(STATIC,jblk)
+      do j= 1-nbdy,jj+nbdy
+        do i= 1-nbdy,ii+nbdy
+          if     (tide_on(1)) then
+            htide1= &
+              atidh(i,j,1)*pf8(1)*cos(omega(1)*timet+arg8(1)+pu8(1))- &
+              btidh(i,j,1)*pf8(1)*sin(omega(1)*timet+arg8(1)+pu8(1))
+          endif
+          if     (tide_on(2)) then
+            htide2= &
+              atidh(i,j,2)*pf8(2)*cos(omega(2)*timet+arg8(2)+pu8(2))- &
+              btidh(i,j,2)*pf8(2)*sin(omega(2)*timet+arg8(2)+pu8(2))
+          endif
+          if     (tide_on(3)) then
+            htide3= &
+              atidh(i,j,3)*pf8(3)*cos(omega(3)*timet+arg8(3)+pu8(3))- &
+              btidh(i,j,3)*pf8(3)*sin(omega(3)*timet+arg8(3)+pu8(3))
+          endif
+          if     (tide_on(4)) then
+            htide4= &
+              atidh(i,j,4)*pf8(4)*cos(omega(4)*timet+arg8(4)+pu8(4))- &
+              btidh(i,j,4)*pf8(4)*sin(omega(4)*timet+arg8(4)+pu8(4))
+          endif
+          if     (tide_on(5)) then
+            htide5= &
+              atidh(i,j,5)*pf8(5)*cos(omega(5)*timet+arg8(5)+pu8(5))- &
+              btidh(i,j,5)*pf8(5)*sin(omega(5)*timet+arg8(5)+pu8(5))
+          endif
+          if     (tide_on(6)) then
+            htide6= &
+              atidh(i,j,6)*pf8(6)*cos(omega(6)*timet+arg8(6)+pu8(6))- &
+              btidh(i,j,6)*pf8(6)*sin(omega(6)*timet+arg8(6)+pu8(6))
+          endif
+          if     (tide_on(7)) then
+            htide7= &
+              atidh(i,j,7)*pf8(7)*cos(omega(7)*timet+arg8(7)+pu8(7))- &
+              btidh(i,j,7)*pf8(7)*sin(omega(7)*timet+arg8(7)+pu8(7))
+          endif
+          if     (tide_on(8)) then
+            htide8= &
+              atidh(i,j,8)*pf8(8)*cos(omega(8)*timet+arg8(8)+pu8(8))- &
+              btidh(i,j,8)*pf8(8)*sin(omega(8)*timet+arg8(8)+pu8(8))
+          endif
+!
+          htide(i,j)= htide1 &
+                     +htide2 &
+                     +htide3 &
+                     +htide4 &
+                     +htide5 &
+                     +htide6 &
+                     +htide7 &
+                     +htide8
+          htide(i,j)=ramp*htide(i,j)
+        enddo !i
+      enddo !j
+!
+      if (debug_tides) then
+        if     (itest.gt.0 .and. jtest.gt.0) then
+          write (lp,'(i9,i3,2f14.6,2i5,3x,a,f10.6)') &
+            nstep,ll,timeref+timet,timet,itest+i0,jtest+j0, &
+              ' htide = ',htide(itest,jtest)
+        endif !test point
+        call xcsync(flush_lp)
+      endif  !debug_tides
+      return
+      end subroutine tides_observed
+!
+!
       subroutine tides_filter(n)
       use mod_cb_arrays  ! HYCOM saved arrays
       implicit none
 !
       integer n       !time level index
 !
-! --- asvance M2 and K1 streaming filters
+! --- advance M2,S2,K1,O1 streaming filters
 !
       integer i,j,k,l
       real    pthkbl,pbop,phi,plo,ubot,vbot,ft,c1,c2
 !
-! ---  M2 and K1 streaming filters
+! ---  streaming bottom velocity filters
 !
 ! --- The filter detects instantaneous tidal signals in the input using
 ! ---  a set of coupled ODEs (the filter equations).  Given a target
@@ -601,7 +913,7 @@
 ! ---     advance the l-th filter equations (eqn 19 of Xu & Zaron)
           ft = omega(l) / 86400.d0  !M2,S2,K1,O1
           c1 = ft * baclin
-          c2 = 1.0 - tidfbw(l) * c1 
+          c2 = 1.0 - tidfbw(l) * c1
           do j= 1-nbdy,jj+nbdy
             do i= 1-nbdy,ii+nbdy
               usf(i,j,l) =        usf(i,j,l) + &
@@ -640,18 +952,17 @@
       endif  !debug_tides
       return
       end subroutine tides_filter
-
-      subroutine tides_force(ll)
+!
+!
+      subroutine tides_body(ll)
       use mod_xc  ! HYCOM communication interface
       use mod_cb_arrays  ! HYCOM saved arrays
       implicit none
-
+!
       integer ll
-
 !
 ! --- calculate body tide
 !
-
       integer i,j
       real*8  timef,timet,timermp
       real    ramp
@@ -688,7 +999,7 @@
       else
         timet=time_8+(ll*dlt/86400.d0)            !time since model day zero
       endif
-
+!
       if    (tidein.eq.1) then
         timef=timeref+timet
         call tides_forfun(timef)
@@ -715,7 +1026,7 @@
               etide1=                &
               atide(i,j,1)*pf8(1)*cos(omega(1)*timet+arg8(1)+pu8(1))- &
               btide(i,j,1)*pf8(1)*sin(omega(1)*timet+arg8(1)+pu8(1))
-            endif                                              
+            endif
             if     (tide_on(2)) then
               etide2= &
               atide(i,j,2)*pf8(2)*cos(omega(2)*timet+arg8(2)+pu8(2))- &
@@ -751,7 +1062,7 @@
               atide(i,j,8)*pf8(8)*cos(omega(8)*timet+arg8(8)+pu8(8))- &
               btide(i,j,8)*pf8(8)*sin(omega(8)*timet+arg8(8)+pu8(8))
             endif
-
+!
             etide(i,j)= etide1 &
                        +etide2 &
                        +etide3 &
@@ -764,18 +1075,19 @@
           enddo !i
         enddo !j
       endif !tidein.eq.1:else
-
+!
       if (debug_tides) then
         if     (itest.gt.0 .and. jtest.gt.0) then
-          write (lp,'(i9,f14.6,2i5,3x,a,f10.6)') &
-            nstep,timeref+timet,itest+i0,jtest+j0, &
+          write (lp,'(i9,i3,2f14.6,2i5,3x,2(a,f10.6))') &
+            nstep,ll,timeref+timet,timet,itest+i0,jtest+j0, &
               ' etide = ',etide(itest,jtest)
-        endif
+        endif !test point
         call xcsync(flush_lp)
       endif  !debug_tides
       return
-      end subroutine tides_force
-
+      end subroutine tides_body
+!
+!
       subroutine tides_forfun(dtime)
       use mod_xc         ! HYCOM communication interface
       use mod_cb_arrays  ! HYCOM saved arrays
@@ -874,9 +1186,9 @@
         call rdpall1(etidei,dtime1,917,.true.)
         call xctilr( etidei,1,2, nbdy,nbdy, halo_ps)
         if     (mnproc.eq.1) then
-        write (lp,*) 
+        write (lp,*)
         write (lp,*) ' dtime,dtime0,dtime1 = ',dtime,dtime0,dtime1
-        write (lp,*) 
+        write (lp,*)
         write (lp,*) ' ...finished initializing tidal forcing fields'
         endif !1st tile
         call xcsync(flush_lp)
@@ -907,7 +1219,57 @@
 !           call xcsync(flush_lp)
       return
       end subroutine tides_forfun
-
+!
+!
+      subroutine tides_forfun_obs
+      use mod_xc         ! HYCOM communication interface
+      use mod_cb_arrays  ! HYCOM saved arrays
+      use mod_za         ! HYCOM I/O interface
+      implicit none
+!
+! --- initialize real and imaginary observed tidal complex amplitudes
+!
+! --- units of atidh and btidh are m on the p-grid.
+!
+! --- I/O and array I/O unit 925 used here, but not reserved.
+!
+! --- all input fields much be defined at all grid points
+!
+      integer   i,j,k,lgth
+!
+      if     (mnproc.eq.1) then
+      write (lp,*) ' now opening obsReIm fields  ...'
+      endif !1st tile
+      call xcsync(flush_lp)
+!
+      lgth = len_trim(flnmfor)
+!
+      call zaiopf(flnmfor(1:lgth)//'tidal.obshReIm.a', 'old', 925)
+      if     (mnproc.eq.1) then  ! .b file from 1st tile only
+      open (unit=uoff+925,file=flnmfor(1:lgth)//'tidal.obshReIm.b', &
+         status='old', action='read')
+      endif !1st tile
+      do k= 1,ncon
+        call rdmonth(atidh(1-nbdy,1-nbdy,k), 925)
+        call rdmonth(btidh(1-nbdy,1-nbdy,k), 925)
+      enddo !k
+      if     (mnproc.eq.1) then  ! .b file from 1st tile only
+      close (unit=uoff+925)
+      endif
+      call zaiocl(925)
+!
+      call xctilr(atidh,1,ncon, nbdy,nbdy, halo_ps)
+      call xctilr(btidh,1,ncon, nbdy,nbdy, halo_ps)
+!
+      if     (mnproc.eq.1) then
+      write (lp,*) ' ...finished reading obsReIm fields '
+      endif !1st tile
+      call xcsync(flush_lp)
+!
+      return
+      end subroutine tides_forfun_obs
+!
+!
       subroutine tides_forfun_sal
       use mod_xc         ! HYCOM communication interface
       use mod_cb_arrays  ! HYCOM saved arrays
@@ -935,27 +1297,28 @@
       if     (mnproc.eq.1) then  ! .b file from 1st tile only
       open (unit=uoff+925,file=flnmfor(1:lgth)//'tidal.salReIm.b', &
          status='old', action='read')
-      endif !1st tile                
-      do k= 1,8
-        call rdmonth(atide(1-nbdy,1-nbdy,k), 925)      
-        call rdmonth(btide(1-nbdy,1-nbdy,k), 925)      
+      endif !1st tile
+      do k= 1,ncon
+        call rdmonth(atide(1-nbdy,1-nbdy,k), 925)
+        call rdmonth(btide(1-nbdy,1-nbdy,k), 925)
       enddo !k
       if     (mnproc.eq.1) then  ! .b file from 1st tile only
-      close (unit=uoff+925)                                  
-      endif                                                  
-      call zaiocl(925) 
-!     
-      call xctilr(atide,1,8, nbdy,nbdy, halo_ps)
-      call xctilr(btide,1,8, nbdy,nbdy, halo_ps)
-!     
+      close (unit=uoff+925)
+      endif
+      call zaiocl(925)
+!
+      call xctilr(atide,1,ncon, nbdy,nbdy, halo_ps)
+      call xctilr(btide,1,ncon, nbdy,nbdy, halo_ps)
+!
       if     (mnproc.eq.1) then
       write (lp,*) ' ...finished reading salReIm fields '
       endif !1st tile
       call xcsync(flush_lp)
-!     
+!
       return
       end subroutine tides_forfun_sal
-
+!
+!
       subroutine tides_ports(dtime,nportpts,zR,zI,zA, port_tide)
       implicit none
 !
@@ -976,7 +1339,7 @@
 ! --- On output:
 !       port_tide = tidal signal (1:3 is z,u,v)
 !
-! --- Input  u and v are eastward and northward, but 
+! --- Input  u and v are eastward and northward, but
 ! --- Output u and v are x-ward and y-ward.
 ! --- On a rectilinear grid, zA is 0.0 and eastward==x-ward.
 !
@@ -984,14 +1347,14 @@
       real    ramp,pt(3)
       real*8  timermp
       real*8  timet,Arg_p,ct,st,Ar,Ai
-
+!
       timet=dtime - timeref
-
+!
 !     ramp-up of tide signal
-
+!
       ramp   =1.0
       timermp=dtime
-      if(ramp_time.gt.0.0 ) then
+      if     (ramp_time.gt.0.0) then
          if(timermp .ge.ramp_orig)then
             timermp=(timermp-ramp_orig)/ramp_time
             ramp=ramp*(1.0-exp(-5.0*timermp))
@@ -999,7 +1362,7 @@
             ramp=0.0
          endif
       endif !ramp_time
-
+!
       port_tide(:,:)=0.0  !initiialize sum over ncom tidal components
       do n=1,ncon
         if(tide_on(n))then
@@ -1017,7 +1380,7 @@
       enddo !n
 !DAN-----------------------
 !DAN  scale open boundary port tidal signal by ramp
-!DAN         
+!DAN
       do j=1, nportpts
         do k=1,3
           pt(k)=ramp*port_tide(j,k)
@@ -1027,23 +1390,24 @@
         port_tide(j,3)=cos(zA(j))*pt(3)-sin(zA(j))*pt(2)
       enddo !j
 !     if     (mnproc.eq.1) then
-!       write(lp,'(a,f8.4,2f12.5)') 
+!       write(lp,'(a,f8.4,2f12.5)')
 !    &    'tides_ports: ramp,time =',ramp,dtime,timet
 !     endif
       return
       end subroutine tides_ports
-
+!
+!
       subroutine tides_driver(z1rall,z1iall,dtime, &
           astroflag,zpredall,start,ijtdm,ndat) !normal
       use mod_xc         ! HYCOM communication interface
       use mod_cb_arrays  ! HYCOM saved arrays
       implicit none
-
+!
       integer start,ijtdm,ndat
       logical astroflag
       real    z1rall(ijtdm,ncon),z1iall(ijtdm,ncon),zpredall(ijtdm)
-      real*8  dtime      
-
+      real*8  dtime
+!
       character*10 cdate
       character*8  ctime
       logical interp_micon
@@ -1051,101 +1415,96 @@
       integer ind(ncon)
       real    zpred(ndat),z1r(ndat,ncon),z1i(ndat,ncon)
       real    Ai(ncon), Ar(ncon)
-
+!
 ! From  ptide
       real ww(17,ncon)
-
+!
       real*8 ttime
-
+!
 ! from make_a
 ! If l_sal is .true. - NO solid Earth correction is applied
 ! USING beta_SE coefficients
       logical l_sal
       real beta_SE(ncon)
       real ci(ncon),cr(ncon)
-
-! the succession is: M2,S2,K1,O1,N2,P1,K2,Q1 (corresponding to 
+!
+! the succession is: M2,S2,K1,O1,N2,P1,K2,Q1 (corresponding to
 ! succession in tidalports_*.input)
-
-       data beta_SE/ &
-          0.9540,0.9540,0.9400,0.9400, &
-          0.9540,0.9400,0.9540,0.9400/
-       save beta_SE 
-       
-       l_sal = .TRUE.
-       interp_micon =.FALSE.
-
-       do i =1,ndat
-         zpred(i) = zpredall(start+i-1)
-         do ic =1,ncon
-            z1r(i,ic) = z1rall(start+i-1,ic)
-            z1i(i,ic) = z1iall(start+i-1,ic)
-          enddo
+!
+      data beta_SE/ &
+         0.9540,0.9540,0.9400,0.9400, &
+         0.9540,0.9400,0.9540,0.9400/
+      save beta_SE
+!
+      l_sal = .TRUE.
+      interp_micon =.FALSE.
+!
+      do i =1,ndat
+        zpred(i) = zpredall(start+i-1)
+        do ic =1,ncon
+          z1r(i,ic) = z1rall(start+i-1,ic)
+          z1i(i,ic) = z1iall(start+i-1,ic)
         enddo
-
-        do i =1,ncon
-          ind(i) = i
-        enddo
-       
-        ttime=dtime-timeref !days from 00Z today
-
+      enddo
+!
+      do i =1,ncon
+        ind(i) = i
+      enddo
+!
+      ttime=dtime-timeref !days from 00Z today
+!
 ! ndat is the number of lat/lon pairs
 ! output is zpred which is the elevations
-        do k = 1, ndat
-
+!
+      do k = 1, ndat
+!
 ! Currently disabled
 !. to include get ww from weights.h
         if(interp_micon)call tides_mkw(interp_micon,ind,ncon,ww)
-
-         do j=1,ncon
-           i=ind(j)
-           if(i.ne.0)then
-             cr(j) = pf8(i)*cos(omega(i)*ttime+arg8(i)+pu8(i))
-             ci(j) = pf8(i)*sin(omega(i)*ttime+arg8(i)+pu8(i))
-           endif
-         enddo
-
+!
+        do j=1,ncon
+          i=ind(j)
+          if(i.ne.0)then
+            cr(j) = pf8(i)*cos(omega(i)*ttime+arg8(i)+pu8(i))
+            ci(j) = pf8(i)*sin(omega(i)*ttime+arg8(i)+pu8(i))
+          endif
+        enddo
+!
 ! .true. means NO solid Earth correction will be applied in make_a
 !  remove solid Earth tide
-         if(.not.l_sal)then
-           do j=1,ncon
-             Ar(j)=0. 
-             Ai(j)=0.
-             if(ind(j).ne.0) then
-             Ar(j)=cr(j)*beta_SE(ind(j))
-             Ai(j)=ci(j)*beta_SE(ind(j))
-             endif
-
-           enddo
-         else
-           do j=1,ncon 
-             Ar(j)=cr(j)*1.
-             Ai(j)=ci(j)*1.
-           enddo
-         endif
-
-
-         if(ncon.eq.0)then
-           zpred(k)=0
-         else
-           zpred(k)=0
-            do i=1,ncon
-              zpred(k)=zpred(k)+z1r(k,i)*Ar(i) &
-                  -z1i(k,i)*Ai(i)
-            enddo
-         endif
-  
-         zpredall(start+k-1) = zpred(k)
- 
-       enddo
-
-        
-       close(1)    
-
-
-       return
+        if(.not.l_sal)then
+          do j=1,ncon
+            Ar(j)=0.0
+            Ai(j)=0.0
+            if(ind(j).ne.0) then
+              Ar(j)=cr(j)*beta_SE(ind(j))
+              Ai(j)=ci(j)*beta_SE(ind(j))
+            endif
+          enddo
+        else
+          do j=1,ncon
+            Ar(j)=cr(j)*1.
+            Ai(j)=ci(j)*1.
+          enddo
+        endif
+!
+        if(ncon.eq.0)then
+          zpred(k)=0
+        else
+          zpred(k)=0
+          do i=1,ncon
+            zpred(k)=zpred(k)+z1r(k,i)*Ar(i) &
+                -z1i(k,i)*Ai(i)
+          enddo
+        endif
+!
+        zpredall(start+k-1) = zpred(k)
+!
+      enddo
+      return
       end subroutine tides_driver
-
+!
+!
         subroutine tides_mkw(interp,ind,nc,wr)
         real wr(17,ncon)
         logical interp
@@ -1177,32 +1536,32 @@
         enddo
         return
         end subroutine tides_mkw
-
-
+!
+!
 !cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 ! argUMENTS and ASTROL subroutines SUPPLIED by RICHARD RAY, March 1999
 ! attached to OTIS by Lana Erofeeva (subroutine nodal.f)
 ! NOTE - "no1" in constit.h corresponds to "M1" in arguments
 !iris   subroutine nodal(dtime,pu8,pf8,arg8)
-
+!
         subroutine tides_nodal
         implicit none
-
+!
         integer ncmx
         parameter(ncmx = 21)
 ! 21 put here instead of ncmx for compatability with old constit.h
         integer index(ncmx),i
         real*8 latitude,pu(ncmx),pf(ncmx)
         real*8 arg(53),f(53),u(53),pi
-        
-
+!
+!
         data pi/3.14159265358979/
 ! index gives correspondence between constit.h and Richard's subroutines
 ! constit.h:       M2,S2,K1,O1,N2,P1,K2,q1,2N2,mu2,nu2,L2,t2,
 !                  J1,M1(no1),OO1,rho1,Mf,Mm,SSA,M4
          data index/30,35,19,12,27,17,37,10,25,26,28,33,34, &
                    23,14,24,11,5,3,2,45/
-
+!
         call tidal_arguments(time_mjd,arg,f,u)
         do i=1,ncmx
 ! u is returned by "tidal_arguments" in degrees
@@ -1210,19 +1569,20 @@
          pf(i)=f(index(i))
 !         write(*,*)pu(i),pf(i)
         enddo
-
+!
         do i =1,ncon
           pu8(i) = pu(i)
           pf8(i) = pf(i)
           arg8(i)= arg(index(i))*pi/180.d0
         enddo
-
+!
         return
         end subroutine tides_nodal
-
+!
+!
       subroutine tidal_arguments( time1, arg, f, u)
       implicit none
- 
+!
       real*8 time1, arg(*), f(*), u(*)
 !
 !   Kernel routine for subroutine hat53.    Calculate tidal arguments.
@@ -1301,7 +1661,7 @@
       arg(52) = 7.0*t1                                  ! S7
       arg(53) = four*t2                                 ! S8
 !
-!     determine nodal corrections f and u 
+!     determine nodal corrections f and u
 !     -----------------------------------
       sinn = sin(omega*rad)
       cosn = cos(omega*rad)
@@ -1315,7 +1675,7 @@
       f( 5) = 1.043 + 0.414*cosn                      ! Mf
       f( 6) = sqrt((one+.203*cosn+.040*cos2n)**2 +  &
                     (.203*sinn+.040*sin2n)**2)        ! Mt
-
+!
       f( 7) = one                                     ! alpha1
       f( 8) = sqrt((1.+.188*cosn)**2+(.188*sinn)**2)  ! 2Q1
       f( 9) = f(8)                                    ! sigma1
@@ -1376,7 +1736,7 @@
       f(51) = one                                     ! S6
       f(52) = one                                     ! S7
       f(53) = one                                     ! S8
-
+!
          u( 1) = zero                                    ! Sa
          u( 2) = zero                                    ! Ssa
          u( 3) = zero                                    ! Mm
@@ -1435,12 +1795,12 @@
          u(51) = zero                                    ! S6
          u(52) = zero                                    ! S7
          u(53) = zero                                    ! S8
-
+!
       return
       end subroutine tidal_arguments
-
-
-      SUBROUTINE TIDES_ASTROL( time, SHPN )     
+!
+!
+      SUBROUTINE TIDES_ASTROL( time, SHPN )
 !
 !  Computes the basic astronomical mean longitudes  s, h, p, N.
 !  Note N is not N', i.e. N is decreasing with time.
@@ -1474,19 +1834,19 @@
 !     mean longitude of ascending lunar node
 !     --------------------------------------
       SHPN(4) = 125.0445D0 -  0.05295377D0 * T
-
+!
       SHPN(1) = MOD(SHPN(1),CIRCLE)
       SHPN(2) = MOD(SHPN(2),CIRCLE)
       SHPN(3) = MOD(SHPN(3),CIRCLE)
       SHPN(4) = MOD(SHPN(4),CIRCLE)
-
+!
       IF (SHPN(1).LT.0.D0) SHPN(1) = SHPN(1) + CIRCLE
       IF (SHPN(2).LT.0.D0) SHPN(2) = SHPN(2) + CIRCLE
       IF (SHPN(3).LT.0.D0) SHPN(3) = SHPN(3) + CIRCLE
       IF (SHPN(4).LT.0.D0) SHPN(4) = SHPN(4) + CIRCLE
       RETURN
       END SUBROUTINE TIDES_ASTROL
-
+!
 !
       end module mod_tides
 !
@@ -1510,3 +1870,5 @@
 !> Dec  2024 - fixed p to v grid indexing bug in tides_detide
 !> Dec  2024 - generic tide time bug fixed for yrflag=3
 !> Dec  2024 - added tidstr for tidal streaming filter
+!> Dec. 2024 - moved salfaco here from mod_cb_arrays
+!> Jan. 2025 - added the option to nudge towards the observed tides

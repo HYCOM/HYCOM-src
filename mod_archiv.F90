@@ -24,9 +24,10 @@
       logical,     save,  private :: l_arch(nfields) !field output flags
 !
       private archiv_prof_out
-
+!
       contains
-
+!
+!
       subroutine archiv_init
 !
 ! --- initialize surface archive output flags
@@ -86,8 +87,10 @@
       call xcsync(flush_lp)
       return
       end subroutine archiv_init
-
+!
+!
       subroutine archiv(n, kkout, iyear,iday,ihour, intvl)
+      use mod_tides   ! HYCOM tides
 #if defined(STOKES)
       use mod_stokes  ! Stokes Drift Velocity Module
 #endif
@@ -459,11 +462,11 @@
  118      format (a5,a3,' =',i11,f11.3,i3,f7.3,1p2e16.7)
         enddo
       endif !diaflx
-!        
+!
 ! --- surface tracers at end of archs file
-!                    
-      if     (kkout.eq.0 .and. mstrcr.gt.0) then 
-        do ktr= 1,mstrcr 
+!
+      if     (kkout.eq.0 .and. mstrcr.gt.0) then
+        do ktr= 1,mstrcr
           if     (ktr.eq.istrcr(701)) then !disp_ld
             stracr(:,:,ktr) = stracr(:,:,ktr)/real(disp_count)
             call zaiowr(stracr(1-nbdy,1-nbdy,ktr),ip,.true., xmin,xmax, &
@@ -509,6 +512,74 @@
             k    =0
             coord=0.0
             write (nop,117) 'pbavg   ',nstep,time,k,coord,xmin,xmax
+            call flush(nop)
+            endif !1st tile
+          elseif (ktr.eq.istrcr(705)) then !hntide
+            do j=1,jj
+              do i=1,ii
+                if     (ip(i,j).ne.0) then
+                  stracr(i,j,ktr) = hntide(i,j)*svref  !pressure units
+                endif !ip
+              enddo !i
+            enddo !j
+            call zaiowr(stracr(1-nbdy,1-nbdy,ktr),ip,.true., xmin,xmax, &
+                        nopa, .false.)
+            if     (mnproc.eq.1) then
+            k    =0
+            coord=0.0
+            write (nop,117) 'pbavg_mn',nstep,time,k,coord,xmin,xmax
+            call flush(nop)
+            endif !1st tile
+          elseif (ktr.eq.istrcr(706)) then !pbavg-hntide
+            do j=1,jj
+              do i=1,ii
+                if     (ip(i,j).ne.0) then
+                  stracr(i,j,ktr) = (pbavg(i,j,n)-hntide(i,j))*svref  !pressure units
+                endif !ip
+              enddo !i
+            enddo !j
+            call zaiowr(stracr(1-nbdy,1-nbdy,ktr),ip,.true., xmin,xmax, &
+                        nopa, .false.)
+            if     (mnproc.eq.1) then
+            k    =0
+            coord=0.0
+            write (nop,117) 'pbavg_a ',nstep,time,k,coord,xmin,xmax
+            call flush(nop)
+            endif !1st tile
+          elseif (ktr.eq.istrcr(707)) then !htide
+            do j=1,jj
+              do i=1,ii
+                if     (ip(i,j).ne.0) then
+                  stracr(i,j,ktr) = htide(i,j)*g  !pressure units
+                endif !ip
+              enddo !i
+            enddo !j
+            call zaiowr(stracr(1-nbdy,1-nbdy,ktr),ip,.true., xmin,xmax, &
+                        nopa, .false.)
+            if     (mnproc.eq.1) then
+            k    =0
+            coord=0.0
+            write (nop,117) 'htide   ',nstep,time,k,coord,xmin,xmax
+            call flush(nop)
+            endif !1st tile
+          elseif (ktr.eq.istrcr(708)) then !nsssh
+            do j=1,jj
+              do i=1,ii
+                if     (ip(i,j).ne.0) then
+                  if     (sshflg.eq.1 .or. sshflg.eq.3) then
+                    stracr(i,j,ktr) = srfhgt(i,j)-steric(i,j)
+                  else
+                    stracr(i,j,ktr) = srfhgt(i,j)-montg1(i,j)
+                  endif !sshflg
+                endif !ip
+              enddo !i
+            enddo !j
+            call zaiowr(stracr(1-nbdy,1-nbdy,ktr),ip,.true., xmin,xmax, &
+                        nopa, .false.)
+            if     (mnproc.eq.1) then
+            k    =0
+            coord=0.0
+            write (nop,117) 'ns_ssh  ',nstep,time,k,coord,xmin,xmax
             call flush(nop)
             endif !1st tile
           else  !generic surface tracer
@@ -576,7 +647,8 @@
 !cc     .     'barotrop. v vel. (mm/s)')
       return
       end subroutine archiv
-
+!
+!
       subroutine archiv_prof_init
 !
 ! --- initialize for multi-location profile output.
@@ -628,14 +700,14 @@
       fpnts = .true.  !initialize profile location files
       return
       end subroutine archiv_prof_init
-
-      subroutine archiv_prof(n, kkout, iyear,iday,ihour)
 !
+!
+      subroutine archiv_prof(n, kkout, iyear,iday,ihour)
       integer   n, kkout, iyear,iday,ihour
 !
-# include "stmt_fns.h"
-!
 ! --- multi-location profile output.
+!
+# include "stmt_fns.h"
 !
       character*81, save :: flnmarcp  !1 extra character for trailing "_"
       integer,      save :: ldot
@@ -697,22 +769,25 @@
       call xcsync(no_flush)  !called on all tiles
       return
       end subroutine archiv_prof
-
+!
+!
       subroutine archiv_prof_out(n, iyear,iday,ihour, ipoint,jpoint,nop)
+      use mod_tides   ! HYCOM tides
 #if defined(STOKES)
       use mod_stokes  ! Stokes Drift Velocity Module
 #endif
 !
       integer   n, iyear,iday,ihour, ipoint,jpoint,nop
 !
-# include "stmt_fns.h"
-!
 ! --- on the owning tile only: write a text profile file to unit nop.
 ! --- open and close of the I/O unit is done outside this routine.
 !
+# include "stmt_fns.h"
+!
       character*80 cformat
       integer      ipnt,ipnt1,jpnt,jpnt1,k,ktr
-      real         ssha,sshn,sshs,sssc,sstc,ubpnt,upnt,vbpnt,vpnt
+      real         ssha,sshn,sshs,sssc,sstc
+      real         ubpnt,upnt,vbpnt,vpnt
       real         difsp,sshb,opnt,sssa,sihpnt
       real*8       sums
 #if defined(STOKES)
@@ -797,127 +872,252 @@
         ust0  = usds(ipnt,jpnt)
         vst0  = vsds(ipnt,jpnt)
 !
-! ---   order is not optimal, constrained by ALL/bin/hycom_profile_list 
+! ---   order is not optimal, constrained by ALL/bin/hycom_profile_list
 ! ---   which only includes the fields up to vbavg (or up to nsterc)
-        write (nop,'(8a)') &
-          '## model-day  srfhgt  surflx', &
-          '     dpbl   dpmixl    tmix    smix   thmix', &
-          '    umix    vmix   ubavg   vbavg  steric  nsterc', &
-          '   oneta   tclim   sclim', &
-          '  sswflx  mixflx  sstflx', &
-          '      E-P   sssE-P   rivE-P  bhtflx  buoflx', &
-          '    ustar   hekman    dpbbl', &
-          ' usdbave vsdbave    usd0    vsd0'
-        write (nop,'(a,f11.4,f8.2,f8.1,'//   & !...surflx
-                    '2f9.3,3f8.4,'//         & !... thmix
-                    '6f8.2,'//               & !...nsterc
-                    '3f8.4,'//               & !... sclim
-                    '3f8.1,'//               & !...sstflx
-                    '3f9.2,2f8.4,'//         & !...buoflx
-                    'f9.5, 2f9.3,'//         & !... dpbbl
-                    '4f8.2)')                & !...  vsd0
-          '#',time,                                             & !model-day
-          ssha*100.0/g,                                         & !cm
-          surflx(ipnt,jpnt),                                    & !W/m**2
-          min(  dpbl(ipnt,jpnt)  *qonem, 9999.999),             & !m
-          min(dpmixl(ipnt,jpnt,n)*qonem, 9999.999),             & !m
-            tmix(ipnt,jpnt),                                    & !degC
-            smix(ipnt,jpnt),                                    & !psu
-           thmix(ipnt,jpnt)+thbase,                             & !SigmaT
-          max(-999.99,min(999.99, upnt*100.0)),                 & !cm/s
-          max(-999.99,min(999.99, vpnt*100.0)),                 & !cm/s
-          max(-999.99,min(999.99,ubpnt*100.0)),                 & !cm/s
-          max(-999.99,min(999.99,vbpnt*100.0)),                 & !cm/s
-          sshs*100.0/g,                                         & !cm
-          sshn*100.0/g,                                         & !cm
-          opnt,                                                 & !unitless
-          sstc,                                                 & !degC
-          sssc,                                                 & !psu
-          sswflx(ipnt,jpnt),                                    & !W/m**2
-          mixflx(ipnt,jpnt),                                    & !W/m**2
-          sstflx(ipnt,jpnt),                                    & !W/m**2
-          wtrflx(ipnt,jpnt)*svref*8.64E7,                       & !mm/day
-          sssflx(ipnt,jpnt)*svref*8.64E7/ &
-                            max(0.1,saln(ipnt,jpnt,1,n)),       & !mm/day
-          rivflx(ipnt,jpnt)*svref*8.64E7,                       & !mm/day
-          bhtflx(ipnt,jpnt)*1.e6,                          & !1.e6*m**2/sec**3
-          buoflx(ipnt,jpnt)*1.e6,                          & !1.e6*m**2/sec**3
-           ustar(ipnt,jpnt),                                    & !m/s?
-          min(hekman(ipnt,jpnt),         9999.999),             & !m
-          min( dpbbl(ipnt,jpnt)  *qonem, 9999.999),             & !m
-          max(-999.99,min(999.99,ubstk*100.0)),                 & !cm/s
-          max(-999.99,min(999.99,vbstk*100.0)),                 & !cm/s
-          max(-999.99,min(999.99, ust0*100.0)),                 & !cm/s
-          max(-999.99,min(999.99, vst0*100.0))                 !cm/s
+!
+        if     (tidnud.ge.2) then
+          write (nop,'(9a)') &
+            '## model-day  srfhgt  surflx', &
+            '     dpbl   dpmixl    tmix    smix   thmix', &
+            '    umix    vmix   ubavg   vbavg  steric  nsterc', &
+            '   oneta   tclim   sclim', &
+            '  sswflx  mixflx  sstflx', &
+            '      E-P   sssE-P   rivE-P  bhtflx  buoflx', &
+            '    ustar   hekman    dpbbl', &
+            ' usdbave vsdbave    usd0    vsd0', &
+            '   htide'
+          write (nop,'(a,f11.4,f8.2,f8.1,'//   & !...surflx
+                      '2f9.3,3f8.4,'//         & !... thmix
+                      '6f8.2,'//               & !...nsterc
+                      '3f8.4,'//               & !... sclim
+                      '3f8.1,'//               & !...sstflx
+                      '3f9.2,2f8.4,'//         & !...buoflx
+                      'f9.5, 2f9.3,'//         & !... dpbbl
+                      '4f8.2,'//               & !...  vsd0
+                      'f8.2)')                 & !...  htide
+            '#',time,                                             & !model-day
+            ssha*100.0/g,                                         & !cm
+            surflx(ipnt,jpnt),                                    & !W/m**2
+            min(  dpbl(ipnt,jpnt)  *qonem, 9999.999),             & !m
+            min(dpmixl(ipnt,jpnt,n)*qonem, 9999.999),             & !m
+              tmix(ipnt,jpnt),                                    & !degC
+              smix(ipnt,jpnt),                                    & !psu
+             thmix(ipnt,jpnt)+thbase,                             & !SigmaT
+            max(-999.99,min(999.99, upnt*100.0)),                 & !cm/s
+            max(-999.99,min(999.99, vpnt*100.0)),                 & !cm/s
+            max(-999.99,min(999.99,ubpnt*100.0)),                 & !cm/s
+            max(-999.99,min(999.99,vbpnt*100.0)),                 & !cm/s
+            sshs*100.0/g,                                         & !cm
+            sshn*100.0/g,                                         & !cm
+            opnt,                                                 & !unitless
+            sstc,                                                 & !degC
+            sssc,                                                 & !psu
+            sswflx(ipnt,jpnt),                                    & !W/m**2
+            mixflx(ipnt,jpnt),                                    & !W/m**2
+            sstflx(ipnt,jpnt),                                    & !W/m**2
+            wtrflx(ipnt,jpnt)*svref*8.64E7,                       & !mm/day
+            sssflx(ipnt,jpnt)*svref*8.64E7/ &
+                              max(0.1,saln(ipnt,jpnt,1,n)),       & !mm/day
+            rivflx(ipnt,jpnt)*svref*8.64E7,                       & !mm/day
+            bhtflx(ipnt,jpnt)*1.e6,                          & !1.e6*m**2/sec**3
+            buoflx(ipnt,jpnt)*1.e6,                          & !1.e6*m**2/sec**3
+             ustar(ipnt,jpnt),                                    & !m/s?
+            min(hekman(ipnt,jpnt),         9999.999),             & !m
+            min( dpbbl(ipnt,jpnt)  *qonem, 9999.999),             & !m
+            max(-999.99,min(999.99, ubstk*100.0)),                & !cm/s
+            max(-999.99,min(999.99, vbstk*100.0)),                & !cm/s
+            max(-999.99,min(999.99,  ust0*100.0)),                & !cm/s
+            max(-999.99,min(999.99,  vst0*100.0)),                & !cm/s
+            htide(ipnt,jpnt)*100.0                                  !cm
+        else
+          write (nop,'(8a)') &
+            '## model-day  srfhgt  surflx', &
+            '     dpbl   dpmixl    tmix    smix   thmix', &
+            '    umix    vmix   ubavg   vbavg  steric  nsterc', &
+            '   oneta   tclim   sclim', &
+            '  sswflx  mixflx  sstflx', &
+            '      E-P   sssE-P   rivE-P  bhtflx  buoflx', &
+            '    ustar   hekman    dpbbl', &
+            ' usdbave vsdbave    usd0    vsd0'
+          write (nop,'(a,f11.4,f8.2,f8.1,'//   & !...surflx
+                      '2f9.3,3f8.4,'//         & !... thmix
+                      '6f8.2,'//               & !...nsterc
+                      '3f8.4,'//               & !... sclim
+                      '3f8.1,'//               & !...sstflx
+                      '3f9.2,2f8.4,'//         & !...buoflx
+                      'f9.5, 2f9.3,'//         & !... dpbbl
+                      '4f8.2)')                & !...  vsd0
+            '#',time,                                             & !model-day
+            ssha*100.0/g,                                         & !cm
+            surflx(ipnt,jpnt),                                    & !W/m**2
+            min(  dpbl(ipnt,jpnt)  *qonem, 9999.999),             & !m
+            min(dpmixl(ipnt,jpnt,n)*qonem, 9999.999),             & !m
+              tmix(ipnt,jpnt),                                    & !degC
+              smix(ipnt,jpnt),                                    & !psu
+             thmix(ipnt,jpnt)+thbase,                             & !SigmaT
+            max(-999.99,min(999.99, upnt*100.0)),                 & !cm/s
+            max(-999.99,min(999.99, vpnt*100.0)),                 & !cm/s
+            max(-999.99,min(999.99,ubpnt*100.0)),                 & !cm/s
+            max(-999.99,min(999.99,vbpnt*100.0)),                 & !cm/s
+            sshs*100.0/g,                                         & !cm
+            sshn*100.0/g,                                         & !cm
+            opnt,                                                 & !unitless
+            sstc,                                                 & !degC
+            sssc,                                                 & !psu
+            sswflx(ipnt,jpnt),                                    & !W/m**2
+            mixflx(ipnt,jpnt),                                    & !W/m**2
+            sstflx(ipnt,jpnt),                                    & !W/m**2
+            wtrflx(ipnt,jpnt)*svref*8.64E7,                       & !mm/day
+            sssflx(ipnt,jpnt)*svref*8.64E7/ &
+                              max(0.1,saln(ipnt,jpnt,1,n)),       & !mm/day
+            rivflx(ipnt,jpnt)*svref*8.64E7,                       & !mm/day
+            bhtflx(ipnt,jpnt)*1.e6,                          & !1.e6*m**2/sec**3
+            buoflx(ipnt,jpnt)*1.e6,                          & !1.e6*m**2/sec**3
+             ustar(ipnt,jpnt),                                    & !m/s?
+            min(hekman(ipnt,jpnt),         9999.999),             & !m
+            min( dpbbl(ipnt,jpnt)  *qonem, 9999.999),             & !m
+            max(-999.99,min(999.99,ubstk*100.0)),                 & !cm/s
+            max(-999.99,min(999.99,vbstk*100.0)),                 & !cm/s
+            max(-999.99,min(999.99, ust0*100.0)),                 & !cm/s
+            max(-999.99,min(999.99, vst0*100.0))                    !cm/s
+        endif  !htide:else
 #else
 !
-! ---   order is not optimal, constrained by ALL/bin/hycom_profile_list 
+! ---   order is not optimal, constrained by ALL/bin/hycom_profile_list
 ! ---   which only includes the fields up to vbavg (or up to nsterc)
-        write (nop,'(7a)') &
-          '## model-day  srfhgt  surflx', &
-          '     dpbl   dpmixl    tmix    smix   thmix', &
-          '    umix    vmix   ubavg   vbavg  steric  nsterc', &
-          '   oneta   tclim   sclim', &
-          '  sswflx  mixflx  sstflx', &
-          '      E-P   sssE-P   rivE-P  bhtflx  buoflx', &
-          '    ustar   hekman    dpbbl'
-        write (nop,'(a,f11.4,f8.2,f8.1,'//   & !...surflx
-                    '2f9.3,3f8.4,'//         & !... thmix
-                    '6f8.2,'//               & !...nsterc
-                    '3f8.4,'//               & !... sclim
-                    '3f8.1,'//               & !...sstflx
-                    '3f9.2,2f8.4,'//         & !...buoflx
-                    'f9.5, 2f9.3)')          & !... dpbbl
-          '#',time,                                             & !model-day
-          ssha*100.0/g,                                         & !cm
-          surflx(ipnt,jpnt),                                    & !W/m**2
-          min(  dpbl(ipnt,jpnt)  *qonem, 9999.999),             & !m
-          min(dpmixl(ipnt,jpnt,n)*qonem, 9999.999),             & !m
-            tmix(ipnt,jpnt),                                    & !degC
-            smix(ipnt,jpnt),                                    & !psu
-           thmix(ipnt,jpnt)+thbase,                             & !SigmaT
-          max(-999.99,min(999.99, upnt*100.0)),                 & !cm/s
-          max(-999.99,min(999.99, vpnt*100.0)),                 & !cm/s
-          max(-999.99,min(999.99,ubpnt*100.0)),                 & !cm/s
-          max(-999.99,min(999.99,vbpnt*100.0)),                 & !cm/s
-          sshs*100.0/g,                                         & !cm
-          sshn*100.0/g,                                         & !cm
-          opnt,                                                 & !unitless
-          sstc,                                                 & !degC
-          sssc,                                                 & !psu
-          sswflx(ipnt,jpnt),                                    & !W/m**2
-          mixflx(ipnt,jpnt),                                    & !W/m**2
-          sstflx(ipnt,jpnt),                                    & !W/m**2
-          wtrflx(ipnt,jpnt)*svref*8.64E7,                       & !mm/day
-          sssflx(ipnt,jpnt)*svref*8.64E7/ &
-                            max(0.1,saln(ipnt,jpnt,1,n)),       & !mm/day
-          rivflx(ipnt,jpnt)*svref*8.64E7,                       & !mm/day
-          bhtflx(ipnt,jpnt)*1.e6,                          & !1.e6*m**2/sec**3
-          buoflx(ipnt,jpnt)*1.e6,                          & !1.e6*m**2/sec**3
-           ustar(ipnt,jpnt),                                    & !m/s?
-          min(hekman(ipnt,jpnt),         9999.999),             & !m
-          min( dpbbl(ipnt,jpnt)  *qonem, 9999.999)             !m
+!
+        if     (tidnud.ge.2) then
+          write (nop,'(8a)') &
+            '## model-day  srfhgt  surflx', &
+            '     dpbl   dpmixl    tmix    smix   thmix', &
+            '    umix    vmix   ubavg   vbavg  steric  nsterc', &
+            '   oneta   tclim   sclim', &
+            '  sswflx  mixflx  sstflx', &
+            '      E-P   sssE-P   rivE-P  bhtflx  buoflx', &
+            '    ustar   hekman    dpbbl', &
+            '   htide'
+          write (nop,'(a,f11.4,f8.2,f8.1,'//   & !...surflx
+                      '2f9.3,3f8.4,'//         & !... thmix
+                      '6f8.2,'//               & !...nsterc
+                      '3f8.4,'//               & !... sclim
+                      '3f8.1,'//               & !...sstflx
+                      '3f9.2,2f8.4,'//         & !...buoflx
+                      'f9.5, 2f9.3,'//         & !... dpbbl
+                      'f8.2)')                 & !... htide
+            '#',time,                                             & !model-day
+            ssha*100.0/g,                                         & !cm
+            surflx(ipnt,jpnt),                                    & !W/m**2
+            min(  dpbl(ipnt,jpnt)  *qonem, 9999.999),             & !m
+            min(dpmixl(ipnt,jpnt,n)*qonem, 9999.999),             & !m
+              tmix(ipnt,jpnt),                                    & !degC
+              smix(ipnt,jpnt),                                    & !psu
+             thmix(ipnt,jpnt)+thbase,                             & !SigmaT
+            max(-999.99,min(999.99, upnt*100.0)),                 & !cm/s
+            max(-999.99,min(999.99, vpnt*100.0)),                 & !cm/s
+            max(-999.99,min(999.99,ubpnt*100.0)),                 & !cm/s
+            max(-999.99,min(999.99,vbpnt*100.0)),                 & !cm/s
+            sshs*100.0/g,                                         & !cm
+            sshn*100.0/g,                                         & !cm
+            opnt,                                                 & !unitless
+            sstc,                                                 & !degC
+            sssc,                                                 & !psu
+            sswflx(ipnt,jpnt),                                    & !W/m**2
+            mixflx(ipnt,jpnt),                                    & !W/m**2
+            sstflx(ipnt,jpnt),                                    & !W/m**2
+            wtrflx(ipnt,jpnt)*svref*8.64E7,                       & !mm/day
+            sssflx(ipnt,jpnt)*svref*8.64E7/ &
+                              max(0.1,saln(ipnt,jpnt,1,n)),       & !mm/day
+            rivflx(ipnt,jpnt)*svref*8.64E7,                       & !mm/day
+            bhtflx(ipnt,jpnt)*1.e6,                          & !1.e6*m**2/sec**3
+            buoflx(ipnt,jpnt)*1.e6,                          & !1.e6*m**2/sec**3
+             ustar(ipnt,jpnt),                                    & !m/s?
+            min(hekman(ipnt,jpnt),         9999.999),             & !m
+            min( dpbbl(ipnt,jpnt)  *qonem, 9999.999),             & !m
+            htide(ipnt,jpnt)*100.0                                  !cm
+        else
+          write (nop,'(7a)') &
+            '## model-day  srfhgt  surflx', &
+            '     dpbl   dpmixl    tmix    smix   thmix', &
+            '    umix    vmix   ubavg   vbavg  steric  nsterc', &
+            '   oneta   tclim   sclim', &
+            '  sswflx  mixflx  sstflx', &
+            '      E-P   sssE-P   rivE-P  bhtflx  buoflx', &
+            '    ustar   hekman    dpbbl'
+          write (nop,'(a,f11.4,f8.2,f8.1,'//   & !...surflx
+                      '2f9.3,3f8.4,'//         & !... thmix
+                      '6f8.2,'//               & !...nsterc
+                      '3f8.4,'//               & !... sclim
+                      '3f8.1,'//               & !...sstflx
+                      '3f9.2,2f8.4,'//         & !...buoflx
+                      'f9.5, 2f9.3)')          & !... dpbbl
+            '#',time,                                             & !model-day
+            ssha*100.0/g,                                         & !cm
+            surflx(ipnt,jpnt),                                    & !W/m**2
+            min(  dpbl(ipnt,jpnt)  *qonem, 9999.999),             & !m
+            min(dpmixl(ipnt,jpnt,n)*qonem, 9999.999),             & !m
+              tmix(ipnt,jpnt),                                    & !degC
+              smix(ipnt,jpnt),                                    & !psu
+             thmix(ipnt,jpnt)+thbase,                             & !SigmaT
+            max(-999.99,min(999.99, upnt*100.0)),                 & !cm/s
+            max(-999.99,min(999.99, vpnt*100.0)),                 & !cm/s
+            max(-999.99,min(999.99,ubpnt*100.0)),                 & !cm/s
+            max(-999.99,min(999.99,vbpnt*100.0)),                 & !cm/s
+            sshs*100.0/g,                                         & !cm
+            sshn*100.0/g,                                         & !cm
+            opnt,                                                 & !unitless
+            sstc,                                                 & !degC
+            sssc,                                                 & !psu
+            sswflx(ipnt,jpnt),                                    & !W/m**2
+            mixflx(ipnt,jpnt),                                    & !W/m**2
+            sstflx(ipnt,jpnt),                                    & !W/m**2
+            wtrflx(ipnt,jpnt)*svref*8.64E7,                       & !mm/day
+            sssflx(ipnt,jpnt)*svref*8.64E7/ &
+                              max(0.1,saln(ipnt,jpnt,1,n)),       & !mm/day
+            rivflx(ipnt,jpnt)*svref*8.64E7,                       & !mm/day
+            bhtflx(ipnt,jpnt)*1.e6,                          & !1.e6*m**2/sec**3
+            buoflx(ipnt,jpnt)*1.e6,                          & !1.e6*m**2/sec**3
+             ustar(ipnt,jpnt),                                    & !m/s?
+            min(hekman(ipnt,jpnt),         9999.999),             & !m
+            min( dpbbl(ipnt,jpnt)  *qonem, 9999.999)                !m
+        endif  !htide:else
 #endif
 !
-! ---   An added line for mass constervation
-        write (nop,'(2a)') &
-          '## model-day  srfhgt  steric  nsterc   pbavg', &
-          '   oneta  salt1.anom  salt.anom'
-        write (nop,'(a,f11.4,4f8.2,f8.5,2f12.2)') &
-          '#',time,                                             & !model-day
-          ssha*100.0/g,                                         & !cm
-          sshs*100.0/g,                                         & !cm
-          sshn*100.0/g,                                         & !cm
-          sshb*100.0*qonem,                                     & !cm
-          opnt,                                                 & !1+eta, unitless
-          sssa,                                                 & !m.psu
-          sums                                                 !m.psu
+! ---   An added line for mass conservation
+        if     (tidnud.eq.2) then
+          write (nop,'(2a)') &
+            '## model-day  srfhgt  steric  nsterc   pbavg', &
+            '  pbavga   htide   oneta  salt1.anom  salt.anom'
+          write (nop,'(a,f11.4,6f8.2,f8.5,2f12.2)') &
+            '#',time,                                             & !model-day
+            ssha*100.0/g,                                         & !cm
+            sshs*100.0/g,                                         & !cm
+            sshn*100.0/g,                                         & !cm
+            sshb*100.0*qonem,                                     & !cm
+            (sshb-hntide(ipnt,jpnt))*100.0*qonem,                 & !cm
+            htide(ipnt,jpnt)*100.0,                               & !cm
+            opnt,                                                 & !1+eta, unitless
+            sssa,                                                 & !m.psu
+            sums                                                    !m.psu
+        else
+          write (nop,'(2a)') &
+            '## model-day  srfhgt  steric  nsterc   pbavg', &
+            '   oneta  salt1.anom  salt.anom'
+          write (nop,'(a,f11.4,4f8.2,f8.5,2f12.2)') &
+            '#',time,                                             & !model-day
+            ssha*100.0/g,                                         & !cm
+            sshs*100.0/g,                                         & !cm
+            sshn*100.0/g,                                         & !cm
+            sshb*100.0*qonem,                                     & !cm
+            opnt,                                                 & !1+eta, unitless
+            sssa,                                                 & !m.psu
+            sums                                                    !m.psu
+        endif  !tidnud
 !
         if     (iceflg.ne.0) then
-          if     (.not.icegln) then 
+          if     (.not.icegln) then
             wflfrz(ipnt,jpnt) = wflice(ipnt,jpnt)
           endif
-          if     (iceflg.eq.1) then 
+          if     (iceflg.eq.1) then
             sihpnt = thkice(ipnt,jpnt)  !from icloan
           else
             sihpnt =   si_h(ipnt,jpnt)  !from coupler
@@ -1006,13 +1206,14 @@
         write (lp,*) 'archiv_prof_out called on wrong tile'
         write (lp,*) 'ipoint,jpoint = ',ipoint,jpoint
         write (lp,*) 'ipnt,  jpnt   = ',ipnt,  jpnt
-        write (lp,*) 
+        write (lp,*)
         call xchalt('(archiv_prof_out)')
                stop '(archiv_prof_out)'
       endif !point tile
       return
       end subroutine archiv_prof_out
-
+!
+!
       subroutine archiv_tile(n, kkout, iyear,iday,ihour)
 #if defined(STOKES)
       use mod_stokes  ! Stokes Drift Velocity Module
@@ -1021,9 +1222,9 @@
       integer   n, kkout, iyear,iday,ihour
       real      sssc,sstc
 !
-# include "stmt_fns.h"
-!
 ! --- write a partial archive file on a tile by tile basis.
+!
+# include "stmt_fns.h"
 !
       character*8  ctype
       character*12 cdir
@@ -1229,15 +1430,15 @@
       call xcsync(no_flush)  !called on all tiles, see lexist above
       return
       end subroutine archiv_tile
-
+!
+!
 #if defined (ESPC_COUPLE)
       subroutine archiv_exchange
       use mod_xc  ! HYCOM communication interface
       use mod_za  ! HYCOM I/O interface
       use mod_cb_arrays
-
+!
       implicit none
-
 !
 ! --- Create a HYCOM "archive-like" file from "ice" Import/Export state.
 ! --- Import state may not be at the same time as Export.
@@ -1304,21 +1505,20 @@
        i5,4x,'''jdm   '' = latitudinal  array size'/ &
        'field       time step  model day', &
        '  k  dens        min              max')
-
+!
 #if defined(ARCTIC)
 ! --- Arctic (tripole) domain, top row is replicated (ignore it)
       jja = min( jj, jtdm-1-j0 )
 #else
       jja = jj
 #endif
-
 !
 ! --- surface fields
 !
       coord=0.0
       do k= 1,numExpFields
         call export_from_hycom_tiled(util2,cname_exp(k))  !can't use util1
-
+!
         do j= 1,jja
           do i= 1,ii
             if     (ishlf(i,j).eq.1) then
@@ -1328,7 +1528,7 @@
             endif !ishlf
           enddo !i
         enddo !j
-
+!
 #if defined(ARCTIC)
         if     (k.eq.3 .or. k.eq.4) then !ssu and ssv
           call xctila(util2,1,1,halo_pv)
@@ -1394,7 +1594,7 @@
 #if defined(ARCTIC)
         call xctila(util1,1,1,halo_pv)
 #endif
-
+!
       cname = 'sitxdown'
       call zaiowr(util1,ishlf,.true., xmin,xmax, nopa, .false.)
       if     (mnproc.eq.1) then
@@ -1414,7 +1614,7 @@
 #if defined(ARCTIC)
         call xctila(util1,1,1,halo_pv)
 #endif
-
+!
       cname = 'sitydown'
       call zaiowr(util1,ishlf,.true., xmin,xmax, nopa, .false.)
       if     (mnproc.eq.1) then
@@ -1457,7 +1657,7 @@
         call xctila(util1,1,1,halo_ps)
         vland = 0.0
 #endif
-
+!
       cname = 'sifh    '
       call zaiowr(util1,ishlf,.false., xmin,xmax, nopa, .false.)
       if     (mnproc.eq.1) then
@@ -1479,7 +1679,7 @@
         call xctila(util1,1,1,halo_ps)
         vland = 0.0
 #endif
-
+!
       cname = 'sifs    '
       call zaiowr(util1,ishlf,.false., xmin,xmax, nopa, .false.)
       if     (mnproc.eq.1) then
@@ -1501,7 +1701,7 @@
         call xctila(util1,1,1,halo_ps)
         vland = 0.0
 #endif
-
+!
       cname = 'sifw    '
       call zaiowr(util1,ishlf,.false., xmin,xmax, nopa, .false.)
       if     (mnproc.eq.1) then
@@ -1523,7 +1723,7 @@
         call xctila(util1,1,1,halo_ps)
         vland = 0.0
 #endif
-
+!
       cname = 'sit     '
       call zaiowr(util1,ishlf,.false., xmin,xmax, nopa, .false.)
       if     (mnproc.eq.1) then
@@ -1545,7 +1745,7 @@
         call xctila(util1,1,1,halo_ps)
         vland = 0.0
 #endif
-
+!
       cname = 'sih     '
       call zaiowr(util1,ishlf,.false., xmin,xmax, nopa, .false.)
       if     (mnproc.eq.1) then
@@ -1562,13 +1762,13 @@
           endif !ice:no-ice
         enddo !i
       enddo !j
-
+!
 #if defined(ARCTIC)
         vland = hugel
         call xctila(util1,1,1,halo_pv)
         vland = 0.0
 #endif
-
+!
       cname = 'siu     '
       call zaiowr(util1,ishlf,.false., xmin,xmax, nopa, .false.)
       if     (mnproc.eq.1) then
@@ -1585,7 +1785,7 @@
           endif !ice:no-ice
         enddo !i
       enddo !j
-
+!
 #if defined(ARCTIC)
         vland = hugel
         call xctila(util1,1,1,halo_pv)
@@ -1661,7 +1861,7 @@
       end subroutine archiv_exchange
 #endif /* ESPC_COUPLE */
       end module mod_archiv
-
+!
 !>
 !> Revision history
 !>
@@ -1691,12 +1891,14 @@
 !> Nov. 2018 - wtrflx replaces salflx in default surface archive
 !> Nov. 2018 - write out si_h rather than thkice when coupled to sea ice
 !> Nov. 2018 - added oneta to 3-D archives
-!> Dec. 2018 - add archiv_exchange for NAVYESPC 
-!> Feb. 2019 - removed onetai 
+!> Dec. 2018 - add archiv_exchange for NAVYESPC
+!> Feb. 2019 - removed onetai
 !> July 2023 - added mtracer for diagnostic tracers
 !> July 2023 - added a number 01-99 to tracer output
+!> Dec. 2024 - added htide to text profiles when available
 !> Jan. 2025 - added surface tracers
 !> Jan. 2025 - converted displd_mn and dispqd_mn to surface tracers
-!> Jan. 2025 - removed tidepg_mn 
+!> Jan. 2025 - removed tidepg_mn
 !> Jan. 2025 - kkout==0 for surface archives
 !> Jan. 2025 - Added sshflg=3 for steric SSH and Montg. Potential
+!> Jan. 2025 - tidnud adds extra surface fields to archiv_prof_out

@@ -186,7 +186,6 @@
        pvtrop,         & ! pot.vort. of barotropic flow
        depths,         & ! water depth
        drag,           & ! bottom drag
-       salfac,         & ! spatialy varying "scalar" SAL factor
        topiso,         & ! shallowest depth for isopycnal layers (pressure units)
        diws,           & ! spacially varying background/internal wave diffusivity
        diwm,           & ! spacially varying background/internal wave viscosity
@@ -684,11 +683,11 @@
 ! --- 'cbar'   = rms flow speed (m/s) for linear bottom friction law
 ! --- 'drglim' = limiter for explicit friction (1.0 no limiter, 0.0 implicit)
 ! --- tidfbw(4):
-! --- 'tidfm2' = M2 streaming filter bandwidth  (0.0 for no filter)
-! --- 'tidfs2' = S2 streaming filter bandwidth  (0.0 for no filter)
-! --- 'tidfk1' = K1 streaming filter bandwidth  (0.0 for no filter)
-! --- 'tidfo1' = O1 streaming filter bandwidth  (0.0 for no filter)
-! --- drgscf(4):       
+! --- 'tidfm2' = M2 velocity streaming filter bandwidth  (0.0 for no filter)
+! --- 'tidfs2' = S2 velocity streaming filter bandwidth  (0.0 for no filter)
+! --- 'tidfk1' = K1 velocity streaming filter bandwidth  (0.0 for no filter)
+! --- 'tidfo1' = O1 velocity streaming filter bandwidth  (0.0 for no filter)
+! --- drgscf(4):
 ! --- 'drgscm' = scale factor for M2 tidal drag (0.0 when tidfm2=0.0)
 ! --- 'drgscs' = scale factor for S2 tidal drag (0.0 when tidfs2=0.0)
 ! --- 'drgsck' = scale factor for K1 tidal drag (0.0 when tidfk1=0.0)
@@ -805,7 +804,7 @@
                      visco2,visco4,veldf2,veldf4,facdf4, &
                      temdf2,temdfc,thkdf2,thkdf4,vertmx,diapyc, &
                      tofset,sofset,dtrate,slip,cb,cbar, &
-                     drgscl,drgscf(4),tidfbw(4),thkdrg,drglim, &
+                     tidfbw(4),drgscf(4),drgscl,thkdrg,drglim, &
                      dsurfq,diagfq,proffq,tilefq,meanfq, &
                      rstrfq,bnstfq,nestfq, &
                      stfrdt,stfrds,stfrdv,ra2fac,wbaro, &
@@ -1240,7 +1239,6 @@
               pvtrop(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy), &
               depths(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy), &
                 drag(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy), &
-              salfac(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy), & 
               topiso(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy), &
                 diws(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy), &
                 diwm(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy), &
@@ -1248,7 +1246,7 @@
               diwqh0(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy), &
               sssrmx(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy), &
               drgfrh(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy) )
-      call mem_stat_add( 60*(idm+2*nbdy)*(jdm+2*nbdy) )
+      call mem_stat_add( 59*(idm+2*nbdy)*(jdm+2*nbdy) )
 #endif
                util1(:,:) = r_init
                util2(:,:) = r_init
@@ -1302,7 +1300,6 @@
               pvtrop(:,:) = r_init
               depths(:,:) = r_init
                 drag(:,:) = r_init
-              salfac(:,:) = r_init
               topiso(:,:) = r_init
                 diws(:,:) = r_init
                 diwm(:,:) = r_init
@@ -1614,7 +1611,7 @@
 #if defined(RELO)
       allocate( &
            maskbc(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy), &
-           oneclp(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy) ) 
+           oneclp(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy) )
       call mem_stat_add( (idm+2*nbdy)*(jdm+2*nbdy) ) !real=2*int
 #endif
            maskbc(:,:) = -99
@@ -1927,3 +1924,4 @@
 !> Jan. 2025 - added stracr, mstrcr, strcfl and istrcr
 !> Jan. 2025 - converted displd_mn and dispqd_mn to surface tracers
 !> Jan. 2025 - removed tidepg_mn
+!> Jan. 2025 - moved salfac to mod_tides

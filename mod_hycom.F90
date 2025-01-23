@@ -599,7 +599,7 @@
             tfrz = tfrz_0 + smxl*tfrz_s  !salinity dependent freezing point
             ssfi = (tfrz-tmxl)*t2f       !W/m^2 into ocean
 ! ---       average currents over top thkcdw meters
-            thksur = onem*min( thkcdw, depths(i,j) ) 
+            thksur = onem*min( thkcdw, depths(i,j) )
             usur1  = 0.0
             vsur1  = 0.0
             psur1  = 0.0
@@ -1078,7 +1078,7 @@
       type(ESMF_Clock)     :: extClock
       integer, intent(out) :: rc
       logical       restart_cpl
-#else 
+#else
       subroutine HYCOM_Init &
                   (mpiCommunicator,hycom_start_dtg,hycom_end_dtg, &
                    pointer_filename)
@@ -1202,7 +1202,7 @@
                stop '(hycom)'   !won't get here
       else
          if (mnproc.eq.1) then
-         write(lp,*)  trim(flnminp)//'limits'  
+         write(lp,*)  trim(flnminp)//'limits'
          call flush(lp)
         endif !1st tile
         open( unit=uoff+99,file=trim(flnminp)//'limits')
@@ -1254,8 +1254,8 @@
       nts_day = nint(86400.0d0/baclin)     !no. time steps per day
       dsmall  = baclin/86400.0d0 * 0.25d0  !1/4 of a time step in days
       dsmall2 = dsmall*2.0d0
-      dtime=(nstep1/nts_day)+mod(nstep1,nts_day)*(baclin/86400.0d0)             
-      day1 =dtime 
+      dtime=(nstep1/nts_day)+mod(nstep1,nts_day)*(baclin/86400.0d0)
+      day1 =dtime
       if     (dsurfq.ge.1.0) then
         ddsurf = dsurfq
 !       write(6,'("Case 1 ddsurf =",G25.17)')ddsurf
@@ -1437,25 +1437,6 @@
         call forfunt    !spacially varying minimum depths
       else
         topiso(:,:)=onem*isotop  !constant minimum depth
-      endif
-!
-! --- tidal drag roughness (m/s)
-!
-      if     (max(drgscl,maxval(drgscf(:))).ne.0.0) then
-        call forfund(tiddrg)    !tidal drag scalar or tensor
-      else
-        drgten(:,:,:,:)=0.0
-        drgfrh(:,:)    =0.0
-      endif
-!
-! --- "scalar" tidal SAL factor
-!
-      if     (tidflg.eq.0) then
-        salfac(:,:)=0.0     !not used, set it for safety
-      elseif (tidsal.lt.0.0) then
-        call forfuns        !varying tidal SAL factor
-      else
-        salfac(:,:)=tidsal  !scalar  tidal SAL factor
       endif
 !
 ! --- veldf2, veldf4 and thkdf4 may be spacially varying
@@ -1650,6 +1631,43 @@
           call archiv(n, kk, iyear,jday,ihour, intvl)
         endif !archive output
       endif !initial conditions
+!
+! --- tidal drag roughness (m/s)
+!
+      if     (max(drgscl,maxval(drgscf(:))).ne.0.0) then
+        call forfund(tiddrg)    !tidal drag scalar or tensor
+      else
+        drgten(:,:,:,:)=0.0
+        drgfrh(:,:)    =0.0
+      endif
+!
+! --- tidal nudging coefficent (1/s)
+!
+      if     (tidnud.eq.0) then
+        hnudge(:,:)=0.0 !not used, set it for safety
+      else
+        call forfunn
+      endif
+!
+        if (.false. .and. itest.gt.0 .and. jtest.gt.0) then
+          i = itest
+          j = jtest
+          write (lp,'(2i5,3x,a,g15.6)') &
+            i+i0,j+j0, &
+            'nudge =', &
+            hnudge(i,j)
+        endif !debug
+        call xcsync(flush_lp)
+!
+! --- "scalar" tidal SAL factor
+!
+      if     (tidflg.eq.0) then
+        salfac(:,:)=0.0     !not used, set it for safety
+      elseif (tidsal.lt.0.0) then
+        call forfuns        !varying tidal SAL factor
+      else
+        salfac(:,:)=tidsal  !scalar  tidal SAL factor
+      endif
 !
 ! --- set barotp.pot.vort. and layer thickness (incl.bottom pressure) at
 ! --- u,v points
@@ -2147,7 +2165,7 @@
       endif
 !
 ! --- report initialization time.
-! 
+!
       call xctmrp
       call xctmr0(78)  !time since HYCOM_Init
 !
@@ -2164,7 +2182,7 @@
       type(ESMF_State)     :: expState
       type(ESMF_Clock)     :: extClock
       integer, intent(out) :: rc
-#else 
+#else
       subroutine HYCOM_Run  &
                  (endtime,pointer_filename,restart_write)
 !
@@ -2241,9 +2259,13 @@
 !
       time  =dtime
       time_8=dtime  !'baroclinic' time for body force tides
-      if     (tidflg.gt.0 .and. &
-              mod(dtime+dsmall,hours1).lt.dsmall2) then
-        call tides_detide(n, .true.)  !update 49-hour filter
+      if     (mod(dtime+dsmall,hours1).lt.dsmall2) then
+        if     (tidnud.eq.2) then
+          call tides_dehtide(n, .true.)  !update 49-hour pbavg filter
+        endif
+        if     (tidflg.gt.0) then
+          call tides_detide( n, .true.)  !update 49-hour botvel filter
+        endif
       endif
       if     (tidstr.eq.1) then
         call tides_filter(n)  !update streaming filters
@@ -2312,7 +2334,7 @@
               .and.  cpl_taux   .and. cpl_tauy     .and. cpl_precip)) &
               then
                call forfunh(dtime)
-               if (mnproc.eq.1) print*,'not cpl_forcing, forfunh(dtime)'  
+               if (mnproc.eq.1) print*,'not cpl_forcing, forfunh(dtime)'
           endif
           if (mnproc.eq.1) print*,'cpl_forcing from coupler'
 #  if defined(ARCTIC)
@@ -2773,17 +2795,17 @@
           endif !1st tile
           lfatal = .true.  !delay exit to allow archive output
         endif !NaN
-!                
+!
         if     (tidflg.gt.0) then
           call xcsum( dsms, util2,ipa)
           sms=dsms/area
-!         
+!
           call xctilr(u(    1-nbdy,1-nbdy,1,n),1,kk, 1,1, halo_uv)
           call xctilr(v(    1-nbdy,1-nbdy,1,n),1,kk, 1,1, halo_vv)
           call xctilr(ubavg(1-nbdy,1-nbdy,  n),1, 1, 1,1, halo_uv)
           call xctilr(vbavg(1-nbdy,1-nbdy,  n),1, 1, 1,1, halo_vv)
-!         
-#if defined(STOKES) 
+!
+#if defined(STOKES)
           dskesa=0.0d0
 #endif
           dskea =0.0d0
@@ -2991,9 +3013,9 @@
             smt=d4/d2   !average ice temperature, where there is ice
             sms=d2/area * 100.0  !ice coverage, percent of total area
           else
-            sum=0.0 
-            smt=0.0 
-            sms=0.0 
+            sum=0.0
+            smt=0.0
+            sms=0.0
           endif
           if (mnproc.eq.1) then
           write (lp,'(i9,a, &
@@ -3044,9 +3066,9 @@
             smt=d4/d2   !average ice temperature, where there is ice in S.H.
             sms=d2/area * 100.0  !S.H. ice coverage, percent of total area
           else
-            sum=0.0 
-            smt=0.0 
-            sms=0.0 
+            sum=0.0
+            smt=0.0
+            sms=0.0
           endif
           if (mnproc.eq.1) then
           write (lp,'(i9,a, &
@@ -3073,9 +3095,9 @@
             smt=d4/d2   !average ice temperature, where there is ice in N.H.
             sms=d2/area * 100.0  !N.H. ice coverage, percent of total area
           else
-            sum=0.0 
-            smt=0.0 
-            sms=0.0 
+            sum=0.0
+            smt=0.0
+            sms=0.0
           endif
           if (mnproc.eq.1) then
           write (lp,'(i9,a, &
@@ -3515,7 +3537,8 @@
       endif  !diagno ...
 !
 ! --- diagnose meridional overturning and heat flux
-      if     (mod(dtime+dsmall,dmonth).lt.dsmall2) then
+      if     (day2-day1.gt.32.0 .and. &
+              mod(dtime+dsmall,dmonth).lt.dsmall2) then
         call xctmr0(52)
         call overtn(dtime,dyear)
         call xctmr1(52)
@@ -3595,7 +3618,7 @@
             do k= 1,kk
               do i=1,ii
                 if (SEA_P) then
-! ---             convert diapycnal thickness changes into 
+! ---             convert diapycnal thickness changes into
 ! ---             actual interface fluxes
                   if (k.gt.1) then
                     diaflx(i,j,k)=diaflx(i,j,k)/(2.*onem) + &
@@ -3695,11 +3718,11 @@
           if (SEA_P) then
              sshm(i,j) = sshm(i,j) + srfhgt(i,j)
 
-             um(i,j)  = um(i,j)  + 0.5*(    u(i,j,1,1)+    u(i,j,1,2)) 
+             um(i,j)  = um(i,j)  + 0.5*(    u(i,j,1,1)+    u(i,j,1,2))
              ubm(i,j) = ubm(i,j) + 0.5*(ubavg(i,j,  1)+ubavg(i,j,  2))
 
-             vm(i,j)  = vm(i,j)  + 0.5*(    v(i,j,1,1)+    v(i,j,1,2)) 
-             vbm(i,j) = vbm(i,j) + 0.5*(vbavg(i,j,  1)+vbavg(i,j,  2)) 
+             vm(i,j)  = vm(i,j)  + 0.5*(    v(i,j,1,1)+    v(i,j,1,2))
+             vbm(i,j) = vbm(i,j) + 0.5*(vbavg(i,j,  1)+vbavg(i,j,  2))
 
              tavgm(i,j) = tavgm(i,j) + 0.5*(temp(i,j,1,1) &
                                            +temp(i,j,1,2))
@@ -3803,7 +3826,7 @@
 !            vml(:,:)=vml(:,:)*(icefrq/ntavg)
 !          else
 !            if (mnproc.eq.1) then
-!              write(lp,*) 
+!              write(lp,*)
 !              write(lp,*) ' icefrq and cplfrq should be the same ....'
 !              write(lp,*) ' icefrq, ntavg:',icefrq, ntavg
 !              call flush(lp)
@@ -3929,7 +3952,7 @@
           call dpudpv(dpu(1-nbdy,1-nbdy,1,nm), &
                       dpv(1-nbdy,1-nbdy,1,nm), &
                       p,depthu,depthv, margin,max(0,margin-1))
-!            
+!
         enddo  !nm=1,2
         nstep = nstep-1  !restore
 !
@@ -3986,7 +4009,7 @@
 
       end_of_run = nstep.ge.nstep2
 !
-! --- at end: output float restart file 
+! --- at end: output float restart file
 !
       if     (synflt .and. end_of_run) then
         call floats_restart
@@ -4115,3 +4138,5 @@
 !> Dec. 2024 - added streaming tidal filter
 !> Jan. 2025 - kkout==0 for surface archives
 !> Jan. 2025 - Added sshflg=3 for steric SSH and Montg. Potential
+!> Jan. 2025 - added the option to nudge towards the observed tides
+!> Jan. 2025 - call overtn only at the end of one month or shorter runs

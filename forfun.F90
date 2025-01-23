@@ -1,5 +1,5 @@
       subroutine datefor(wday, iyr,mon,idy,ihr, yrflag)
-      use mod_xc  ! HYCOM communication interface 
+      use mod_xc  ! HYCOM communication interface
       implicit none
 !
       real*8  wday
@@ -15,8 +15,8 @@
 !         so wday would be 1.0.
 !      b) iyr=1,mon=1,idy=2 is the 2nd day of the run,
 !         so wday would be 2.0.
-!  
-!  3) for yrflag==3, the 'model day' is the number of days since 
+!
+!  3) for yrflag==3, the 'model day' is the number of days since
 !     001/1901 (which is model day 1.0).
 !     for example:
 !      a) iyr=1901,mon=1,idy=1, represents 0000z hrs on 01/01/1901
@@ -54,7 +54,7 @@
         if     (mon.gt.2) then
           wday  = wday + 1.0d0
         endif
-      else 
+      else
         if     (mnproc.eq.1) then
         write(lp,*)
         write(lp,*) 'error in datefor - unsupported yrflag value'
@@ -198,7 +198,7 @@
 ! --- units of airtmp are degC
 ! --- units of surtmp are degC
 ! --- units of seatmp are degC
-! --- units of vapmix are kg/k 
+! --- units of vapmix are kg/k
 ! --- units of spchum are kg/k
 ! --- units of mslprs are Pa     (anomaly, offset from total by prsbas)
 ! --- units of precip are m/s    (positive into ocean)
@@ -324,8 +324,8 @@
             enddo !i
           enddo !j
         endif !stroff:else
-!      
-      else !.not. windf 
+!
+      else !.not. windf
         do j=1,jj
           do i=1,ii
             ustar(i,j) = 0.0
@@ -461,7 +461,7 @@
             sstflx(i,j) = 0.0
             surflx(i,j) = 0.0
             wtrflx(i,j) = 0.0
-            salflx(i,j) = 0.0  
+            salflx(i,j) = 0.0
             sssflx(i,j) = 0.0
             rivflx(i,j) = 0.0
           enddo
@@ -828,7 +828,7 @@
           read (uoff+901,'(a79)') preambl
           endif !1st tile
           call preambl_print(preambl)
-!             
+!
           call zaiopf(flnmfor(1:lgth)//'forcing.wndnwd.a', 'old', 902)
           if     (mnproc.eq.1) then  ! .b file from 1st tile only
           open (unit=uoff+902,file=flnmfor(1:lgth)//'forcing.wndnwd.b', &
@@ -1028,7 +1028,7 @@
             if     (nrec.ne.1 .and. dtime1.lt.dtime0) then
               dtime1 = dtime1 + wndrep
             endif
-          elseif (yrflag.eq.4) then 
+          elseif (yrflag.eq.4) then
             if     (nrec.eq.1 .and. abs(dtime1-731.0d0).gt.0.01) then
 !
 ! ---         climatology must start on wind day 731.0, 01/01/1903.
@@ -1087,7 +1087,7 @@
             cycle  !no mslprs
           endif
           if     (iunit.eq.900 .and. ustflg.ne.3) then
-            cycle  !no ustar 
+            cycle  !no ustar
           endif
           if     (iunit.eq.903 .and. wndflg.ge.3) then
             cycle  !no wndspd
@@ -1176,9 +1176,9 @@
           enddo
         endif
         if     (mnproc.eq.1) then
-        write (lp,*) 
+        write (lp,*)
         write (lp,*) ' dtime,dtime0,dtime1 = ',dtime,dtime0,dtime1
-        write (lp,*) 
+        write (lp,*)
         write (lp,*) ' ...finished initializing forcing fields'
         endif !1st tile
         call xcsync(flush_lp)
@@ -1416,9 +1416,9 @@
           endif
         endif
         if     (mnproc.eq.1) then
-        write (lp,*) 
+        write (lp,*)
         write (lp,*) ' dtime,dtime0,dtime1 = ',dtime,dtime0,dtime1
-        write (lp,*) 
+        write (lp,*)
         write (lp,*) ' ...finished initializing forcing fields'
         endif !1st tile
         call xcsync(flush_lp)
@@ -1580,7 +1580,7 @@
         endif !kparan
 !
       else  ! .not.thermo
-        kparan = .true.  
+        kparan = .true.
       endif                    !  thermo
 !
       if     (mnproc.eq.1) then
@@ -1601,7 +1601,7 @@
 ! --- initialize input of kpar forcing field
 ! --- call either forfunc or forfunk, not both
 !
-! --- units of akpar are 1/m 
+! --- units of akpar are 1/m
 ! --- akpar  is always on the p grid.
 !
 ! --- I/O and array I/O unit 919 is reserved for the entire run.
@@ -1651,11 +1651,56 @@
         endif !kparan
 !
       else  ! .not.thermo
-        kparan = .true.  
+        kparan = .true.
       endif                    !  thermo
 !
       if     (mnproc.eq.1) then
       write (lp,*) ' ...finished opening kpar field '
+      endif !1st tile
+      call xcsync(flush_lp)
+!
+      return
+      end
+!
+!
+      subroutine forfunn
+      use mod_xc         ! HYCOM communication interface
+      use mod_cb_arrays  ! HYCOM saved arrays
+      use mod_tides      ! HYCOM tides
+      use mod_za         ! HYCOM I/O interface
+      implicit none
+!
+! --- initialize observed tides nudging coefficient fields.
+!
+! --- the input hnudge has units of 1/s and is on the p-grid.
+!
+! --- I/O and array I/O unit 925 used here, but not reserved.
+!
+! --- all input fields must be defined at all grid points
+!
+      integer   i,j,k,l,lgth
+!
+      if     (mnproc.eq.1) then
+      write (lp,*) ' now opening nudging coefficent field  ...'
+      endif !1st tile
+      call xcsync(flush_lp)
+!
+      lgth = len_trim(flnmfor)
+!
+      call zaiopf(flnmfor(1:lgth)//'tidal.nudge.a', 'old', 925)
+      if     (mnproc.eq.1) then  ! .b file from 1st tile only
+      open (unit=uoff+925,file=flnmfor(1:lgth)//'tidal.nudge.b', &
+         status='old', action='read')
+      endif !1st tile
+      call rdmonth(hnudge, 925)
+      call xctilr( hnudge,1,1, nbdy,nbdy, halo_ps)
+      if     (mnproc.eq.1) then  ! .b file from 1st tile only
+      close (unit=uoff+925)
+      endif
+      call zaiocl(925)
+!
+      if     (mnproc.eq.1) then
+      write (lp,*) ' ...finished opening nudging coefficent field  ...'
       endif !1st tile
       call xcsync(flush_lp)
 !
@@ -1704,7 +1749,7 @@
         endif !1st tile
         call xcsync(flush_lp)
         rivers(:,:,:) = 0.0
-        rivera = .true.  
+        rivera = .true.
       else
         call zaiopf(flnmfor(1:lgth)//'forcing.rivers.a', 'old', 918)
         if     (mnproc.eq.1) then  ! .b file from 1st tile only
@@ -1736,7 +1781,7 @@
       else  ! .not.thermo
         rivers(:,:,:) = 0.0
         priver = .false.
-        rivera = .true.  
+        rivera = .true.
       endif                    !  thermo
 !
       if     (mnproc.eq.1) then
@@ -1809,7 +1854,7 @@
            status='old', action='read')
         endif !1st tile
         call rdmonth(thmean, 915)  ! (mean depth averaged density)
-        call rdmonth(sshgmn, 915)  
+        call rdmonth(sshgmn, 915)
         if     (mnproc.eq.1) then  ! .b file from 1st tile only
         close (unit=uoff+915)
         endif !1st tile
@@ -2065,6 +2110,7 @@
       subroutine forfuns
       use mod_xc         ! HYCOM communication interface
       use mod_cb_arrays  ! HYCOM saved arrays
+      use mod_tides      ! HYCOM tides
       use mod_za         ! HYCOM I/O interface
       implicit none
 !
@@ -2878,7 +2924,7 @@
 !
       real*8  dtime0,dtime1
 !
-! --- copy slot 2 into slot 1, and 
+! --- copy slot 2 into slot 1, and
 ! --- read a set of high frequency forcing fields into slot 2.
 ! --- on exit, dtime0 and dtime1 are the associated times (wind days).
 !
@@ -4037,7 +4083,7 @@
         call zaiosk(921)
         if     (cline(1:8).eq.'salflx  ') then  !salflx
           exit
-        endif 
+        endif
       enddo !skip
       if     (nodens) then
         do i= 1,2 !dpbl,dpmixl
@@ -4105,7 +4151,7 @@
               pbnest(i,j,lslot) = (util2(i,j)-util1(i,j)-montg_c(i,j)) &
                                   *rhoref
             else
-!             montgomery correction either not needed (sshflg<2) 
+!             montgomery correction either not needed (sshflg<2)
 !                                  or already applied (lbmont)
               pbnest(i,j,lslot) = (util2(i,j)-util1(i,j))*rhoref
             endif
@@ -4484,7 +4530,7 @@
         call zaiosk(920)
         if     (cline(1:8).eq.'salflx  ') then  !salflx
           exit
-        endif 
+        endif
       enddo !skip
       if     (nodens) then
         do i= 1,2 !dpbl,dpmixl
@@ -4559,7 +4605,7 @@
                             cfield,layer, 920)
             if     (cfield.eq.'u-vel.  ') then
               exit
-            endif 
+            endif
           enddo !skip
         endif !k==1:else
         if     (cfield.ne.'u-vel.  ') then
@@ -4728,7 +4774,7 @@
         if     (sumn(1)+sumn(2).gt.0.0 .and. mnproc.eq.1) then
           write(lp,'(f12.5,a,2i9)') &
             dtime,'  nest mask counts =',int(sumn(1)),int(sumn(2))
-        endif 
+        endif
       endif !lmask_rdnest
 !
       if     (ldebug_rdnest .and. ittest.ne.-1 .and. jttest.ne.-1) then
@@ -4903,7 +4949,7 @@
 ! --- calculate wind speed from wind stress
 !
 ! --- speed-dependent scale factor from stress to speed is based
-! --- on the Kara (neutral) wind-speed dependent drag coefficient 
+! --- on the Kara (neutral) wind-speed dependent drag coefficient
 !
       integer   i,j
       real      strspd,wndstr
@@ -4996,3 +5042,5 @@
 !> Nov. 2024 - set surface fluxes to zero if not used
 !> Dec. 2024 - added drgfrh for streaming tidal filter
 !> Jan. 2025 - Added sshflg=3 for steric SSH and Montg. Potential
+!> Jan. 2025 - added forfunn for nudging towards the observed tides
+!> Jan. 2025 - salfac and hnudge in mod_tides

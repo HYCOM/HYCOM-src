@@ -1,7 +1,6 @@
       subroutine geopar
       use mod_xc         ! HYCOM communication interface
       use mod_cb_arrays  ! HYCOM saved arrays
-      use mod_tides      ! HYCOM tides
       use mod_za         ! HYCOM I/O interface
 !
 ! --- set up model parameters related to geography
@@ -746,9 +745,9 @@
       ktr = istrcr(701)
       if     (ktr.ne.0) then
         stracr(:,:,ktr) = 0.0  !701: displd_mn
-      endif      
+      endif
       ktr = istrcr(702)
-      if     (ktr.ne.0) then  
+      if     (ktr.ne.0) then
         stracr(:,:,ktr) = 0.0  !702: dispqd_mn
       endif
 !
@@ -999,7 +998,7 @@
         enddo !j
       enddo !i
 #endif
-!diag 
+!diag
 !diag if (itest.gt.0 .and. jtest.gt.0) then
 !diag   do j= 1,jtdm
 !diag     write(lp,'(a,2i5,e16.8)') &

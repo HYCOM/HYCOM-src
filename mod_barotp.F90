@@ -40,7 +40,7 @@
 !
 ! --- LeapFrog version based on:
 ! ---   Y. Morel, Baraille, R., Pichon A. (2008) "Time splitting and
-! ---   linear stability of the slow part of the barotropic component", 
+! ---   linear stability of the slow part of the barotropic component",
 ! ---   Ocean Modeling, 23, pp 73-81.
 ! --- ------------------------------------------------------------------------
 !
@@ -49,11 +49,11 @@
 !
       character text*12
 !
-      real    q,pbudel,pbvdel,utndcy,vtndcy,wblpf
+      real    q,pbudel,pbvdel,utndcy,vtndcy,wblpf,ramph
       real    d11,d12,d21,d22,ubp,vbp,z1
       real    xmin(2)
       real    sminny(jdm,2)
-      real*8  sump
+      real*8  sump,timenud
       integer i,j,l,lll,ml,nl,mn,lstep1,margin,mbdy,k,ktr,icof,nsclip
 !	 & ,iffstep
       logical ldrag
@@ -62,7 +62,7 @@
 !
 #if defined(RELO)
       real, save, allocatable, dimension(:,:) :: &
-              pbavo,ubavo,vbavo,displd,gslpr,gtide, &
+              pbavo,ubavo,vbavo,displd,gslpr,gtide,pbnud, &
               flxloc,flyloc,uflxba,vflxba
 !
       if     (.not.allocated(pbavo)) then
@@ -72,14 +72,16 @@
                 vbavo(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy), &
                displd(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy), &
                 gslpr(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy),  &
-                gtide(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy) )
-        call mem_stat_add( 6*(idm+2*nbdy)*(jdm+2*nbdy) )
-                pbavo = r_init
-                ubavo = r_init
-                vbavo = r_init
-               displd = r_init
-                gslpr = r_init
-                gtide = r_init
+                gtide(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy), &
+                pbnud(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy) )
+        call mem_stat_add( 7*(idm+2*nbdy)*(jdm+2*nbdy) )
+                pbavo(:,:) = r_init
+                ubavo(:,:) = r_init
+                vbavo(:,:) = r_init
+               displd(:,:) = r_init
+                gslpr(:,:) = r_init
+                gtide(:,:) = r_init
+                pbnud(:,:) = 0.0  !safe to use if no nudging
         if     (btrmas) then
           allocate( &
                  flxloc(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy), &
@@ -87,10 +89,10 @@
                  uflxba(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy), &
                  vflxba(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy) )
           call mem_stat_add( 4*(idm+2*nbdy)*(jdm+2*nbdy) )
-                 flxloc = r_init
-                 flyloc = r_init
-                 uflxba = r_init
-                 vflxba = r_init
+                 flxloc(:,:) = r_init
+                 flyloc(:,:) = r_init
+                 uflxba(:,:) = r_init
+                 vflxba(:,:) = r_init
         endif
       endif
 #else
@@ -141,9 +143,61 @@
         enddo !i
       enddo !j
 !
+! --- tidal nudging, if required
+      if     (tidnud.ne.0) then
+!
+! ---   Newtonian relaxation of filtered bottom pressure towards tides
+! ---   Wang et. al (2021) and Fu et. al. (2021)
+!
+        mn = -lstep  !centered in time
+        call tides_observed(mn) !calculate htide
+!
+        ramph = 0.0
+        timenud = time_8 + (mn*dlt/86400.d0)
+        if     (timenud.ge.nudg_orig) then
+          timenud = (timenud-nudg_orig)/nudg_time
+          ramph = (1.0-exp(-5.0*timenud))
+        endif
+        if     (ramph.gt.0.0) then !tidal nudging
+! ---     calculate nudging increment once per call
+          if     (tidnud.eq.2) then
+! ---       hntide is a 49-hour weighted mean of pbavg
+            do j=1-margin,jj+margin
+              do i=1-margin,ii+margin
+                if (SEA_P) then
+                  q = ramph*dlt*hnudge(i,j)
+                  pbnud(i,j)= q*( onem*htide(i,j) + hntide(i,j) - &
+                                                     pbavg(i,j,m) )
+                endif !ip
+              enddo !i
+            enddo !j
+          endif !tidnud=2
+        endif !tidal nudging
+!
+!!!!!!  if     (.true. .and. &
+        if     (ldebug_barotp .and. &
+                itest.gt.0 .and. jtest.gt.0) then
+          i = itest
+          j = jtest
+          if     (tidnud.eq.2) then
+            q = pbavg(i,j,m)-hntide(i,j)
+          endif !tidnud=2
+          write (lp,'(i9,2i5,3x,a,8g15.6)') &
+            nstep,i+i0,j+j0, &
+            'nudge,h,tide =', &
+            q, &
+            onem*htide(i,j),   &
+            ramph, &
+            pbnud(i,j)
+        endif !debug
+        call xcsync(flush_lp)
+      else
+        ramph = 0.0
+      endif !nudge:else
+!
 ! --- utotn,vtotn from momtum is time step t-1 to t+1 barotropic tendency
-      call xctilr(utotn(  1-nbdy,1-nbdy    ),1, 1, 6,6, halo_uv)
-      call xctilr(vtotn(  1-nbdy,1-nbdy    ),1, 1, 6,6, halo_vv)
+      call xctilr(utotn,1, 1, 6,6, halo_uv)
+      call xctilr(vtotn,1, 1, 6,6, halo_vv)
 !
       if     (lpipe .and. lpipe_barotp) then
 ! ---   compare two model runs.
@@ -282,7 +336,7 @@
             if (i.ge.1-margin) then
                 if (iuopn(i,j).ne.0) then
                     flxloc(i,j) = ubavg(i,j,ml)*scuy(i,j)* &
-                       max(0.,pbot(i,j))               
+                       max(0.,pbot(i,j))
                     uflxba(i,j) = uflxba(i,j) + &
                         coeflx(lll+1,icof)*(1.0+wblpf)*flxloc(i,j)
                 endif !iuopn
@@ -291,7 +345,7 @@
             if (i.le.ii+margin) then
                 if (iuopn(i,j).ne.0) then
                     flxloc(i,j) = ubavg(i,j,ml)*scuy(i,j)* &
-                       max(0.,pbot(i-1,j))            
+                       max(0.,pbot(i-1,j))
                     uflxba(i,j) = uflxba(i,j) + &
                         coeflx(lll+1,icof)*(1.0+wblpf)*flxloc(i,j)
                 endif !iuopn
@@ -305,7 +359,7 @@
             if (j.ge.1-margin) then
                 if (ivopn(i,j).ne.0) then
                     flyloc(i,j) = vbavg(i,j,ml)*scvx(i,j)* &
-                       max(0.,pbot(i,j))               
+                       max(0.,pbot(i,j))
                     vflxba(i,j) = vflxba(i,j) + &
                         coeflx(lll+1,icof)*(1.0+wblpf)*flyloc(i,j)
                 endif !ivopn
@@ -314,7 +368,7 @@
             if (j.le.jj+margin) then
                 if (ivopn(i,j).ne.0) then
                     flyloc(i,j) = vbavg(i,j,ml)*scvx(i,j)* &
-                       max(0.,pbot(i,j-1))               
+                       max(0.,pbot(i,j-1))
                     vflxba(i,j) = vflxba(i,j) + &
                         coeflx(lll+1,icof)*(1.0+wblpf)*flyloc(i,j)
                 endif !ivopn
@@ -335,7 +389,8 @@
                         wblpf *pbavg(i,j,nl) )- &
                    (1.0+wblpf)*dlt*(flxloc(i+1,j)-flxloc(i,j) + &
                                     flyloc(i,j+1)-flyloc(i,j)  )* &
-                                   scp2i(i,j)
+                                   scp2i(i,j) &
+                              +pbnud(i,j)
                 pbavg(i,j,nl) = max( pbotmin(i,j), pbavg(i,j,nl) )
 !
                 if     (ldrag) then
@@ -343,6 +398,7 @@
 ! ---             tidal drag tensor on p-grid:
 ! ---               ub = ub - (dlt/H)*(t.11*ub + t.12*vb)
 ! ---               vb = vb - (dlt/H)*(t.21*ub + t.22*vb)
+! ---             scalar drag has t.11=t.22 and t.12=t.21=0.0
 ! ---             solve implicitly by inverting the matrix:
 ! ---                1+(dlt/H)*t.11    (dlt/H)*t.12
 ! ---                  (dlt/H)*t.21  1+(dlt/H)*t.22
@@ -357,7 +413,7 @@
                   q   = 1.0/((1.0-d11)*(1.0-d22)-d12*d21)
 ! ---             set util5,util6 to the ubavg,vbavg drag increment
                   util5(i,j) = q*(ubp*(1.0-d22)+vbp*d12) - ubp
-                  util6(i,j) = q*(ubp*d21+vbp*(1.0-d12)) - vbp
+                  util6(i,j) = q*(vbp*(1.0-d11)+ubp*d21) - vbp
 ! ---             add an explicit antidrag correction
 !                 util5(i,j) = util5(i,j) - (d11*untide(i,j)+
 !    &                                       d12*vntide(i,j) )
@@ -376,7 +432,7 @@
                   util5(i,j) = 0.0
                   util6(i,j) = 0.0
                 endif !ldrag
-            endif 
+            endif !ip
           enddo !i
         enddo !j
 !
@@ -411,7 +467,8 @@
             pbavg(i,j,nl) = &
               ((1.-wblpf)*pbavg(i,j,ml)+ &
                    wblpf *pbavg(i,j,nl) )- &
-               (1.+wblpf)*dlt*(pbudel + pbvdel)*scp2i(i,j)
+               (1.+wblpf)*dlt*(pbudel + pbvdel)*scp2i(i,j) &
+                         +pbnud(i,j)
             pbavg(i,j,nl) = max( pbotmin(i,j), pbavg(i,j,nl) )
 !
             if     (ldrag) then
@@ -419,6 +476,7 @@
 ! ---         tidal drag tensor on p-grid:
 ! ---           ub = ub - (dlt/H)*(t.11*ub + t.12*vb)
 ! ---           vb = vb - (dlt/H)*(t.21*ub + t.22*vb)
+! ---         scalar drag has t.11=t.22 and t.12=t.21=0.0
 ! ---         solve implicitly by inverting the matrix:
 ! ---            1+(dlt/H)*t.11    (dlt/H)*t.12
 ! ---              (dlt/H)*t.21  1+(dlt/H)*t.22
@@ -433,7 +491,7 @@
               q   = 1.0/((1.0-d11)*(1.0-d22)-d12*d21)
 ! ---         set util5,util6 to the ubavg,vbavg drag increment
               util5(i,j) = q*(ubp*(1.0-d22)+vbp*d12) - ubp
-              util6(i,j) = q*(ubp*d21+vbp*(1.0-d11)) - vbp
+              util6(i,j) = q*(vbp*(1.0-d11)+ubp*d21) - vbp
 ! ---         add an explicit antidrag correction
 !             util5(i,j) = util5(i,j) - (d11*untide(i,j)+
 !    &                                   d12*vntide(i,j) )
@@ -469,7 +527,7 @@
 !
       margin = margin - 1
 !
-!$OMP PARALLEL DO PRIVATE(j,i,utndcy) &
+!$OMP PARALLEL DO PRIVATE(j,i,utndcy,q) &
 !$OMP          SCHEDULE(STATIC,jblk)
       do j=1-margin,jj+margin
         do i=1-margin,ii+margin
@@ -484,10 +542,13 @@
              (0.125*(pvtrop(i,j)+pvtrop(i,j+1)))
 !
             ubavg(i,j,nl)= &
-              ((1.-wblpf)*ubavg(i,j,ml)+ &
-                   wblpf *ubavg(i,j,nl) )+ &
-               (1.+wblpf)*dlt*(utndcy+utotn(i,j))+ &
-                      0.5*(util5(i,j)+util5(i-1,j))
+                ((1.-wblpf)*ubavg(i,j,ml)+ &
+                     wblpf *ubavg(i,j,nl) )+ &
+                 (1.+wblpf)*dlt*(utndcy+utotn(i,j))
+            if     (ldrag) then
+              ubavg(i,j,nl)=ubavg(i,j,nl) + &
+                            0.5*(util5(i,j)+util5(i-1,j))
+            endif
 !
 !           if (ldebug_barotp .and. i.eq.itest.and.j.eq.jtest) then
 !             write (lp,'(i9,2i5,i3,3x,a,8g15.6)')
@@ -517,7 +578,7 @@
 !
       margin = margin - 1
 !
-!$OMP PARALLEL DO PRIVATE(j,i,vtndcy) &
+!$OMP PARALLEL DO PRIVATE(j,i,vtndcy,q) &
 !$OMP          SCHEDULE(STATIC,jblk)
       do j=1-margin,jj+margin
         do i=1-margin,ii+margin
@@ -534,8 +595,11 @@
             vbavg(i,j,nl)= &
               ((1.-wblpf)*vbavg(i,j,ml)+ &
                    wblpf *vbavg(i,j,nl) )+ &
-               (1.+wblpf)*dlt*(vtndcy+vtotn(i,j))+ &
-                      0.5*(util6(i,j)+util6(i,j-1))
+               (1.+wblpf)*dlt*(vtndcy+vtotn(i,j))
+            if     (ldrag) then
+              vbavg(i,j,nl)=vbavg(i,j,nl) + &
+                            0.5*(util6(i,j)+util6(i,j-1))
+            endif
 !
 !           if (ldebug_barotp .and. i.eq.itest.and.j.eq.jtest) then
 !             write (lp,'(i9,2i5,i3,3x,a,8g15.6)')
@@ -610,7 +674,7 @@
                  flxloc(i,j) = ubavg(i,j,ml)*(depthu(i,j)*scuy(i,j))
                  uflxba(i,j) = uflxba(i,j) + &
                      coeflx(lll+2,icof)*(1.0+wblpf)*flxloc(i,j)
-             endif 
+             endif
            enddo !i
          enddo !j
 !
@@ -622,7 +686,7 @@
                 flyloc(i,j) = vbavg(i,j,ml)*(depthv(i,j)*scvx(i,j))
                 vflxba(i,j) = vflxba(i,j) + &
                               coeflx(lll+2,icof)*(1.0+wblpf)*flyloc(i,j)
-            endif 
+            endif
           enddo !i
         enddo !j
 !
@@ -638,7 +702,8 @@
                         wblpf *pbavg(i,j,nl) )- &
                    (1.0+wblpf)*dlt*(flxloc(i+1,j)-flxloc(i,j) + &
                                     flyloc(i,j+1)-flyloc(i,j)  )* &
-                                   scp2i(i,j)
+                                   scp2i(i,j) &
+                              +pbnud(i,j)
                 pbavg(i,j,nl) = max( pbotmin(i,j), pbavg(i,j,nl) )
 !
                 if     (ldrag) then
@@ -679,7 +744,7 @@
                   util5(i,j) = 0.0
                   util6(i,j) = 0.0
                 endif !ldrag
-            endif 
+            endif !ip
           enddo !i
         enddo !j
 !
@@ -727,7 +792,8 @@
             pbavg(i,j,nl) = &
               ((1.-wblpf)*pbavg(i,j,ml)+ &
                    wblpf *pbavg(i,j,nl) )- &
-               (1.+wblpf)*dlt*(pbudel + pbvdel)*scp2i(i,j)
+               (1.+wblpf)*dlt*(pbudel + pbvdel)*scp2i(i,j) &
+                         +pbnud(i,j)
             pbavg(i,j,nl) = max( pbotmin(i,j), pbavg(i,j,nl) )
 !
             if     (ldrag) then
@@ -784,7 +850,7 @@
 !
       margin = margin - 1
 !
-!$OMP PARALLEL DO PRIVATE(j,i,vtndcy) &
+!$OMP PARALLEL DO PRIVATE(j,i,vtndcy,q) &
 !$OMP          SCHEDULE(STATIC,jblk)
       do j=1-margin,jj+margin
         do i=1-margin,ii+margin
@@ -801,8 +867,11 @@
             vbavg(i,j,nl)= &
               ((1.-wblpf)*vbavg(i,j,ml)+ &
                    wblpf *vbavg(i,j,nl))+ &
-               (1.+wblpf)*dlt*(vtndcy+vtotn(i,j))+ &
-                      0.5*(util6(i,j)+util6(i,j-1))
+               (1.+wblpf)*dlt*(vtndcy+vtotn(i,j))
+            if     (ldrag) then
+              vbavg(i,j,nl)=vbavg(i,j,nl) + &
+                            0.5*(util6(i,j)+util6(i,j-1))
+            endif
 !
 !           if (ldebug_barotp .and. i.eq.itest.and.j.eq.jtest) then
 !             write (lp,'(i9,2i5,i3,3x,a,8g15.6)')
@@ -833,7 +902,7 @@
 !
       margin = margin - 1
 !
-!$OMP PARALLEL DO PRIVATE(j,i,utndcy) &
+!$OMP PARALLEL DO PRIVATE(j,i,utndcy,q) &
 !$OMP          SCHEDULE(STATIC,jblk)
       do j=1-margin,jj+margin
         do i=1-margin,ii+margin
@@ -850,8 +919,11 @@
             ubavg(i,j,nl)= &
               ((1.-wblpf)*ubavg(i,j,ml)+ &
                    wblpf *ubavg(i,j,nl) )+ &
-               (1.+wblpf)*dlt*(utndcy+utotn(i,j))+ &
-                      0.5*(util5(i,j)+util5(i-1,j))
+               (1.+wblpf)*dlt*(utndcy+utotn(i,j))
+            if     (ldrag) then
+              ubavg(i,j,nl)=ubavg(i,j,nl) + &
+                            0.5*(util5(i,j)+util5(i-1,j))
+            endif
 !
 !           if (ldebug_barotp .and. i.eq.itest.and.j.eq.jtest) then
 !             write (lp,'(i9,2i5,i3,3x,a,7g15.6)')
@@ -940,7 +1012,7 @@
       endif
 !
       if     (btrlfr .and. delt1.ne.baclin) then  !not on very 1st time step
-! ---   Robert-Asselin time filter 
+! ---   Robert-Asselin time filter
 !$OMP   PARALLEL DO PRIVATE(j,i,q) &
 !$OMP            SCHEDULE(STATIC,jblk)
         do j=1,jj
@@ -970,7 +1042,7 @@
           if (SEA_P) then
             oneta(i,j,n)  = 1.0 + pbavg(i,j,n)/pbot(i,j) !t+1
             oneta(i,j,m)  = 1.0 + pbavg(i,j,m)/pbot(i,j) !t&RA
-          endif 
+          endif !ip
         enddo !i
       enddo !j
 !
@@ -1150,7 +1222,7 @@
                          ((uflux(i+1,j)-uflux(i,j))+ &
                           (vflux(i,j+1)-vflux(i,j)))*delt1*scp2i(i,j)
                   p(i,j,k+1)=p(i,j,k)+dp(i,j,k,n)
-              endif 
+              endif !ip
             enddo !i
           enddo !j
 !
@@ -1186,7 +1258,7 @@
                     if (isopyc .and. k.eq.1) then
                         dpmixl(i,j,n)=dp(i,j,k,n)
                     endif
-                endif 
+                endif !ip
               enddo !i
             enddo !k
           enddo !j
@@ -1339,5 +1411,7 @@
 !> Sep. 2019 - added oneta0, and oneta diagnostic test
 !> Jan. 2024 - replaced oneta limit (oneta0), with pbot limit (pbotmin)
 !> Dec. 2024 - added oneclp to reduce the number of clipped oneta messages
+!> Dec. 2024 - bugfix for tidal drag tensor
 !> Jan. 2025 - converted displd_mn to a surface tracer
-!> Jan. 2025 - Added sshflg=3 for steric SSH and Montg. Potential
+!> Jan. 2025 - added sshflg=3 for steric SSH and Montg. Potential
+!> Jan. 2025 - added the option to nudge towards the observed tides

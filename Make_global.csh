@@ -3,34 +3,62 @@
 set echo
 cd $cwd
 #
-# --- Usage:  ./Make.com >& Make.log
+# --- Usage:  ./Make.csh >& Make.log
 #
 # --- make hycom with TYPE from this directory's name (src_*_$TYPE).
 # --- assumes dimensions.h is correct for $TYPE.
 #
 # --- set ARCH to the correct value for this machine.
-# --- ARCH that start with A are for ARCTIC patch regions
 #
+# --- Generic, GNU Fortran
+#setenv ARCH generic-gnu-relo
+#
+# --- IBM iDataPlex, IBM MPI (very old example)
+#unset echo
 #module swap compiler compiler/intel/12.1.3
 #module swap mpi      mpi/intel/ibmpe
 #module list
+#set echo
 #setenv ARCH Aintelsse-pe-sm-relo
 #
+# --- IBM iDataPlex, Intel MPI (very old example)
+#unset echo
 #module swap compiler compiler/intel/12.1.3
 #module swap mpi      mpi/intel/impi/4.1.3
 #module list
-#setenv ARCH Aintelsse-impi-sm-SD-relo
+#set echo
 #setenv ARCH Aintelsse-impi-sm-relo
 #
+# --- Cray XC30/40, Intel Fortran
+#unset echo
+##module switch PrgEnv-cray PrgEnv-intel
+#module unload cray-libsci
+#module switch intel intel/15.0.0.090
+#module switch cray-mpich cray-mpich/7.0.3
+#module load   craype-hugepages2M
+#module list
+#set echo
+#setenv ARCH xc40-intel-relo
+#
+# --- Cray SHASTA, Intel Fortran (cray-mpich/8.1.[12] do not work)
 unset echo
-#module switch PrgEnv-cray PrgEnv-intel
-module unload cray-libsci
-module switch intel intel/15.0.0.090
-module switch cray-mpich cray-mpich/7.0.3
-module load   craype-hugepages2M
+module restore PrgEnv-intel
+module use --append /p/app/modulefiles
+module load bct-env
+module load cray-pals
+module swap cray-mpich/8.1.4
 module list
 set echo
-setenv ARCH xc40-intel-relo
+setenv ARCH shasta-intel-relo
+#
+# --- HPE SGI, MPI (mpt), Intel Fortran  (mpt/2.17 does not work)
+#unset echo
+#module purge
+#module load compiler/intel/2017.4.196
+#module load mpt/2.16
+#module list
+#set echo
+#setenv ARCH hpe-intel-relo
 #
 setenv TYPE `echo $cwd | awk -F"_" '{print $NF}'`
 echo "ARCH = " $ARCH "  TYPE = " $TYPE
@@ -46,9 +74,9 @@ setenv OCN_SIG  -DEOS_SIG2 ## Sigma-2
 #setenv OCN_SIG -DEOS_SIG0 ## Sigma-0
 
 #setenv OCN_EOS -DEOS_7T  ## EOS  7-term
-setenv OCN_EOS -DEOS_9T  ## EOS  9-term
+#setenv OCN_EOS -DEOS_9T  ## EOS  9-term
 #setenv OCN_EOS -DEOS_12T ## EOS 12-term
-#setenv OCN_EOS -DEOS_17T ## EOS 17-term
+setenv OCN_EOS -DEOS_17T ## EOS 17-term
 
 # Optional CPP flags
 # Global or regional
@@ -62,7 +90,14 @@ setenv OCN_KAPP ""
 # Miscellaneous CPP flags (-DSTOKES -DOCEANS2 etc...)
 # -DSTOKES  : Stokes drift
 # -DOCEANS2 : master and slave HYCOM in same executable
-setenv OCN_MISC ""
+# -DMOMTUM_CFL     : include an explicit CFL limiter
+# -DMOMTUM4_CFL    : include an explicit CFL limiter
+# -DRDNEST_MASK    : mask velocity outliers
+# -DLATBDT_NPLINE3 : update pline every 3 time steps
+# -DMASSLESS_1MM   : lowest substantial mass-containing layer > 1mm thick
+#setenv OCN_MISC ""
+#setenv OCN_MISC "-DMASSLESS_1MM -DRDNEST_MASK -DLATBDT_NPLINE3"
+setenv OCN_MISC "-DMASSLESS_1MM -DMOMTUM_CFL"
 
 # CPP_EXTRAS
 setenv CPP_EXTRAS "${OCN_SIG} ${OCN_EOS} ${OCN_GLB} ${OCN_KAPP} ${OCN_MISC}"

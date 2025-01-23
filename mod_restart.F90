@@ -1,20 +1,16 @@
       module mod_restart
       use mod_xc         ! HYCOM communication interface
       use mod_za         ! HYCOM I/O interface
-
       implicit none
-     
 !
 ! --- module for restart and related routines
 !
       private !! default is private
       public  :: restart_in, restart_out, restart_zero
-
-
+!
       contains
-
-
-
+!
+!
       subroutine restart_in(nstep0, dtime0, flnmra,flnmrb, restart_cpl)
       use mod_cb_arrays  ! HYCOM saved arrays
       use mod_tides      ! HYCOM tides
@@ -28,7 +24,7 @@
 !     read in a restart file.
 !     flnmra is the ".a" file, and flnmrb is the ".b" file.
 !
-      logical   lmyin,ltidin,lstream,lold
+      logical   lmyin,ltidin,ltidinh,lstream,lold
       integer   i,ios,j,k,kskip,ktr
       character cline*80
 !
@@ -180,6 +176,62 @@
 !
 !     do we have DETIDE arrays in the restart file?
 !
+      ltidinh = cline(1:8).eq.'hhrly   '
+!
+      if     (ltidinh) then
+!
+!       h-DETIDE in restart file.
+!
+        mhrly = 49  !hntide will be initialised in tides_dehtide
+        call restart_inrw(kskip)
+!
+        if     (tidnud.eq.2) then
+          if     (.not.allocated(hhrly)) then
+             allocate(  hhrly(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy,49), &
+                       hntide(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy)    )
+            call mem_stat_add( 50*(idm+2*nbdy)*(jdm+2*nbdy) )
+          else
+            if     (mnproc.eq.1) then
+              write(lp,'(/ a /)') &
+                'error - hhrly already allocated'
+            endif !1st tile
+            call xcstop('(restart_in)')
+                   stop '(restart_in)'
+          endif !allocated:else
+          call restart_in3d(hhrly,mhrly, ip, 'hhrly   ')
+          call xctilr( hhrly, 1,49, nbdy,nbdy, halo_ps)
+          call tides_dehtide(1, .false.)  !recalculate hntide
+        else
+          if     (mnproc.eq.1) then
+          write(lp,'(a)') 'RESTART: skipping h-DETIDE input fields'
+          call flush(lp)
+          endif !1st tile
+          do k= 1,mhrly
+            call zagetc(cline,ios, uoff+11)
+            if     (ios.ne.0) then
+              if     (mnproc.eq.1) then
+                write(lp,'(/ a,i4,i9 /)') &
+                  'I/O error from zagetc, iunit,ios = ',uoff+11,ios
+              endif !1st tile
+              call xcstop('(restart_in)')
+                     stop '(restart_in)'
+            endif
+!           if     (mnproc.eq.1) then
+!           write(lp,'(a)') cline
+!           endif !1st tile
+            call zaiosk(11)
+          enddo !k
+        endif !tidnud:else
+        call zagetc(cline,ios, uoff+11)
+        kskip = kskip + mhrly
+      elseif (tidnud.eq.2) then
+! ---   hhrly & hntide will be allocated/initialized in tides_set
+        if     (mnproc.eq.1) then
+        write(lp,'(a)') 'RESTART: no h-DETIDE fields input'
+        call flush(lp)
+        endif !1st tile
+      endif !ltidinh:tidnud
+!
       ltidin  = cline(1:8).eq.'uhrly   '
       lstream = cline(1:8).eq.'uvf     '
 !
@@ -220,8 +272,8 @@
             call xcstop('(restart_in)')
                    stop '(restart_in)'
           endif !allocated:else
-          call restart_in3d(uhrly ,nhrly, iu, 'uhrly   ')
-          call restart_in3d(vhrly ,nhrly, iv, 'vhrly   ')
+          call restart_in3d(uhrly,nhrly, iu, 'uhrly   ')
+          call restart_in3d(vhrly,nhrly, iv, 'vhrly   ')
           call xctilr( uhrly, 1,49, nbdy,nbdy, halo_uv)
           call xctilr( vhrly, 1,49, nbdy,nbdy, halo_vv)
           call tides_detide(1, .false.)  !recalculate untide,vntide
@@ -257,6 +309,8 @@
       if     (lstream) then
 !
 !       Streaming filter in restart file
+!
+        call restart_inrw(kskip)
 !
         if (tidflg.gt.0 .and.tidstr.eq.1) then
           if     (.not.allocated(uvf)) then
@@ -382,6 +436,9 @@
             if     (lmyin) then
               kskip = kskip + 7*kdm+14
             endif
+            if     (ltidinh) then
+              kskip = kskip + mhrly
+            endif
             if     (ltidin) then
               kskip = kskip + 2*nhrly
             endif
@@ -402,6 +459,9 @@
           if     (lmyin) then
             kskip = kskip + 7*kdm+14
           endif
+          if     (ltidinh) then
+            kskip = kskip + mhrly
+          endif
           if     (ltidin) then
             kskip = kskip + 2*nhrly
           endif
@@ -410,9 +470,9 @@
           endif
           call restart_inrw(kskip)
 !
-          call restart_in3d(temice,    1, ip, 'temice  ')
-          call restart_in3d(covice,    1, ip, 'covice  ')
-          call restart_in3d(thkice,    1, ip, 'thkice  ')
+          call restart_in3d(temice,1, ip, 'temice  ')
+          call restart_in3d(covice,1, ip, 'covice  ')
+          call restart_in3d(thkice,1, ip, 'thkice  ')
         endif  !new ice:read ice
       else
 ! ---   no sea ice, but still need covice
@@ -428,7 +488,7 @@
                                    2*kdm, ip, 'tracer  ')
         enddo
       endif
-
+!
       if (restart_cpl) then
         call zagetc(cline,ios, uoff+11)
         if (cline(1:8).eq. 'tml     ') then
@@ -443,6 +503,9 @@
           if     (lmyin) then
             kskip = kskip + 7*kdm+14
           endif
+          if     (ltidinh) then
+            kskip = kskip + mhrly
+          endif
           if     (ltidin) then
             kskip = kskip + 2*nhrly
           endif
@@ -450,10 +513,10 @@
             kskip = kskip + 16
           endif
           call restart_inrw(kskip)
-          call restart_in3d(tml ,    1, ip, 'tml     ')
-          call restart_in3d(sml ,    1, ip, 'sml     ')
-          call restart_in3d(uml,    1, ip, 'umxl    ')
-          call restart_in3d(vml,    1, ip, 'vmxl    ')
+          call restart_in3d(tml,1, ip, 'tml     ')
+          call restart_in3d(sml,1, ip, 'sml     ')
+          call restart_in3d(uml,1, ip, 'umxl    ')
+          call restart_in3d(vml,1, ip, 'vmxl    ')
         else
 ! ---   reposition file for coupled input
 !
@@ -465,6 +528,9 @@
           if     (lmyin) then
             kskip = kskip + 7*kdm+14
           endif
+          if     (ltidinh) then
+            kskip = kskip + mhrly
+          endif
           if     (ltidin) then
             kskip = kskip + 2*nhrly
           endif
@@ -474,7 +540,7 @@
           call restart_inrw(kskip)
         endif !cline
       endif ! restart_cpl = .true.
-
+!
       if     (mnproc.eq.1) then  ! .b file from 1st tile only
         close (unit=uoff+11)
       endif
@@ -490,9 +556,9 @@
       enddo
       return
       end subroutine restart_in
-
-      subroutine restart_in3d(field,l, mask, cfield)
 !
+!
+      subroutine restart_in3d(field,l, mask, cfield)
       integer   l
       real,    dimension (1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy,l) :: &
        field
@@ -552,9 +618,9 @@
 !
       return
       end subroutine restart_in3d
-
-      subroutine restart_inrw(kline)
 !
+!
+      subroutine restart_inrw(kline)
       integer   kline
 !
 !     reposition the input restart .b file at line kline.
@@ -583,18 +649,19 @@
       endif !1st tile
       return
       end subroutine restart_inrw
-
+!
+!
       subroutine restart_out(nstepx, dtimex, flnmra,flnmrb, last, restart_cpl)
       use mod_cb_arrays  ! HYCOM saved arrays
       use mod_tides      ! HYCOM tides
       implicit none
-
+!
       logical last
       integer nstepx
       real*8  dtimex
       character*(*) flnmra,flnmrb
       logical, intent(in) :: restart_cpl ! coupled
-
+!
 !
 !     write out in a restart file on unit 12 or 22 (and a flux file on 25).
 !
@@ -740,7 +807,6 @@
       enddo
       call flush(iunit)
       endif !1st tile
-
 !
 ! --- temp and saln may have been changed, so update th3d
       do k= 1,kdm
@@ -806,6 +872,20 @@
         call flush(iunit)
         endif !1st tile
       endif !mxlmy
+!
+      if     (tidnud.eq.2) then
+        call zaiowr3(hhrly,   49, ip,.false., xmin,xmax, iunta,.true.)
+        call xctilr( hhrly, 1,49, nbdy,nbdy, halo_ps)
+        if     (mnproc.eq.1) then
+        do l= 1,49
+          do k= 0,0
+            write(iunit,4100) 'hhrly   ',k,l,  xmin(l),xmax(l)
+          enddo
+        enddo
+        call flush(iunit)
+        endif !1st tile
+        call tides_dehtide(1, .false.)  !recalculate hntide
+      endif !hhrly
 !
       if (tidflg.gt.0 .and. tidstr.eq.0) then
         call zaiowr3(uhrly,   49, iu,.false., xmin,xmax, iunta,.true.)
@@ -972,7 +1052,7 @@
       vland = 1.0
       call xctilr(oneta,1,2, nbdy,nbdy, halo_ps)
       vland = 0.0
-
+!
       if (icegln) then
         call zaiowr3(temice,     1, ip,.false., xmin,xmax, iunta,.true.)
         call xctilr( temice,   1,1, nbdy,nbdy, halo_ps)
@@ -1169,12 +1249,12 @@
       return
  4100 format(a,': layer,tlevel,range = ',i3,i3,2x,1p2e16.7)
       end subroutine restart_out
-
+!
+!
       subroutine restart_zero
       use mod_cb_arrays  ! HYCOM saved arrays
       use mod_tides      ! HYCOM tides
       implicit none
-
 !
 !     replacement for restart_in in dummy version
 !     set all fields to zero
@@ -1204,9 +1284,9 @@
       call restart_zero3d(dpbl,      1, ip, 'dpbl    ')
       return
       end subroutine restart_zero
-
-      subroutine restart_zero3d(field,l, mask, cfield)
 !
+!
+      subroutine restart_zero3d(field,l, mask, cfield)
       integer   l
       real,    dimension (1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy,l) :: &
        field
@@ -1226,7 +1306,6 @@
       end subroutine restart_zero3d
 !
       end module mod_restart
-
 !
 !> Revision history:
 !>
@@ -1237,11 +1316,12 @@
 !> May  2012 - added restart_zero
 !> Sep. 2015 - if no sea ice, still set covice to zero
 !> Aug. 2018 - added onetai
-!> Dec. 2018 - module form 
+!> Dec. 2018 - module form
 !> Dec. 2018 - added onetai and oneta to allow for type casting to REAL*4
 !> Feb. 2019 - onetai set to 1.0
 !> Feb  2019 - montg_c correction to pbavg (see momtum for correction to psikk)
 !> Feb. 2019 - replaced onetai by 1.0
 !> Dec. 2024 - made [uv]hrly bit for bit reproducable across restarts
-!> Dec. 2024 - added streaming tidal filter, turns off [uv]hrly 
+!> Dec. 2024 - added streaming tidal filter, turns off [uv]hrly
 !> Jan. 2025 - Added sshflg=3 for steric SSH and Montg. Potential
+!> Jan. 2024 - added hhrly
