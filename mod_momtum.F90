@@ -140,6 +140,13 @@
         call tides_body(hlstep)
       endif
 !
+! --- tidal velocities
+!
+      if     (tidflg.eq.-1) then
+        hlstep=0
+        call tides_observed_vel(hlstep)
+      endif
+!
 ! --- hydrostatic equation (and surface stress)
 !
 !        wtime1( 1) = wtime()
@@ -1570,18 +1577,42 @@
                   + (ubavg(i,j,n)+ubavg(i+1,j,n))
             vbot=vbot/min(pthkbl,p(i,j,kk+1)) &
                   + (vbavg(i,j,n)+vbavg(i,j+1,n))
+            ubot=0.5*ubot
+            vbot=0.5*vbot
+            if     (tidflg.eq.-1) then
+! ---         add observed tides
+              ubot=ubot+utide(i,j)
+              vbot=vbot+vtide(i,j)
+            endif
 !
-! ---       drag = Cb * (|v| + c.bar)
+! ---       drag = Cb * |v| + Cb * c.bar if cbar >= 0.0, or
+! ---       drag = Cb * |v + c.bar| if cbarp is tidal amplitude
 ! ---       include 1/thkbop for the fraction of layer calculation
 ! ---        and onem for conversion from 1/dp to 1/h
 !
-            vmag=0.5*sqrt(ubot**2+vbot**2)   !0.5 from u+u.i-1  & v+v.j-1
-            dall=cbp(i,j)*(vmag+cbarp(i,j))  !no tidal drag
+            if     (cbar.ge.0.0) then
+! ---         linear drag: cb*cbar
+              vmag=sqrt(ubot**2+vbot**2)+cbar
+            else
+! ---         cbarp represents tidal amplitude
+              vmag=sqrt(ubot**2+vbot**2+cbarp(i,j)**2)
+            endif
+            dall=cbp(i,j)*vmag
             drag(i,j)=dall*onem/thkbop(i,j)
             util1(i,j) = ubot
             util2(i,j) = vbot
             if (mxlkpp .and. bblkpp) then
               ustarb(i,j)=sqrt(dall*vmag)
+            endif
+!
+            if     (istrcr(721).ne.0) then !efold_cb
+              stracr(i,j,istrcr(721)) = (1.0/dall)/3600.0  !e-folding time (hours)
+            endif
+            if     (istrcr(722).ne.0) then !spdbot
+              stracr(i,j,istrcr(722)) = vmag  !m/s
+            endif
+            if     (istrcr(723).ne.0) then !spdtid
+              stracr(i,j,istrcr(723)) = sqrt(utide(i,j)**2 + vtide(i,j)**2)
             endif
 !
 ! ---       tidal bottom drag
@@ -4021,16 +4052,40 @@
                   + (ubavg(i,j,n)+ubavg(i+1,j,n))
             vbot=vbot/min(pthkbl,p(i,j,kk+1)) &
                   + (vbavg(i,j,n)+vbavg(i,j+1,n))
+            ubot=0.5*ubot
+            vbot=0.5*vbot
+            if     (tidflg.eq.-1) then
+! ---         add observed tides
+              ubot=ubot+utide(i,j)
+              vbot=vbot+vtide(i,j)
+            endif
 !
-! ---       drag = Cb * (|v| + c.bar)
+! ---       drag = Cb * |v| + Cb * c.bar if cbar >= 0.0, or
+! ---       drag = Cb * |v + c.bar| if cbarp is tidal amplitude
 ! ---       include 1/thkbop for the fraction of layer calculation
 ! ---        and onem for conversion from 1/dp to 1/h
 !
-            vmag=0.5*sqrt(ubot**2+vbot**2)   !0.5 from u+u.i-1  & v+v.j-1
-            dall=cbp(i,j)*(vmag+cbarp(i,j))  !no tidal drag
+            if     (cbar.ge.0.0) then
+! ---         linear drag: cb*cbar
+              vmag=sqrt(ubot**2+vbot**2)+cbar
+            else
+! ---         cbarp represents tidal amplitude
+              vmag=sqrt(ubot**2+vbot**2+cbarp(i,j)**2)
+            endif
+            dall=cbp(i,j)*vmag
             drag(i,j)=dall*onem/thkbop(i,j)
             if (mxlkpp .and. bblkpp) then
               ustarb(i,j)=sqrt(dall*vmag)
+            endif
+!
+            if     (istrcr(721).ne.0) then !efold_cb
+              stracr(i,j,istrcr(721)) = (1.0/dall)/3600.0  !e-folding time (hours)
+            endif
+            if     (istrcr(722).ne.0) then !spdbot
+              stracr(i,j,istrcr(722)) = vmag+cbarp(i,j)  !m/s
+            endif
+            if     (istrcr(723).ne.0) then !spdtid
+              stracr(i,j,istrcr(723)) = sqrt(utide(i,j)**2 + vtide(i,j)**2)
             endif
 !
 ! ---       tidal bottom drag
@@ -5733,4 +5788,10 @@
 !> Aug. 2024 - replace U10-Uocn with U10-ocnscl*Uocn
 !> Dec. 2024 - added streaming tidal filter
 !> Jan. 2025 - converted displd_mn and dispqd_mn to surface tracers
-!> Jan. 2025 - Added sshflg=3 for steric SSH and Montg. Potential
+!> Jan. 2025 - added sshflg=3 for steric SSH and Montg. Potential
+!> Feb. 2025 - cbarmin (forfundf) ensures that BBL speed is not zero
+!> Feb. 2025 - added efold_cb, strflg=721
+!> Feb. 2025 - added spdbot,   strflg=722
+!> Feb. 2025 - added spdtid,   strflg=723
+!> Feb. 2025 - if cbar is negative, cbarp represents tidal amplitude
+!> Feb. 2025 - optionally add observed tidal velocities to bottom speed

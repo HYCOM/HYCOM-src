@@ -907,9 +907,11 @@
 ! --- 'vertmx' = diffusion velocity (m/s) for mom.mixing at mix.layr.base
 ! ---             (vertmx only used in MICOM-like isopycnal mode)
 ! --- 'cbar'   = rms flow speed     (m/s) for linear bottom friction
-! ---             (negative to input spatially varying rms flow speed)
+! ---             (negative to input tidal amplitude flow speed)
 ! --- 'cb'     = coefficient of quadratic bottom friction
 ! ---             (negative to input spatially varying coefficient)
+! --- 'cbtidc' = tidal velocities: 1 digit per constituent (Q1K2P1N2O1K1S2M2)
+! ---             0 for no tidal velocities, must be 0 when tidflg > 0
 ! --- 'drglim' = limiter for explicit friction (1.0 no limiter, 0.0 implicit)
       if (mnproc.eq.1) then
       write(lp,*)
@@ -948,6 +950,7 @@
                                &" m/s (-ve if variable)")')
       call blkinr(cb,    'cb    ','(a6," =",f10.4, &
                                &"     (-ve if variable)")')
+      call blkini(cbtidc,'cbtidc')
       call blkinr(drglim,'drglim','(a6," =",f10.4," ")')
 !
       if (hybrlx.lt.1.0) then
@@ -1373,6 +1376,9 @@
 ! ---              706: pbavg_a
 ! ---              707: htide
 ! ---              708: ns_ssh
+! ---              721: efold_cb
+! ---              722: spdbot
+! ---              723: spdtid
 !
       if (mnproc.eq.1) then
       write(lp,*)
@@ -1825,6 +1831,32 @@
         call xcstop('(blkdat)')
                stop '(blkdat)'
       endif
+!
+! --- internal: set tidflg=-1 for cbtidc on
+!
+      if     (cbtidc.ne.0) then
+        if     (tidflg.ne.0) then
+          if     (mnproc.eq.1) then
+          write(lp,'(/ a /)') &
+           &'error - cbtidc must be off when there is tidal forcing'
+          call flush(lp)
+          endif !1st tile
+          call xcstop('(blkdat)')
+                 stop '(blkdat)'
+        else
+          tidflg = -1
+        endif !tidflg
+      endif !cbtidc
+      if     (tidflg.ne.-1 .and. istrcr(723).ne.0) then
+        if     (mnproc.eq.1) then
+        write(lp,'(/ a /)') &
+         &'error - strflg=723 (spdtid) requires cbtidc on'
+        call flush(lp)
+        endif !1st tile
+        call xcstop('(blkdat)')
+               stop '(blkdat)'
+      endif
+!
       if     (tidflg.ge.2 .and. .not.tidgen .and. yrflag.ne.3) then
         if     (mnproc.eq.1) then
         write(lp,'(/ a /)') &
@@ -3053,3 +3085,5 @@
 !> Jan. 2025 - added mstrcr
 !> Jan. 2025 - Added sshflg=3 for steric SSH and Montg. Potential
 !> Jan. 2025 - added tidnud to nudge towards the observed tides
+!> Feb. 2025 - Added cbtidc for adding tidal velocities to bottom speed
+!> Feb. 2025 - Negative cbar to input tidal amplitude flow speed

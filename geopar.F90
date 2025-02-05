@@ -144,7 +144,6 @@
             call xcstop('(geopar)')
                    stop '(geopar)'
           endif
-#if defined(ESPC_COUPLE) || defined (USE_NUOPC_CESMBETA)
 !         pang
           i = index(cline,'=')
           read (cline(i+1:),*) hminb,hmaxb
@@ -153,10 +152,6 @@
           endif
           call xcsync(flush_lp)
           call zaiord(pang, ip,.false., hmina,hmaxa, 9)
-#else
-!         skip pang
-          call zaiosk(9)
-#endif
         elseif (k.eq.7) then
           call zaiord(scpx, ip,.false., hmina,hmaxa, 9)
         elseif (k.eq.8) then
@@ -271,9 +266,7 @@
       call xctilr(qlon,  1,1, nbdy,nbdy, halo_ps)
       call xctilr(qlat,  1,1, nbdy,nbdy, halo_ps)
 #endif
-#if defined(ESPC_COUPLE) || defined (USE_NUOPC_CESMBETA)
       call xctilr(pang,  1,1, nbdy,nbdy, halo_ps)
-#endif
       if     (momtyp.eq.2) then
       call xctilr(scpx,  1,1, nbdy,nbdy, halo_ps)
       call xctilr(scpy,  1,1, nbdy,nbdy, halo_ps)
@@ -1070,3 +1063,4 @@
 !> Dec. 2018 - add /* USE_NUOPC_CESMBETA */ macro for pang (for coupled simulation)
 !> Apr. 2023 - added dx0k
 !> Jan. 2025 - converted displd_mn and dispqd_mn to surface tracers
+!> Feb. 2025 - always read pang in case it is used in mod_tides 

@@ -1489,7 +1489,7 @@
 !
 ! ---   setup parameters defining tidal body forces
 !
-        if     (tidflg.gt.0) then
+        if     (tidflg.ne.0) then
           time_8=dtime0      !'baroclinic' time for body force tides
           call tides_set(0)
         endif
@@ -1594,7 +1594,7 @@
 !
 ! ---   setup parameters defining tidal body forces
 !
-        if     (tidflg.gt.0) then
+        if     (tidflg.ne.0) then
           time_8=dtime0      !'baroclinic' time for body force tides
           call tides_set(0)
         endif
@@ -1661,7 +1661,7 @@
 !
 ! --- "scalar" tidal SAL factor
 !
-      if     (tidflg.eq.0) then
+      if     (tidflg.le.0) then
         salfac(:,:)=0.0     !not used, set it for safety
       elseif (tidsal.lt.0.0) then
         call forfuns        !varying tidal SAL factor
@@ -4140,3 +4140,4 @@
 !> Jan. 2025 - Added sshflg=3 for steric SSH and Montg. Potential
 !> Jan. 2025 - added the option to nudge towards the observed tides
 !> Jan. 2025 - call overtn only at the end of one month or shorter runs
+!> Feb. 2025 - tidflg==-1 adds tidal velocities to bottom speed

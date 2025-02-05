@@ -582,6 +582,33 @@
             write (nop,117) 'ns_ssh  ',nstep,time,k,coord,xmin,xmax
             call flush(nop)
             endif !1st tile
+          elseif (ktr.eq.istrcr(721)) then !efold_cb
+            call zaiowr(stracr(1-nbdy,1-nbdy,ktr),ip,.true., xmin,xmax, &
+                        nopa, .false.)
+            if     (mnproc.eq.1) then
+            k    =0
+            coord=0.0
+            write (nop,117) 'efold_cb',nstep,time,k,coord,xmin,xmax
+            call flush(nop)
+            endif !1st tile
+          elseif (ktr.eq.istrcr(722)) then !spdbot
+            call zaiowr(stracr(1-nbdy,1-nbdy,ktr),ip,.true., xmin,xmax, &
+                        nopa, .false.)
+            if     (mnproc.eq.1) then
+            k    =0
+            coord=0.0
+            write (nop,117) 'spdbot  ',nstep,time,k,coord,xmin,xmax
+            call flush(nop)
+            endif !1st tile
+          elseif (ktr.eq.istrcr(723)) then !spdtid
+            call zaiowr(stracr(1-nbdy,1-nbdy,ktr),ip,.true., xmin,xmax, &
+                        nopa, .false.)
+            if     (mnproc.eq.1) then
+            k    =0
+            coord=0.0
+            write (nop,117) 'spdtid  ',nstep,time,k,coord,xmin,xmax
+            call flush(nop)
+            endif !1st tile
           else  !generic surface tracer
             call zaiowr(stracr(1-nbdy,1-nbdy,ktr),ip,.true., xmin,xmax, &
                         nopa, .false.)
@@ -1902,3 +1929,4 @@
 !> Jan. 2025 - kkout==0 for surface archives
 !> Jan. 2025 - Added sshflg=3 for steric SSH and Montg. Potential
 !> Jan. 2025 - tidnud adds extra surface fields to archiv_prof_out
+!> Feb. 2025 - Added efold_cb,spdbot,spdtid: strflg=721,722,723

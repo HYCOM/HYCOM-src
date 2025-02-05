@@ -24,7 +24,10 @@
 !
       integer, save, public  :: &
        tidflg,    & ! 0:notide,1:bdy.;2:body;3:body&bdy.
-       tidcon,    & ! 1 digit per constituent (Q1K2P1N2O1K1S2M2), 0=off,1=on
+       tidcon,    & ! tidal elevations:
+                    ! 1 digit per constituent (Q1K2P1N2O1K1S2M2), 0=off,1=on
+       cbtidc,    & ! tidal velocities:
+                    ! 1 digit per constituent (Q1K2P1N2O1K1S2M2), 0=off,1=on
        tidein,    & ! tide input flag: 0=no; 1=yes; 2=sal
        tiddrg,    & ! tidal drag flag: 0:no; -1,1=scalar; 2=tensor
        tidstr,    & ! tidal streaming filter flag: 0:no; 1=yes
@@ -52,6 +55,8 @@
        hnudge,    & ! spatialy varying h-tide nudging coefficent (1/s)
         etide,    & ! body tide, in m
         htide,    & ! observed hbaro tide, in m
+        utide,    & ! observed ubaro tide, in m/s
+        vtide,    & ! observed vbaro tide, in m/s
        hntide,    & ! de-tided hbaro,      filtered from hhrly
        untide,    & ! de-tided u-velocity, filtered from uhrly
        vntide       ! de-tided u-velocity, filtered from vhrly
@@ -70,12 +75,17 @@
        vhrly        ! hourly v-velocity samples
 !
       logical, save, private :: &
-       tide_on(ncon)
+       tide_on(ncon), & !expanded tidcon
+       tidv_on(ncon)    !expanded cbtidc
 !
       real,    allocatable, dimension(:,:,:), &
                save, private :: &
        atidh,     & ! real      complex amplitude coefficents for obs. h-tide
        btidh,     & ! imaginary complex amplitude coefficents for obs. h-tide
+       atidu,     & ! real      complex amplitude coefficents for obs. u-tide
+       btidu,     & ! imaginary complex amplitude coefficents for obs. u-tide
+       atidv,     & ! real      complex amplitude coefficents for obs. v-tide
+       btidv,     & ! imaginary complex amplitude coefficents for obs. v-tide
        atide,     & ! real      complex amplitude coefficents for body tide
        btide,     & ! imaginary complex amplitude coefficents for body tide
        etidei       ! input body tide, in m
@@ -97,7 +107,7 @@
 !
       integer flag  !0 on initial call only
 !
-! --- body force tide setup
+! --- body force or observed velocity tide setup
 !
       integer iyear,idyold,iday,ihour,inty
       integer i,ihr,j,k,nleap,tidcon1
@@ -109,14 +119,26 @@
       data rad/  0.0174532925199432d0 /
       save idyold,rad
 !
-      if     (tidflg.gt.0) then
+      if     (tidflg.ne.0) then
 !
-        if(flag.eq.0) then
-          tidcon1 = tidcon
-          do i =1,ncon
-            tide_on(i) = mod(tidcon1,10) .eq. 1
-            tidcon1    =     tidcon1/10  ! shift by one decimal digit
-          enddo
+        if     (flag.eq.0) then
+          if     (tidflg.gt.0) then
+!           expand tidcon
+            tidcon1 = tidcon
+            do i =1,ncon
+              tidv_on(i) = 0
+              tide_on(i) = mod(tidcon1,10) .eq. 1
+              tidcon1    =     tidcon1/10  ! shift by one decimal digit
+            enddo
+          else !tidflg==-1
+!           expand cbtidc
+            tidcon1 = cbtidc
+            do i =1,ncon
+              tide_on(i) = 0
+              tidv_on(i) = mod(tidcon1,10) .eq. 1
+              tidcon1    =     tidcon1/10  ! shift by one decimal digit
+            enddo
+          endif !tidflg
           idyold=-1  !.ne.iday
         endif
 !
@@ -164,138 +186,167 @@
           endif  !iday.ne.idyold (.or. flag.eq.0)
         endif  !.not.tidgen & yrflag.eq.3
 !
-        if(flag.eq.0) then
-           if     (mnproc.eq.1) then
-           write (lp,*) ' now initializing tidal body forcing ...'
-           write (lp,'(/a,i8.8/)') ' Q1K2P1N2O1K1S2M2 = ',tidcon
-           endif !1st tile
-           call xcsync(flush_lp)
+        if     (flag.eq.0) then
 !
-! ---      amp is in m, and omega in radians/day.
+! ---     amp is in m, and omega in radians/day.
 !
-           amp  ( 3)=   0.1424079984D+00
-           omega( 3)=   0.6300387913D+01  ! K1
-           amp  ( 4)=   0.1012659967D+00
-           omega( 4)=   0.5840444971D+01  ! O1
-           amp  ( 6)=   0.4712900147D-01
-           omega( 6)=   0.6265982327D+01  ! P1
-           amp  ( 8)=   0.1938699931D-01
-           omega( 8)=   0.5612418128D+01  ! Q1
-           amp  ( 1)=   0.2441020012D+00
-           omega( 1)=   0.1214083326D+02  ! M2
-           amp  ( 2)=   0.1135720015D+00
-           omega( 2)=   0.1256637061D+02  ! S2
-           amp  ( 5)=   0.4673499987D-01
-           omega( 5)=   0.1191280642D+02  ! N2
-           amp  ( 7)=   0.3087499924D-01
-           omega( 7)=   0.1260077583D+02  ! K2
+          amp  ( 3)=   0.1424079984D+00
+          omega( 3)=   0.6300387913D+01  ! K1
+          amp  ( 4)=   0.1012659967D+00
+          omega( 4)=   0.5840444971D+01  ! O1
+          amp  ( 6)=   0.4712900147D-01
+          omega( 6)=   0.6265982327D+01  ! P1
+          amp  ( 8)=   0.1938699931D-01
+          omega( 8)=   0.5612418128D+01  ! Q1
+          amp  ( 1)=   0.2441020012D+00
+          omega( 1)=   0.1214083326D+02  ! M2
+          amp  ( 2)=   0.1135720015D+00
+          omega( 2)=   0.1256637061D+02  ! S2
+          amp  ( 5)=   0.4673499987D-01
+          omega( 5)=   0.1191280642D+02  ! N2
+          amp  ( 7)=   0.3087499924D-01
+          omega( 7)=   0.1260077583D+02  ! K2
 !
-           allocate( salfac(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy) )
-           call mem_stat_add( 1*(idm+2*nbdy)*(jdm+2*nbdy) )
-           salfac(:,:) = 0.0
+          if     (tidflg.gt.0) then
+            if     (mnproc.eq.1) then
+            write (lp,*) ' now initializing tidal body forcing ...'
+            write (lp,'(/a,i8.8/)') ' Q1K2P1N2O1K1S2M2 = ',tidcon
+            endif !1st tile
+            call xcsync(flush_lp)
 !
-           if     (tidein.eq.1) then
+            allocate( salfac(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy) )
+            call mem_stat_add( 1*(idm+2*nbdy)*(jdm+2*nbdy) )
+            salfac(:,:) = 0.0
 !
-! ---        read in tidal forcing in time space, rarely used
+            if     (tidein.eq.1) then
 !
-             allocate( etidei(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy,2), &
-                        etide(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy)   )
-             call mem_stat_add( 3*(idm+2*nbdy)*(jdm+2*nbdy) )
-             etidei(:,:,:) = 0.0
-              etide(:,:)   = 0.0
-             wt0 = -99.0
-             wt1 = -99.0
-             call tides_forfun(time_8)
-           else
-             if     (tidnud.ne.0) then
-!              input observed h tidal complex amplitudes
-               allocate( hnudge(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy) )
-               call mem_stat_add( 1*(idm+2*nbdy)*(jdm+2*nbdy) )
+! ---         read in tidal forcing in time space, rarely used
 !
-               hnudge(:,:) = 0.0
+              allocate( etidei(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy,2), &
+                          etide(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy)   )
+              call mem_stat_add( 3*(idm+2*nbdy)*(jdm+2*nbdy) )
+              etidei(:,:,:) = 0.0
+               etide(:,:)   = 0.0
+              wt0 = -99.0
+              wt1 = -99.0
+              call tides_forfun(time_8)
+            else
+              if     (tidnud.ne.0) then
+!               input observed h tidal complex amplitudes
+                allocate( hnudge(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy) )
+                call mem_stat_add( 1*(idm+2*nbdy)*(jdm+2*nbdy) )
 !
-               allocate( atidh(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy,ncon), &
-                         btidh(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy,ncon), &
-                         htide(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy) )
-               call mem_stat_add( 2*(idm+2*nbdy)*(jdm+2*nbdy)*ncon )
-               call mem_stat_add( 1*(idm+2*nbdy)*(jdm+2*nbdy) )
+                hnudge(:,:) = 0.0
 !
-               atidh(:,:,:) = 0.0
-               btidh(:,:,:) = 0.0
-               htide(:,:) = 0.0
+                allocate( atidh(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy,ncon), &
+                          btidh(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy,ncon), &
+                          htide(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy) )
+                call mem_stat_add( 2*(idm+2*nbdy)*(jdm+2*nbdy)*ncon )
+                call mem_stat_add( 1*(idm+2*nbdy)*(jdm+2*nbdy) )
 !
-               call tides_forfun_obs
-             endif !nudging
+                atidh(:,:,:) = 0.0
+                btidh(:,:,:) = 0.0
+                htide(:,:) = 0.0
 !
-             allocate( atide(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy,ncon), &
-                       btide(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy,ncon), &
-                       etide(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy)      )
-             call mem_stat_add( 2*(idm+2*nbdy)*(jdm+2*nbdy)*ncon )
-             call mem_stat_add(   (idm+2*nbdy)*(jdm+2*nbdy) )
+                call tides_forfun_obsh
+              endif !nudging
 !
-             etide(i,j) = 0.0
+              allocate( atide(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy,ncon), &
+                        btide(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy,ncon), &
+                        etide(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy)      )
+              call mem_stat_add( 2*(idm+2*nbdy)*(jdm+2*nbdy)*ncon )
+              call mem_stat_add(   (idm+2*nbdy)*(jdm+2*nbdy) )
 !
-             if     (tidein.eq.2) then
-               call tides_forfun_sal  !input tidal SAL complex amplitudes
-! ---          subtract SAL forcing
-               atide(:,:,:) = -atide(:,:,:)
-               btide(:,:,:) = -btide(:,:,:)
-             else  !scalar SAL
-               atide(:,:,:) = 0.0
-               btide(:,:,:) = 0.0
-             endif
+              etide(i,j) = 0.0
 !
-! ---        alpha2=(1+k-h)g; Love numbers k,h  taken from
-! ---                         Foreman et al. JGR,98,2509-2532,1993
-             alpha2q1=1.0+0.298-0.603
-             alpha2o1=1.0+0.298-0.603
-             alpha2p1=1.0+0.287-0.581
-             alpha2k1=1.0+0.256-0.520
-             alpha2m2=1.0+0.302-0.609
-             alpha2s2=alpha2m2
-             alpha2n2=alpha2m2
-             alpha2k2=alpha2m2
-!$OMP        PARALLEL DO PRIVATE(j,i,semi_cos,semi_sin,diur_cos,diur_sin) &
-!$OMP                 SCHEDULE(STATIC,jblk)
-             do j= 1-nbdy,jj+nbdy
-               do i= 1-nbdy,ii+nbdy
-                 semi_cos=cos(rad*plat(i,j))**2*cos(rad*2*plon(i,j))
-                 semi_sin=cos(rad*plat(i,j))**2*sin(rad*2*plon(i,j))
-                 diur_cos=sin(2.*rad*plat(i,j))*cos(rad*plon(i,j))
-                 diur_sin=sin(2.*rad*plat(i,j))*sin(rad*plon(i,j))
+              if     (tidein.eq.2) then
+                call tides_forfun_sal  !input tidal SAL complex amplitudes
+! ---           subtract SAL forcing
+                atide(:,:,:) = -atide(:,:,:)
+                btide(:,:,:) = -btide(:,:,:)
+              else  !scalar SAL
+                atide(:,:,:) = 0.0
+                btide(:,:,:) = 0.0
+              endif
 !
-                 atide(i,j,3)=atide(i,j,3)+amp(3)*alpha2k1*diur_cos
-                 btide(i,j,3)=btide(i,j,3)+amp(3)*alpha2k1*diur_sin
-                 atide(i,j,4)=atide(i,j,4)+amp(4)*alpha2o1*diur_cos
-                 btide(i,j,4)=btide(i,j,4)+amp(4)*alpha2o1*diur_sin
-                 atide(i,j,6)=atide(i,j,6)+amp(6)*alpha2p1*diur_cos
-                 btide(i,j,6)=btide(i,j,6)+amp(6)*alpha2p1*diur_sin
-                 atide(i,j,8)=atide(i,j,8)+amp(8)*alpha2q1*diur_cos
-                 btide(i,j,8)=btide(i,j,8)+amp(8)*alpha2q1*diur_sin
+! ---         alpha2=(1+k-h)g; Love numbers k,h  taken from
+! ---                          Foreman et al. JGR,98,2509-2532,1993
+              alpha2q1=1.0+0.298-0.603
+              alpha2o1=1.0+0.298-0.603
+              alpha2p1=1.0+0.287-0.581
+              alpha2k1=1.0+0.256-0.520
+              alpha2m2=1.0+0.302-0.609
+              alpha2s2=alpha2m2
+              alpha2n2=alpha2m2
+              alpha2k2=alpha2m2
+!$OMP         PARALLEL DO PRIVATE(j,i,semi_cos,semi_sin,diur_cos,diur_sin) &
+!$OMP                  SCHEDULE(STATIC,jblk)
+              do j= 1-nbdy,jj+nbdy
+                do i= 1-nbdy,ii+nbdy
+                  semi_cos=cos(rad*plat(i,j))**2*cos(rad*2*plon(i,j))
+                  semi_sin=cos(rad*plat(i,j))**2*sin(rad*2*plon(i,j))
+                  diur_cos=sin(2.*rad*plat(i,j))*cos(rad*plon(i,j))
+                  diur_sin=sin(2.*rad*plat(i,j))*sin(rad*plon(i,j))
 !
-                 atide(i,j,1)=atide(i,j,1)+amp(1)*alpha2m2*semi_cos
-                 btide(i,j,1)=btide(i,j,1)+amp(1)*alpha2m2*semi_sin
-                 atide(i,j,2)=atide(i,j,2)+amp(2)*alpha2s2*semi_cos
-                 btide(i,j,2)=btide(i,j,2)+amp(2)*alpha2s2*semi_sin
-                 atide(i,j,5)=atide(i,j,5)+amp(5)*alpha2n2*semi_cos
-                 btide(i,j,5)=btide(i,j,5)+amp(5)*alpha2n2*semi_sin
-                 atide(i,j,7)=atide(i,j,7)+amp(7)*alpha2k2*semi_cos
-                 btide(i,j,7)=btide(i,j,7)+amp(7)*alpha2k2*semi_sin
-              enddo !i
-            enddo  !j
+                  atide(i,j,3)=atide(i,j,3)+amp(3)*alpha2k1*diur_cos
+                  btide(i,j,3)=btide(i,j,3)+amp(3)*alpha2k1*diur_sin
+                  atide(i,j,4)=atide(i,j,4)+amp(4)*alpha2o1*diur_cos
+                  btide(i,j,4)=btide(i,j,4)+amp(4)*alpha2o1*diur_sin
+                  atide(i,j,6)=atide(i,j,6)+amp(6)*alpha2p1*diur_cos
+                  btide(i,j,6)=btide(i,j,6)+amp(6)*alpha2p1*diur_sin
+                  atide(i,j,8)=atide(i,j,8)+amp(8)*alpha2q1*diur_cos
+                  btide(i,j,8)=btide(i,j,8)+amp(8)*alpha2q1*diur_sin
 !
-            call xctilr(atide(1-nbdy,1-nbdy,1),1,ncon, nbdy,nbdy, halo_ps)
-            call xctilr(btide(1-nbdy,1-nbdy,1),1,ncon, nbdy,nbdy, halo_ps)
-          endif !tidein.eq.1:else
+                  atide(i,j,1)=atide(i,j,1)+amp(1)*alpha2m2*semi_cos
+                  btide(i,j,1)=btide(i,j,1)+amp(1)*alpha2m2*semi_sin
+                  atide(i,j,2)=atide(i,j,2)+amp(2)*alpha2s2*semi_cos
+                  btide(i,j,2)=btide(i,j,2)+amp(2)*alpha2s2*semi_sin
+                  atide(i,j,5)=atide(i,j,5)+amp(5)*alpha2n2*semi_cos
+                  btide(i,j,5)=btide(i,j,5)+amp(5)*alpha2n2*semi_sin
+                  atide(i,j,7)=atide(i,j,7)+amp(7)*alpha2k2*semi_cos
+                  btide(i,j,7)=btide(i,j,7)+amp(7)*alpha2k2*semi_sin
+                enddo !i
+              enddo  !j
 !
-          if     (mnproc.eq.1) then
-          write (lp,*) ' ...finished initializing tidal body forcing'
-          endif !1st tile
-          call xcsync(flush_lp)
+              call xctilr(atide(1-nbdy,1-nbdy,1),1,ncon, nbdy,nbdy, halo_ps)
+              call xctilr(btide(1-nbdy,1-nbdy,1),1,ncon, nbdy,nbdy, halo_ps)
+            endif !tidein.eq.1:else
+!
+            if     (mnproc.eq.1) then
+             write (lp,*) ' ...finished initializing tidal body forcing'
+            endif !1st tile
+            call xcsync(flush_lp)
+!23456789012
+          else !tidflg.eq.-1
+            if     (mnproc.eq.1) then
+            write (lp,*) ' now initializing observed tidal velocities ...'
+            write (lp,'(/a,i8.8/)') ' Q1K2P1N2O1K1S2M2 = ',cbtidc
+            endif !1st tile
+            call xcsync(flush_lp)
+!
+            allocate( atidu(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy,ncon), &
+                      btidu(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy,ncon), &
+                      atidv(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy,ncon), &
+                      btidv(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy,ncon), &
+                      utide(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy), &
+                      vtide(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy)      )
+            call mem_stat_add( 4*(idm+2*nbdy)*(jdm+2*nbdy)*ncon )
+            call mem_stat_add( 2*(idm+2*nbdy)*(jdm+2*nbdy) )
+!
+            utide(:,:) = 0.0
+            vtide(:,:) = 0.0
+!
+            call tides_forfun_obsv
+!
+            if     (mnproc.eq.1) then
+            write (lp,*) ' ...finished initializing observed tidal velocities ...'
+            endif !1st tile
+            call xcsync(flush_lp)
+          endif !tidflg>0:tidflg<0
 !
         endif !flag.eq.0
 !
-      endif !tidflg.gt.0
+      endif !tidflg.ne.0
 !
       if     (flag.eq.0) then
         if     (tidnud.eq.2) then
@@ -737,7 +788,7 @@
       endif
 !     if     (mnproc.eq.1) then
 !       write(lp,'(a,f8.4,2f12.5)')
-!    &    'tides_ports: ramp,time =',ramp,dtime,timet
+!    &    'tides_observed: ramp,time =',ramp,dtime,timet
 !     endif
 !
       htide1 = 0.0
@@ -816,6 +867,171 @@
       endif  !debug_tides
       return
       end subroutine tides_observed
+!
+!
+      subroutine tides_observed_vel(ll)
+      use mod_xc  ! HYCOM communication interface
+      use mod_cb_arrays  ! HYCOM saved arrays
+      implicit none
+!
+      integer ll
+!
+! --- calculate observed tidal velocities
+!
+      integer i,j,l
+      real*8  timef,timet
+      real    ewtide,nwtide
+      real    utide1,utide2,utide3,utide4,utide5,utide6,utide7,utide8
+      real    vtide1,vtide2,vtide3,vtide4,vtide5,vtide6,vtide7,vtide8
+!
+      if     (.not.tidgen) then
+        call tides_set(1)
+      else
+        arg8(1:ncon) = 0.0  !no correction for a specific year
+         pu8(1:ncon) = 0.0  !no correction for a specific year
+         pf8(1:ncon) = 1.0  !no correction for a specific year
+      endif  !standard:generic
+!
+! --- Early return?
+!
+      if     (tidflg.ge.0) then
+        RETURN
+      endif
+!
+      if     (yrflag.eq.3) then
+        timet=time_8+(ll*dlt/86400.d0)-timeref    !time from 00Z today
+      else
+        timet=time_8+(ll*dlt/86400.d0)            !time since model day zero
+      endif
+!     if     (mnproc.eq.1) then
+!       write(lp,'(a,2f12.5)')
+!    &    'tides_observed_vel: time =',dtime,timet
+!     endif
+!
+      utide1 = 0.0
+      utide2 = 0.0
+      utide3 = 0.0
+      utide4 = 0.0
+      utide5 = 0.0
+      utide6 = 0.0
+      utide7 = 0.0
+      utide8 = 0.0
+      vtide1 = 0.0
+      vtide2 = 0.0
+      vtide3 = 0.0
+      vtide4 = 0.0
+      vtide5 = 0.0
+      vtide6 = 0.0
+      vtide7 = 0.0
+      vtide8 = 0.0
+!$OMP PARALLEL DO PRIVATE(j,i, &
+!$OMP          utide1,utide2,utide3,utide4,utide5,utide6,utide7,utide8, &
+!$OMP          vtide1,vtide2,vtide3,vtide4,vtide5,vtide6,vtide7,vtide8) &
+!$OMP          SCHEDULE(STATIC,jblk)
+      do j= 1-nbdy,jj+nbdy
+        do i= 1-nbdy,ii+nbdy
+          if     (tidv_on(1)) then
+           utide1= &
+              atidu(i,j,1)*pf8(1)*cos(omega(1)*timet+arg8(1)+pu8(1))- &
+              btidu(i,j,1)*pf8(1)*sin(omega(1)*timet+arg8(1)+pu8(1))
+            vtide1= &
+              atidv(i,j,1)*pf8(1)*cos(omega(1)*timet+arg8(1)+pu8(1))- &
+              btidv(i,j,1)*pf8(1)*sin(omega(1)*timet+arg8(1)+pu8(1))
+          endif
+          if     (tidv_on(2)) then
+            utide2= &
+              atidu(i,j,2)*pf8(2)*cos(omega(2)*timet+arg8(2)+pu8(2))- &
+              btidu(i,j,2)*pf8(2)*sin(omega(2)*timet+arg8(2)+pu8(2))
+            vtide2= &
+              atidv(i,j,2)*pf8(2)*cos(omega(2)*timet+arg8(2)+pu8(2))- &
+              btidv(i,j,2)*pf8(2)*sin(omega(2)*timet+arg8(2)+pu8(2))
+          endif
+          if     (tidv_on(3)) then
+            utide3= &
+              atidu(i,j,3)*pf8(3)*cos(omega(3)*timet+arg8(3)+pu8(3))- &
+              btidu(i,j,3)*pf8(3)*sin(omega(3)*timet+arg8(3)+pu8(3))
+            vtide3= &
+              atidv(i,j,3)*pf8(3)*cos(omega(3)*timet+arg8(3)+pu8(3))- &
+              btidv(i,j,3)*pf8(3)*sin(omega(3)*timet+arg8(3)+pu8(3))
+          endif
+          if     (tidv_on(4)) then
+           utide4= &
+              atidu(i,j,4)*pf8(4)*cos(omega(4)*timet+arg8(4)+pu8(4))- &
+              btidu(i,j,4)*pf8(4)*sin(omega(4)*timet+arg8(4)+pu8(4))
+            vtide4= &
+              atidv(i,j,4)*pf8(4)*cos(omega(4)*timet+arg8(4)+pu8(4))- &
+              btidv(i,j,4)*pf8(4)*sin(omega(4)*timet+arg8(4)+pu8(4))
+          endif
+          if     (tidv_on(5)) then
+            utide5= &
+              atidu(i,j,5)*pf8(5)*cos(omega(5)*timet+arg8(5)+pu8(5))- &
+              btidu(i,j,5)*pf8(5)*sin(omega(5)*timet+arg8(5)+pu8(5))
+            vtide5= &
+              atidv(i,j,5)*pf8(5)*cos(omega(5)*timet+arg8(5)+pu8(5))- &
+              btidv(i,j,5)*pf8(5)*sin(omega(5)*timet+arg8(5)+pu8(5))
+          endif
+          if     (tidv_on(6)) then
+            utide6= &
+              atidu(i,j,6)*pf8(6)*cos(omega(6)*timet+arg8(6)+pu8(6))- &
+              btidu(i,j,6)*pf8(6)*sin(omega(6)*timet+arg8(6)+pu8(6))
+            vtide6= &
+              atidv(i,j,6)*pf8(6)*cos(omega(6)*timet+arg8(6)+pu8(6))- &
+              btidv(i,j,6)*pf8(6)*sin(omega(6)*timet+arg8(6)+pu8(6))
+          endif
+          if     (tidv_on(7)) then
+            utide7= &
+              atidu(i,j,7)*pf8(7)*cos(omega(7)*timet+arg8(7)+pu8(7))- &
+              btidu(i,j,7)*pf8(7)*sin(omega(7)*timet+arg8(7)+pu8(7))
+            vtide7= &
+              atidv(i,j,7)*pf8(7)*cos(omega(7)*timet+arg8(7)+pu8(7))- &
+              btidv(i,j,7)*pf8(7)*sin(omega(7)*timet+arg8(7)+pu8(7))
+          endif
+          if     (tidv_on(8)) then
+            utide8= &
+              atidu(i,j,8)*pf8(8)*cos(omega(8)*timet+arg8(8)+pu8(8))- &
+              btidu(i,j,8)*pf8(8)*sin(omega(8)*timet+arg8(8)+pu8(8))
+            vtide8= &
+              atidv(i,j,8)*pf8(8)*cos(omega(8)*timet+arg8(8)+pu8(8))- &
+              btidv(i,j,8)*pf8(8)*sin(omega(8)*timet+arg8(8)+pu8(8))
+          endif
+!
+          ewtide    = utide1 &
+                     +utide2 &
+                     +utide3 &
+                     +utide4 &
+                     +utide5 &
+                     +utide6 &
+                     +utide7 &
+                     +utide8
+!
+          nwtide    = vtide1 &
+                     +vtide2 &
+                     +vtide3 &
+                     +vtide4 &
+                     +vtide5 &
+                     +vtide6 &
+                     +vtide7 &
+                     +vtide8
+!
+! ---     East-ward,North-ward to X-ward,Y-ward
+          utide(i,j)=cos(-pang(i,j))*ewtide + &
+                     sin( pang(i,j))*nwtide
+          vtide(i,j)=cos(-pang(i,j))*nwtide - &
+                     sin( pang(i,j))*ewtide
+        enddo !i
+      enddo !j
+!
+      if (debug_tides) then
+        if     (itest.gt.0 .and. jtest.gt.0) then
+          write (lp,'(i9,i3,2f14.6,2i5,3x,2(a,f10.6))') &
+           nstep,ll,timeref+timet,timet,itest+i0,jtest+j0, &
+              ' utide = ',utide(itest,jtest), &
+              ' vtide = ',vtide(itest,jtest)
+        endif !test point
+        call xcsync(flush_lp)
+      endif  !debug_tides
+      return
+      end subroutine tides_observed_vel
 !
 !
       subroutine tides_filter(n)
@@ -1221,7 +1437,7 @@
       end subroutine tides_forfun
 !
 !
-      subroutine tides_forfun_obs
+      subroutine tides_forfun_obsh
       use mod_xc         ! HYCOM communication interface
       use mod_cb_arrays  ! HYCOM saved arrays
       use mod_za         ! HYCOM I/O interface
@@ -1267,7 +1483,76 @@
       call xcsync(flush_lp)
 !
       return
-      end subroutine tides_forfun_obs
+      end subroutine tides_forfun_obsh
+!
+!
+      subroutine tides_forfun_obsv
+      use mod_xc         ! HYCOM communication interface
+      use mod_cb_arrays  ! HYCOM saved arrays
+      use mod_za         ! HYCOM I/O interface
+      implicit none
+!
+! --- initialize real and imaginary observed tidal complex amplitudes
+!
+! --- units of atidu and btidu are m/s on the p-grid.
+! --- units of atidv and btidv are m/s on the p-grid.
+!
+! --- tidal velocities are specified e-ward,n-ward on a co-located grid
+! --- (e.g. at the cell center).  We rotate them to x-ward,y-ward.
+! 
+! --- I/O and array I/O unit 925 used here, but not reserved.
+!
+! --- all input fields must be defined at all grid points.
+!     
+      integer   i,j,k,lgth
+!
+      if     (mnproc.eq.1) then
+      write (lp,*) ' now opening obsReIm velocity fields  ...'
+      endif !1st tile 
+      call xcsync(flush_lp)
+!
+      lgth = len_trim(flnmfor)
+!
+      call zaiopf(flnmfor(1:lgth)//'tidal.obsuReIm.a', 'old', 925)
+      if     (mnproc.eq.1) then  ! .b file from 1st tile only
+      open (unit=uoff+925,file=flnmfor(1:lgth)//'tidal.obsuReIm.b', &
+         status='old', action='read')
+      endif !1st tile
+      do k= 1,ncon
+        call rdmonth(atidu(1-nbdy,1-nbdy,k), 925)
+        call rdmonth(btidu(1-nbdy,1-nbdy,k), 925)
+      enddo !k
+      if     (mnproc.eq.1) then  ! .b file from 1st tile only
+      close (unit=uoff+925)
+      endif
+      call zaiocl(925)
+      call zaiopf(flnmfor(1:lgth)//'tidal.obsvReIm.a', 'old', 925)
+      if     (mnproc.eq.1) then  ! .b file from 1st tile only
+      open (unit=uoff+925,file=flnmfor(1:lgth)//'tidal.obsvReIm.b', &
+         status='old', action='read')
+      endif !1st tile
+      do k= 1,ncon
+        call rdmonth(atidv(1-nbdy,1-nbdy,k), 925)
+        call rdmonth(btidv(1-nbdy,1-nbdy,k), 925)
+      enddo !k
+      if     (mnproc.eq.1) then  ! .b file from 1st tile only
+      close (unit=uoff+925)
+      endif
+      call zaiocl(925)
+!    
+!     e-ward,n-ward are not "velocities" for halo updates
+      call xctilr(atidu,1,ncon, nbdy,nbdy, halo_ps)
+      call xctilr(btidu,1,ncon, nbdy,nbdy, halo_ps)
+      call xctilr(atidv,1,ncon, nbdy,nbdy, halo_ps)
+      call xctilr(btidv,1,ncon, nbdy,nbdy, halo_ps)
+!    
+      if     (mnproc.eq.1) then
+      write (lp,*) ' ...finished reading obsReIm velocity fields '
+      endif !1st tile
+      call xcsync(flush_lp)
+!    
+      return
+      end subroutine tides_forfun_obsv
 !
 !
       subroutine tides_forfun_sal
@@ -1872,3 +2157,5 @@
 !> Dec  2024 - added tidstr for tidal streaming filter
 !> Dec. 2024 - moved salfaco here from mod_cb_arrays
 !> Jan. 2025 - added the option to nudge towards the observed tides
+!> Feb. 2025 - added cbtidc for adding tidal velocities to bottom drag
+!> Feb. 2025 - pang is required for cbtidc

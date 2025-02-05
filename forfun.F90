@@ -1946,7 +1946,7 @@
         write (lp,*) ' ...finished opening sefold field '
         endif !1st tile
         call xcsync(flush_lp)
-      endif !cbar
+      endif !sefold
 !
       if     (sssflg.eq.-1) then  ! sss relaxation limiter
         call zaiopf(flnmforw(1:lgth)//'relax.sssrmx.a', 'old', 915)
@@ -2288,6 +2288,8 @@
       logical   lthkdf4
       integer   i,j,l,lgth
 !
+      real, parameter :: cbarmin = 1.e-6  !a negligable velocity (m/s)
+!
       if     (veldf2.ge.0.0) then
         util2(:,:) = veldf2
       else
@@ -2406,7 +2408,7 @@
       endif !thkdf[24]
 !
       if     (cbar.ge.0.0) then
-        cbarp(:,:) = cbar
+        cbarp(:,:) = max( cbar, cbarmin )
       else
         if     (mnproc.eq.1) then
         write (lp,*) ' now opening cbar field  ...'
@@ -5044,3 +5046,4 @@
 !> Jan. 2025 - Added sshflg=3 for steric SSH and Montg. Potential
 !> Jan. 2025 - added forfunn for nudging towards the observed tides
 !> Jan. 2025 - salfac and hnudge in mod_tides
+!> Feb. 2025 - cbarmin (forfundf) ensures that BBL speed is not zero
