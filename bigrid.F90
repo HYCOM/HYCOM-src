@@ -395,7 +395,7 @@
           write (char3,'(i3)') ilast-ifrst
           fmt(8:10)=char3
           if     (mnproc.eq.1) then
-          write (lp,'(a,i5,a,i5)')  &
+          write (lp,'(a,i6,a,i6)')  &
             'ip array, cols',ifrst+1,' --',ilast
           endif
           do j= jtdm,1,-1
@@ -452,8 +452,8 @@
             k = k+1
           elseif (last .eq. 0 .and. ipt(i,j) .eq. 1) then
             if     (k .gt. ms) then
-              write(lp,'(a,i5)')  'indxi problem on proc ',mnproc
-              write(lp,'(a,2i5)')  &
+              write(lp,'(a,i6)')  'indxi problem on proc ',mnproc
+              write(lp,'(a,2i6)')  &
                 ' error in indxi -- ms too small at i,j =',i0+i,j0+j
               call xchalt('(indxi)')
                      stop '(indxi)'
@@ -510,8 +510,8 @@
             k = k+1
           elseif (last .eq. 0 .and. jpt(i,j) .eq. 1) then
             if     (k .gt. ms) then
-              write(lp,'(a,i5)')  'indxj problem on proc ',mnproc
-              write(lp,'(a,2i5)') &
+              write(lp,'(a,i6)')  'indxj problem on proc ',mnproc
+              write(lp,'(a,2i6)') &
                 ' error in indxj -- ms too small at i,j =',i0+i,j0+j
               call xchalt('(indxj)')
                      stop '(indxj)'
@@ -537,3 +537,4 @@
 !> Oct  2008 - warning    on single-width inlets
 !> May  2014 - added ipim1,ipip1,ipjm1,ipjp1,ipim1x,ipip1x,ipjm1x,ipjp1x
 !> May  2014 - added allip,alliq,alliu,alliv
+!> Feb. 2025 - printout now ok for kdm<1000 and idm,jdm<100,000

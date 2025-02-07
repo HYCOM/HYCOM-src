@@ -925,7 +925,7 @@
  100        format(/'diagnostics for float',i6,' of',i6,', time step', &
                     i9/'float time step',i9)
  101        format('float',i6,' ntermn:',i6,' position:',2(1pe12.4)/ &
-                   'lower left points, p,u,v:',3(2i5,2x)/ &
+                   'lower left points, p,u,v:',3(2i6,2x)/ &
                    'mnproc =',i4,'  plon,plat =',1pe12.4,1pe12.4)
             call flush(lp)
           endif !nfl_debug
@@ -1249,7 +1249,7 @@
           if     (nfl.eq.nfl_debug) then
             write(lp,103) nfl,k,phi,flt(nfl,3),plo,q
             write(lp,104) ngood
- 103        format('nfl,k,phi,pflt,plo,q',i6,i3,1p,4e12.4)
+ 103        format('nfl,k,phi,pflt,plo,q',i6,i4,1p,4e12.4)
  104        format('number of good points, p,u,v',3i4)
           endif !nfl_debug
 !
@@ -1639,7 +1639,7 @@
 !
       if     (nfl.eq.nfl_debug) then
         write(lp,105) nfl,uflt,uturb1,vflt,vturb1
- 105    format('nfl,uflt,uturb1,vflt,vturb1',i5,1p,4e12.4)
+ 105    format('nfl,uflt,uturb1,vflt,vturb1',i6,1p,4e12.4)
       endif !nfl_debug
 !
               uflt=(1.0-dtturb*tdecri)*uflt+uturb1
@@ -2023,7 +2023,7 @@
 !
             if     (nfl.eq.nfl_debug) then
               write(lp,111) nfl,tflt,sflt,thflt
- 111          format('new t,s,th, float',i5,2x,3f9.3)
+ 111          format('new t,s,th, float',i6,2x,3f9.3)
             endif !nfl_debug
 !
           endif                          ! ioflag.eq.1
@@ -2790,3 +2790,4 @@
 !> Nov  2012 - implicit none added by Till Andreas Rasmussen
 !> May  2014 - use land/sea masks (e.g. ip) to skip land
 !> Aug  2017 - Added macro to allow NAG Fortran to compile
+!> Feb. 2025 - printout now ok for kdm<1000 and idm,jdm<100,000

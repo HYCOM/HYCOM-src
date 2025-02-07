@@ -34,7 +34,7 @@
 ! --- convective adjustment
 ! --- ---------------------
 !
- 103  format (i9,2i5,a/(33x,i3,2f8.3,f8.3,f8.2,f8.1))
+ 103  format (i9,2i6,a/(33x,i3,2f8.3,f8.3,f8.2,f8.1))
 !diag if (itest.gt.0 .and. jtest.gt.0) then
 !diag   write (lp,103) nstep,itest+i0,jtest+i0, &
 !diag   '  entering convec:  temp    saln    dens    thkns    dpth', &
@@ -242,7 +242,7 @@
               endif
               if     (llayer) then
 !$OMP           CRITICAL
-                write (lp,'(i9,2i5,i3,a,i3,a,i3,a,2f10.4)') &
+                write (lp,'(i9,2i6,i4,a,i4,a,i4,a,2f10.4)') &
                  nstep,i+i0,j+j0,k, &
                  ' colmn unstbl (wrt',ks,') after', &
                  iter-1,' its', &
@@ -276,7 +276,7 @@
 !diag     '  upr,lwr,final dens:',(sigup+thbase), &
 !diag     (siglo+thbase),(th3d(i,j,k,n)+thbase),q
 !diag endif
- 100    format (i9,2i5,i3,'  it',i2,a,3f8.3,f5.2)
+ 100    format (i9,2i6,i4,'  it',i2,a,3f8.3,f5.2)
 !
           end if
         end if
@@ -291,7 +291,7 @@
 !cc      colout(i)=colout(i)+temp(i,j,k,n)*dp(i,j,k,n)
 !cc      enddo !k
 !cc      if (abs((colout(i)-coluin(i))/coluin(i)).gt.1.e-6)
-!cc     .  write (lp,'(i9,2i5,a/1p,3e14.6)') nstep,i,j,
+!cc     .  write (lp,'(i9,2i6,a/1p,3e14.6)') nstep,i,j,
 !cc     .  '  column integral not conserved in convec:',
 !cc     .  coluin(i),colout(i),(colout(i)-coluin(i))/coluin(i)
       endif !ip
@@ -324,7 +324,7 @@
 !
 # include "stmt_fns.h"
 !
- 103  format (i9,2i5,a/(33x,i3,2f8.3,3p,f8.3,0p,f8.2,f8.1))
+ 103  format (i9,2i6,a/(33x,i3,2f8.3,3p,f8.3,0p,f8.2,f8.1))
 !diag if (itest.gt.0 .and. jtest.gt.0) then
 !diag   write (lp,103) nstep,itest+i0,jtest+j0, &
 !diag   '  entering convec:  temp    saln    dens    thkns    dpth', &
@@ -381,8 +381,8 @@
 !diag   +thbase,dp(i,j,1,n)*qonem,temp(i,j,1,n),saln(i,j,1,n),k, &
 !diag   th3d(i,j,k,n)+thbase,dp(i,j,k,n)*qonem,temp(i,j,k,n),saln(i,j,k,n)
 !diag endif
- 100    format (i9,2i5,a,i3,'  th3d,dp,t,s =',3pf7.3,0pf7.1,2f8.3 &
-          /26x,i3,15x,3pf7.3,0pf7.1,2f8.3)
+ 100    format (i9,2i6,a,i4,'  th3d,dp,t,s =',3pf7.3,0pf7.1,2f8.3 &
+          /26x,i4,15x,3pf7.3,0pf7.1,2f8.3)
 !
 ! --- layer -k- contains mass less dense than mixed layer. entrain it.
         delp=dp(i,j,1,n)+dp(i,j,k,n)
@@ -489,3 +489,4 @@
 !> Oct  2010 - replaced two calls to dsiglocdX with one call at mid-point
 !> Aug  2011 - replaced dpold,dpoldm with dpo
 !> May  2014 - use land/sea masks (e.g. ip) to skip land
+!> Feb. 2025 - printout now ok for kdm<1000 and idm,jdm<100,000

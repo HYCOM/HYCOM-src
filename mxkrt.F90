@@ -41,7 +41,7 @@
 !diag   tosal=tosal+saln(itest,jtest,k,n)*dp(itest,jtest,k,n)
 !diag end do
 !
- 103  format (i9,2i5,a/(32x,i3,2f8.2,f8.2,2f8.1))
+ 103  format (i9,2i6,a/(32x,i3,2f8.2,f8.2,2f8.1))
 !diag write (lp,103) nstep,itest+i0,jtest+j0, &
 !diag   '  entering  mxkrt:  temp    saln    dens   thkns    dpth', &
 !diag   (k,temp(itest,jtest,k,n),saln(itest,jtest,k,n), &
@@ -82,7 +82,7 @@
 !diag   tndcyt=tndcyt+temp(itest,jtest,k,n)*dp(itest,jtest,k,n)
 !diag   tndcys=tndcys+saln(itest,jtest,k,n)*dp(itest,jtest,k,n)
 !diag end do
-!diag write (lp,'(i9,2i5,3x,a,1p,3e12.4/22x,a,3e12.4)') &
+!diag write (lp,'(i9,2i6,3x,a,1p,3e12.4/22x,a,3e12.4)') &
 !diag   nstep,itest+i0,jtest+j0, &
 !diag   'total saln,srf.flux,tndcy:',tosal/g,salflx(itest, &
 !diag   jtest)*delt1,tndcys/g,'total temp,srf.flux,tndcy:',totem/g, &
@@ -409,10 +409,10 @@
 !
 !diag if (i.eq.itest.and.j.eq.jtest) then
 !diag   if (turgen(i,j).lt.0.) then
-!diag     write (lp,'(i9,2i5,a,1p,2e13.5)') nstep,i+i0,j+j0, &
+!diag     write (lp,'(i9,2i6,a,1p,2e13.5)') nstep,i+i0,j+j0, &
 !diag     '  m-o length (m), turgen:',depnew(i,j)*qonem,turgen(i,j)
 !diag   else
-!diag     write (lp,'(i9,2i5,a,1p,2e13.5)') nstep,i+i0,j+j0, &
+!diag     write (lp,'(i9,2i6,a,1p,2e13.5)') nstep,i+i0,j+j0, &
 !diag     '  new depth (m), turgen:',depnew(i,j)*qonem,turgen(i,j)
 !diag   endif
 !diag endif
@@ -437,7 +437,7 @@
       thk1ta=thknew*oneta(i,j,n)
       thknss=max(thknew,thkold)
 !
-!diag if (i.eq.itest.and.j.eq.jtest) write (lp,'(i9,2i5,a,2f10.4)') &
+!diag if (i.eq.itest.and.j.eq.jtest) write (lp,'(i9,2i6,a,2f10.4)') &
 !diag   nstep,i+i0,j+j0, &
 !diag   '  old/new mixed layer depth:',thkold*qonem,thknew*qonem
 !
@@ -468,7 +468,7 @@
 !diag if (i.eq.itest.and.j.eq.jtest) then
 !diag   write(lp,104) nstep,i+i0,j+j0,k,0.,1.-swfrac,dtemp(i),dsaln(i)
 !diag endif
- 104  format(i9,2i5,i3,'absorbup,dn,dtemp,dsaln ',2f6.3,2f10.6)
+ 104  format(i9,2i6,i4,'absorbup,dn,dtemp,dsaln ',2f6.3,2f10.6)
 !
       else
 !
@@ -640,7 +640,7 @@
       q=max(0.,min(1.,(util1(i,j)-pu(i,j,k))/(dpu(i,j,k,n)+epsil)))
       u(i,j,k,n)=u(i,j,k,n)+q*(u(i,j,1,n)-u(i,j,k,n))
 !diag if (i.eq.itest .and. j.eq.jtest) write &
-!diag    (lp,'(i9,2i5,i3,a,f9.3,2f8.3)') nstep,i+i0,j+j0,k, &
+!diag    (lp,'(i9,2i6,i4,a,f9.3,2f8.3)') nstep,i+i0,j+j0,k, &
 !diag    ' dpu, old/new u ',dpu(i,j,k,n)*qonem,uold,u(i,j,k,n)
       enddo !k
       endif !iu
@@ -705,7 +705,7 @@
       q=max(0.,min(1.,(util1(i,j)-pv(i,j,k))/(dpv(i,j,k,n)+epsil)))
       v(i,j,k,n)=v(i,j,k,n)+q*(v(i,j,1,n)-v(i,j,k,n))
 !diag if (i.eq.itest .and. j.eq.jtest) write &
-!diag    (lp,'(i9,2i5,i3,a,f9.3,2f8.3)') nstep,i+i0,j+j0,k, &
+!diag    (lp,'(i9,2i6,i4,a,f9.3,2f8.3)') nstep,i+i0,j+j0,k, &
 !diag    ' dpv, old/new v ',dpv(i,j,k,n)*qonem,vold,v(i,j,k,n)
       enddo !k
       endif !iv
@@ -789,7 +789,7 @@
       pres(k+1)=pres(k)+delp(k)
       enddo !k
 !
- 103  format (i9,2i5,a/(33x,i3,2f8.3,f8.3,f8.2,f8.1))
+ 103  format (i9,2i6,a/(33x,i3,2f8.3,f8.3,f8.2,f8.1))
 !diag if (i.eq.itest .and. j.eq.jtest) &
 !diag  write (lp,103) nstep,itest+i0,jtest+j0, &
 !diag  '  entering mxlayr:  temp    saln    dens    thkns    dpth',(k, &
@@ -965,7 +965,7 @@
       enddo !k
 !
 !diag if (i.eq.itest .and. j.eq.jtest .and. turgen(i,j).lt.0.) &
-!diag   write (lp,'(i9,2i5,a,f8.2,1p,e13.3)') nstep,itest+i0,jtest+j0, &
+!diag   write (lp,'(i9,2i6,a,f8.2,1p,e13.3)') nstep,itest+i0,jtest+j0, &
 !diag   '  monin-obukhov length (m),turgen:',thknew*qonem,turgen(i,j)
 !
 ! --- don't allow mixed layer to get too deep or too shallow.
@@ -986,7 +986,7 @@
       end if
       enddo !k
 !
-!diag if (i.eq.itest.and.j.eq.jtest) write (lp,'(i9,2i5,a,2f9.3)') &
+!diag if (i.eq.itest.and.j.eq.jtest) write (lp,'(i9,2i6,a,2f9.3)') &
 !diag   nstep,i+i0,j+j0, &
 !diag   '  old/new mixed layer depth:',thkold*qonem,thknew*qonem
 !
@@ -1009,7 +1009,7 @@
       else if (pres(k).lt.thknew) then
 !
 !diag     if (i.eq.itest.and.j.eq.jtest) &
-!diag     write (lp,'(i9,2i5,i3,a,3f9.3,25x,2f9.3)') &
+!diag     write (lp,'(i9,2i6,i4,a,3f9.3,25x,2f9.3)') &
 !diag     nstep,i+i0,j+j0,k, &
 !diag     '  p_k,thknew,p_k+1,t_1,t_k=',pres(k)*qonem,thknew*qonem, &
 !diag     pres(k+1)*qonem,ttem(1),ttem(k)
@@ -1041,11 +1041,11 @@
 !diag   enddo !k
 !diag   tndcyt=tndcyt-surflx(i,j)*delt1*g/spcifh
 !diag   tndcys=tndcys-salflx(i,j)*delt1*g
-!diag   write (lp,'(2i5,a,1p,2e16.8,e9.1)') i+i0,j+j0, &
+!diag   write (lp,'(2i6,a,1p,2e16.8,e9.1)') i+i0,j+j0, &
 !diag   '  mxlyr temp.col.intgl.:',totem,tndcyt,tndcyt/totem
-!diag   write (lp,'(2i5,a,1p,2e16.8,e9.1)') i+i0,j+j0, &
+!diag   write (lp,'(2i6,a,1p,2e16.8,e9.1)') i+i0,j+j0, &
 !diag   '  mxlyr saln.col.intgl.:',tosal,tndcys,tndcys/tosal
-!diag   write (lp,'(i9,2i5,3x,a,1p,3e10.2/22x,a,3e10.2)') &
+!diag   write (lp,'(i9,2i6,3x,a,1p,3e10.2/22x,a,3e10.2)') &
 !diag   nstep,i+i0,j+j0,'total saln,srf.flux,tndcy:',tosal/g, &
 !diag   salflx*delt1,tndcys/g,'total temp,srf.flux,tndcy:', &
 !diag   totem/g,surflx*delt1,tndcyt*spcifh/g
@@ -1155,7 +1155,7 @@
         klist(i,j)=k
       end if
       enddo !k
- 100  format (i9,2i5,2a,3f9.3/3f10.4,2(2x,2f10.4))
+ 100  format (i9,2i6,2a,3f9.3/3f10.4,2(2x,2f10.4))
 !
       u(i,j,1,n)=uflux(i,j)/util2(i,j)
 !
@@ -1258,3 +1258,4 @@
 !> Nov. 2018 - allow for wtrflx in buoyancy flux 
 !> Nov. 2018 - allow for oneta in swfrac and surface fluxes
 !> May  2024 - added epmass=2 for river only mass exchange
+!> Feb. 2025 - printout now ok for kdm<1000 and idm,jdm<100,000

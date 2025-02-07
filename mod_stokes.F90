@@ -582,8 +582,8 @@
 !$OMP END PARALLEL DO
 !
       if     (debug_stokes) then
- 103    format (i9,2i5,a)
- 104    format (30x,i3,2f8.4,f9.3,f9.2)
+ 103    format (i9,2i6,a)
+ 104    format (32x,i3,2f8.4,f9.3,f9.2)
         if (itest.gt.0 .and. jtest.gt.0) then
           write (lp,103) nstep,itest+i0,jtest+j0, &
           '  stokes_forfun:  usdz    vsdz    thkns     dpth'
@@ -707,3 +707,4 @@
       end module mod_stokes
 !> May  2014 - use land/sea masks (e.g. ip) to skip land
 !> Aug  2015 - added stdarc
+!> Feb. 2025 - printout now ok for kdm<1000 and idm,jdm<100,000

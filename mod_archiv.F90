@@ -149,13 +149,13 @@
       call flush(nop)
       endif !1st tile
  116  format (a80/a80/a80/a80/ &
-       i5,4x,'''iversn'' = hycom version number x10'/ &
-       i5,4x,'''iexpt '' = experiment number x10'/ &
-       i5,4x,'''yrflag'' = days in year flag'/ &
-       i5,4x,'''idm   '' = longitudinal array size'/ &
-       i5,4x,'''jdm   '' = latitudinal  array size'/ &
+       i6,3x,'''iversn'' = hycom version number x10'/ &
+       i6,3x,'''iexpt '' = experiment number x10'/ &
+       i6,3x,'''yrflag'' = days in year flag'/ &
+       i6,3x,'''idm   '' = longitudinal array size'/ &
+       i6,3x,'''jdm   '' = latitudinal  array size'/ &
        'field       time step  model day', &
-       '  k  dens        min              max')
+       '   k  dens        min              max')
 !
 ! --- surface fields
 !
@@ -446,7 +446,7 @@
       endif !kkout/=0
  75   continue
 !
- 117  format (a8,' =',i11,f11.3,i3,f7.3,1p2e16.7)
+ 117  format (a8,' =',i11,f11.3,i4,f7.3,1p2e16.7)
 !
 ! --- output time-averaged mass fluxes, if required
 !
@@ -459,7 +459,7 @@
           write (nop,118) 'diafx',intvl,nstep,time,k,coord,xmin,xmax
           call flush(nop)
           endif !1st tile
- 118      format (a5,a3,' =',i11,f11.3,i3,f7.3,1p2e16.7)
+ 118      format (a5,a3,' =',i11,f11.3,i4,f7.3,1p2e16.7)
         enddo
       endif !diaflx
 !
@@ -1299,15 +1299,15 @@
       write(nop,116) ctitle,iversn,iexpt,yrflag,i0+1,j0+1,ii,jj
       call flush(nop)
  116  format (a80/a80/a80/a80/ &
-       i5,4x,'''iversn'' = hycom version number x10'/ &
-       i5,4x,'''iexpt '' = experiment number x10'/ &
-       i5,4x,'''yrflag'' = days in year flag'/ &
-       i5,4x,'''i1    '' = longitudinal array starting index'/ &
-       i5,4x,'''j1    '' = latitudinal  array starting index'/ &
-       i5,4x,'''ii    '' = longitudinal array size'/ &
-       i5,4x,'''jj    '' = latitudinal  array size'/ &
+       i6,3x,'''iversn'' = hycom version number x10'/ &
+       i6,3x,'''iexpt '' = experiment number x10'/ &
+       i6,3x,'''yrflag'' = days in year flag'/ &
+       i6,3x,'''i1    '' = longitudinal array starting index'/ &
+       i6,3x,'''j1    '' = latitudinal  array starting index'/ &
+       i6,3x,'''ii    '' = longitudinal array size'/ &
+       i6,3x,'''jj    '' = latitudinal  array size'/ &
        'field       time step  model day', &
-       '  k  dens        min              max')
+       '   k  dens        min              max')
 !
 ! --- surface fields
 !
@@ -1449,7 +1449,7 @@
       endif !difout
  75   continue
 !
- 117  format (a8,' =',i11,f11.3,i3,f7.3,1p2e16.7)
+ 117  format (a8,' =',i11,f11.3,i4,f7.3,1p2e16.7)
 !
       close (unit=nop)
       call ztiocl(nopa)
@@ -1525,13 +1525,13 @@
       call flush(nop)
       endif !1st tile
  116  format (a80/a80/a80/a80/ &
-       i5,4x,'''iversn'' = hycom version number x10'/ &
-       i5,4x,'''iexpt '' = experiment number x10'/ &
-       i5,4x,'''yrflag'' = days in year flag'/ &
-       i5,4x,'''idm   '' = longitudinal array size'/ &
-       i5,4x,'''jdm   '' = latitudinal  array size'/ &
+       i6,3x,'''iversn'' = hycom version number x10'/ &
+       i6,3x,'''iexpt '' = experiment number x10'/ &
+       i6,3x,'''yrflag'' = days in year flag'/ &
+       i6,3x,'''idm   '' = longitudinal array size'/ &
+       i6,3x,'''jdm   '' = latitudinal  array size'/ &
        'field       time step  model day', &
-       '  k  dens        min              max')
+       '   k  dens        min              max')
 !
 #if defined(ARCTIC)
 ! --- Arctic (tripole) domain, top row is replicated (ignore it)
@@ -1858,7 +1858,7 @@
       write (nop,117) cname,nstep,time,0,coord,xmin,xmax
       call flush(nop)
       endif !1st tile
- 117  format (a8,' =',i11,f11.3,i3,f7.3,1p2e16.7)
+ 117  format (a8,' =',i11,f11.3,i4,f7.3,1p2e16.7)
 !
       close (unit=nop)
       call zaiocl(nopa)
@@ -1930,3 +1930,4 @@
 !> Jan. 2025 - Added sshflg=3 for steric SSH and Montg. Potential
 !> Jan. 2025 - tidnud adds extra surface fields to archiv_prof_out
 !> Feb. 2025 - Added efold_cb,spdbot,spdtid: strflg=721,722,723
+!> Feb. 2025 - printout now ok for kdm<1000 and idm,jdm<100,000

@@ -305,7 +305,7 @@
 !diag             nstep,i+i0,j+j0,k,0.,1.-swfrac(k+1),dtemp,dsaln
 !diag           call flush(lp)
 !diag         endif
- 100          format(i9,2i5,i3,'absorbup,dn,dtemp,dsaln ',2f6.3,2f10.6)
+ 100          format(i9,2i6,i4,'absorbup,dn,dtemp,dsaln ',2f6.3,2f10.6)
             else !.not.pensol
               dtemp=surflx(i,j)* &
                     delt1*g*qoneta/(spcifh*max(onemm,dp1d(k)))
@@ -425,7 +425,7 @@
 !diag         t1d(k),s1d(k),tr1d(k,1)
 !diag       call flush(lp)
 !diag     endif
- 101      format (i9,2i5,2i3,a/9x,3f9.4)
+ 101      format (i9,2i6,2i4,a/9x,3f9.4)
         enddo !k
       endif !kmlb>1
 !
@@ -493,7 +493,7 @@
 !diag           t1d(k3),s1d(k3),th1d(k3)
 !diag         call flush(lp)
 !diag       endif
- 102        format (i9,2i5,5i3,a/9x,4f9.4)
+ 102        format (i9,2i6,5i4,a/9x,4f9.4)
 !
           enddo
           kmlb=k
@@ -546,7 +546,7 @@
 !diag                     dp1d(k1)/onem,dp1d(k)/onem
 !diag       call flush(lp)
 !diag     endif
- 103      format('rig(k)',i9,2i5,2i3,1p,6e13.5)
+ 103      format('rig(k)',i9,2i6,2i4,1p,6e13.5)
         enddo !k
 !
 ! --- identify interface where rig has a vertical minimum at each grid point
@@ -577,7 +577,7 @@
 !diag                    dp1d(min(kk,k+1))/onem
 !diag       call flush(lp)
 !diag     endif
- 104      format('rig mixing',i9,2i5,i3,1p,7e13.5)
+ 104      format('rig mixing',i9,2i6,i4,1p,7e13.5)
 !
           rigf=rig1*(s1d(k-1)-s1d(k))
           sold=s1d(k-1)
@@ -820,3 +820,4 @@
 !> Aug. 2018 - added wtrflx, salflx now only actual salt flux
 !> Nov. 2018 - allow for oneta in swfrac and surface fluxes
 !> May  2024 - added epmass=2 for river only mass exchange
+!> Feb. 2025 - printout now ok for kdm<1000 and idm,jdm<100,000

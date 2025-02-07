@@ -54,7 +54,7 @@
       enddo !j
 !$OMP END PARALLEL DO
 !
- 103  format (i9,2i5,a/(33x,i3,2f8.3,f8.3,0p,f8.2,f8.1))
+ 103  format (i9,2i6,a/(35x,i3,2f8.3,f8.3,0p,f8.2,f8.1))
 !diag if (itest.gt.0 .and. jtest.gt.0) write (lp,103) nstep,itest,jtest, &
 !diag   '  entering mxlayr:  temp    saln    dens    thkns    dpth', &
 !diag   (k,temp(itest,jtest,k,n),saln(itest,jtest,k,n), &
@@ -94,7 +94,7 @@
       end if !thermo.or.sstflg.gt.0.or.srelax:else
 !
 !diag if (itest.gt.0.and.jtest.gt.0.and.turgen(itest,jtest).lt.0.) &
-!diag   write (lp,'(i9,2i5,a,f8.2)') nstep,itest,jtest, &
+!diag   write (lp,'(i9,2i6,a,f8.2)') nstep,itest,jtest, &
 !diag   '  monin-obukhov length (m):',sdot(itest,jtest)*qonem
 !
 ! --- store 'old' t/s column integral in totem/tosal (diagnostic use only)
@@ -126,7 +126,7 @@
 !cc     tndcyt=tndcyt+temp(itest,jtest,k,n)*dp(itest,jtest,k,n)
 !cc     tndcys=tndcys+saln(itest,jtest,k,n)*dp(itest,jtest,k,n)
 !cc   end do
-!cc   write (lp,'(i9,2i5,i3,3x,a,1p,3e10.2/25x,a,3e10.2)') nstep,itest,
+!cc   write (lp,'(i9,2i6,i4,3x,a,1p,3e10.2/27x,a,3e10.2)') nstep,itest,
 !cc  .  jtest,kmax,'total saln,srf.flux,tndcy:',tosal/g,salflx(itest,
 !cc  .  jtest)*delt1,tndcys/g,'total temp,srf.flux,tndcy:',totem/g,
 !cc  .  surflx(itest,jtest)*delt1,tndcyt*spcifh/g
@@ -494,7 +494,7 @@
       tmxl=t1+surflx(i,j)*delt1*g/(spcifh*thknss)
       smxl=s1+ vsflx(i)  *delt1*g/        thknss
 !
-!diag if (i.eq.itest.and.j.eq.jtest) write (lp,'(i9,2i5,a,3f7.3,f8.2)') &
+!diag if (i.eq.itest.and.j.eq.jtest) write (lp,'(i9,2i6,a,3f7.3,f8.2)') &
 !diag   nstep,i,j,'  t,s,sig,dp after diab.forcing',tmxl,smxl, &
 !diag   sig(tmxl,smxl),thknss*qonem
 !
@@ -502,7 +502,7 @@
 !
 ! --- (mixed layer  d e e p e n s)
 !
-!diag if (i.eq.itest.and.j.eq.jtest) write (lp,'(i9,2i5,a,f9.3,a)') &
+!diag if (i.eq.itest.and.j.eq.jtest) write (lp,'(i9,2i6,a,f9.3,a)') &
 !diag   nstep,i,j,'  entrain',sdot(i,j)*qonem,' m of water'
 !
       tmxl=(tmxl*thknss+tdp(i))/pnew
@@ -518,7 +518,7 @@
       if (k.gt.kk) go to 27
 !
 !diag if (i.eq.itest.and.j.eq.jtest) &
-!diag  write (lp,'(i9,2i5,a,i2,a,3p,2f7.3)') nstep,i,j, &
+!diag  write (lp,'(i9,2i6,a,i4,a,3p,2f7.3)') nstep,i,j, &
 !diag  '  sig\*(1),sig\*(',k,') =',th3d(i,j,1,n)+thbase, &
 !diag  th3d(i,j,k,n)+thbase
 !
@@ -527,7 +527,7 @@
       tn=temp(i,j,k,n)
 !
 !diag if (i.eq.itest.and.j.eq.jtest) &
-!diag   write (lp,'(i9,2i5,i3,a,2f9.4,f8.2)') nstep,i,j,k, &
+!diag   write (lp,'(i9,2i6,i4,a,2f9.4,f8.2)') nstep,i,j,k, &
 !diag   '  t,s,dp before detrainment',tn,sn,dpno*qonem
 !
 ! --- distribute last time step's heating and freshwater flux over depth range
@@ -596,7 +596,7 @@
 !diag    thknss*qonem,'sdot,z=',sdot(i,j)*qonem,z,'t,s,dp(',k,')=',tn, &
 !diag    sn,dpno*qonem,'real root(s):',(work(nu),nu=1,num)
 !diag end if
- 100  format (i9,2i5,a,2f7.3,f8.2,3x,a,2f8.2/20x,a,i2,a,2f7.3,f8.2, &
+ 100  format (i9,2i6,a,2f7.3,f8.2,3x,a,2f8.2/20x,a,i4,a,2f7.3,f8.2, &
        3x,a,1p3e11.4)
 !
 ! --- does root fall into appropriate range?
@@ -623,7 +623,7 @@
       enddo !ktr
 !
 !diag if (i.eq.itest.and.j.eq.jtest) &
-!diag   write (lp,'(i9,2i5,i3,a,2f9.4,f8.2)') nstep,i,j,k, &
+!diag   write (lp,'(i9,2i6,i4,a,2f9.4,f8.2)') nstep,i,j,k, &
 !diag   '  t,s,dp after  detrainment',temp(i,j,k,n),saln(i,j,k,n), &
 !diag   dp(i,j,k,n)*qonem
 !
@@ -644,7 +644,7 @@
       thmix( i,j)  =th3d(i,j,1,n)
 !
 !diag if (i.eq.itest.and.j.eq.jtest) write &
-!diag   (lp,'(i9,2i5,i3,a,2f9.4,f8.2)') nstep,i,j,1, &
+!diag   (lp,'(i9,2i6,i4,a,2f9.4,f8.2)') nstep,i,j,1, &
 !diag   ' final mixed-layer t,s,dp ',tmxl,smxl,dp(i,j,1,n)*qonem
 !
       endif !ip
@@ -671,3 +671,4 @@
 !> Aug. 2018 - added wtrflx, salflx now only actual salt flux
 !> Nov. 2018 - allow for wtrflx in buoyancy flux 
 !> May  2024 - added epmass=2 for river only mass exchange
+!> Feb. 2025 - printout now ok for kdm<1000 and idm,jdm<100,000

@@ -327,7 +327,7 @@
 !diag if     (itests.gt.0 .and. jtests.gt.0) then
 !diag   i=itests
 !diag   j=jtests
-!diag   write (lp,'(a,2i5,f22.3/1pe39.2/0pf21.3,1pe9.2,0pf9.3, &
+!diag   write (lp,'(a,2i6,f22.3/1pe39.2/0pf21.3,1pe9.2,0pf9.3, &
 !diag              1pe9.2,0pf9.3/1pe39.2/0pf39.3)') &
 !diag     'advem (1)',i+i0,j+j0, &
 !diag     fld(i-1,j),u(i,j),fld(i,j-1),v(i,j), &
@@ -455,7 +455,7 @@
 !
 !diag i=itests
 !diag j=jtests
-!diag write (lp,'(''advem (2)'',2i5,f22.3/1pe39.2/0pf21.3,1pe9.2,0pf9.3, &
+!diag write (lp,'(''advem (2)'',2i6,f22.3/1pe39.2/0pf21.3,1pe9.2,0pf9.3, &
 !diag 1pe9.2,0pf9.3/1pe39.2/0pf39.3)') i,j,fldlo(i-1,j),u(i,j),fldlo(i,j-1), &
 !diag v(i,j),fldlo(i,j),v(i,j+1),fldlo(i,j+1),u(i+1,j),fldlo(i+1,j)
 !
@@ -597,7 +597,7 @@
 !diag if     (itests.gt.0 .and. jtests.gt.0) then
 !diag   i=itests
 !diag   j=jtests
-!diag   write (lp,'(a,2i5,f22.3/1pe39.2/0pf21.3,1pe9.2,0pf9.3, &
+!diag   write (lp,'(a,2i6,f22.3/1pe39.2/0pf21.3,1pe9.2,0pf9.3, &
 !diag              1pe9.2,0pf9.3/1pe39.2/0pf39.3)') &
 !diag     'advem (1)',i+i0,j+j0, &
 !diag     fld(i-1,j),u(i,j),fld(i,j-1),v(i,j), &
@@ -636,7 +636,7 @@
 !
 !diag i=itests
 !diag j=jtests
-!diag write (lp,'(''advem (2)'',2i5,f22.3/1pe39.2/0pf21.3,1pe9.2,0pf9.3, &
+!diag write (lp,'(''advem (2)'',2i6,f22.3/1pe39.2/0pf21.3,1pe9.2,0pf9.3, &
 !diag 1pe9.2,0pf9.3/1pe39.2/0pf39.3)') i,j,fld(i-1,j),u(i,j),fld(i,j-1), &
 !diag v(i,j),fld(i,j),v(i,j+1),fld(i,j+1),u(i+1,j),fld(i+1,j)
       return
@@ -730,7 +730,7 @@
       if     (ldebug_advem .and. itests.gt.0 .and. jtests.gt.0) then
         i=itests
         j=jtests
-        write (lp,'(a,2i5,3f10.5)') &
+        write (lp,'(a,2i6,3f10.5)') &
           'advem: fld, rng  ',i+i0,j+j0, &
           fld(i,j),fmx(i,j),fmn(i,j)
       endif
@@ -765,7 +765,7 @@
 !diag if     (ldebug_advem .and. itests.gt.0 .and. jtests.gt.0) then
 !diag   i=itests
 !diag   j=jtests
-!diag   write (lp,'(a,2i5,f22.3/1pe39.2/0pf21.3,1pe9.2,0pf9.3, &
+!diag   write (lp,'(a,2i6,f22.3/1pe39.2/0pf21.3,1pe9.2,0pf9.3, &
 !diag              1pe9.2,0pf9.3/1pe39.2/0pf39.3)') &
 !diag     'advem (1)',i+i0,j+j0, &
 !diag     fld(i-1,j),u(i,j),fld(i,j-1),v(i,j), &
@@ -804,7 +804,7 @@
       if     (ldebug_advem .and. itests.gt.0 .and. jtests.gt.0) then
         i=itests
         j=jtests
-        write (lp,'(a,2i5,3f10.5)') &
+        write (lp,'(a,2i6,3f10.5)') &
           'advem: fldlo,rng ',i+i0,j+j0, &
           fldlo(i,j),fmnlo(i,j),fmxlo(i,j)
       endif
@@ -911,7 +911,7 @@
       if     (ldebug_advem .and. itests.gt.0 .and. jtests.gt.0) then
         i=itests
         j=jtests
-        write (lp,'(a,2i5,3f10.5)') &
+        write (lp,'(a,2i6,3f10.5)') &
           'advem: fldc,rngfq',i+i0,j+j0, &
           fldc(i,j),fmn(i,j),fmx(i,j)
       endif
@@ -952,7 +952,7 @@
 !
 !diag i=itests
 !diag j=jtests
-!diag write (lp,'(''advem (2)'',2i5,f22.3/1pe39.2/0pf21.3,1pe9.2,0pf9.3, &
+!diag write (lp,'(''advem (2)'',2i6,f22.3/1pe39.2/0pf21.3,1pe9.2,0pf9.3, &
 !diag 1pe9.2,0pf9.3/1pe39.2/0pf39.3)') i,j,fldlo(i-1,j),u(i,j),fldlo(i,j-1), &
 !diag v(i,j),fldlo(i,j),v(i,j+1),fldlo(i,j+1),u(i+1,j),fldlo(i+1,j)
 !
@@ -989,7 +989,7 @@
       if     (ldebug_advem .and. itests.gt.0 .and. jtests.gt.0) then
         i=itests
         j=jtests
-        write (lp,'(a,2i5,f10.5)') &
+        write (lp,'(a,2i6,f10.5)') &
           'advem: fld       ',i+i0,j+j0, &
           fld(i,j)
       endif
@@ -1484,7 +1484,7 @@
 !diag if     (itests.gt.0 .and. jtests.gt.0) then
 !diag   i=itests
 !diag   j=jtests
-!diag   write (lp,'(a,2i5,f22.3/1pe39.2/0pf21.3,1pe9.2,0pf9.3, &
+!diag   write (lp,'(a,2i6,f22.3/1pe39.2/0pf21.3,1pe9.2,0pf9.3, &
 !diag              1pe9.2,0pf9.3/1pe39.2/0pf39.3)') &
 !diag     'advem (1)',i+i0,j+j0, &
 !diag     fldc(i-1,j),u(i,j),fldc(i,j-1),v(i,j), &
@@ -1669,7 +1669,7 @@
 !
 !diag i=itests
 !diag j=jtests
-!diag write (lp,'(''advem (2)'',2i5,f22.3/1pe39.2/0pf21.3,1pe9.2,0pf9.3, &
+!diag write (lp,'(''advem (2)'',2i6,f22.3/1pe39.2/0pf21.3,1pe9.2,0pf9.3, &
 !diag 1pe9.2,0pf9.3/1pe39.2/0pf39.3)') i,j,fldlo(i-1,j),u(i,j),fldlo(i,j-1), &
 !diag v(i,j),fldlo(i,j),v(i,j+1),fldlo(i,j+1),u(i+1,j),fldlo(i+1,j)
 !
@@ -1943,13 +1943,13 @@
 !
       if     (lpipe .and. lpipe_tsadvc) then
 ! ---   compare two model runs.
-        write(text,'(a10,i2)') '49:sold,k=',k
+        write(text,'(a9,i3)') '49sold,k=',k
         call pipe_compare_sym1(sold,ip,text)
-        write(text,'(a10,i2)') '49:told,k=',k
+        write(text,'(a9,i3)') '49told,k=',k
         call pipe_compare_sym1(told,ip,text)
-        write(text,'(a10,i2)') '49:utl1,k=',k
+        write(text,'(a9,i3)') '49utl1,k=',k
         call pipe_compare_sym1(util1,ip,text)
-        write(text,'(a10,i2)') '49:utl2,k=',k
+        write(text,'(a9,i3)') '49utl2,k=',k
         call pipe_compare_sym1(util2,ip,text)
         write (textu,'(a9,i3)') 'uflx   k=',k
         write (textv,'(a9,i3)') 'vflx   k=',k
@@ -2058,7 +2058,7 @@
       endif
 !
 !diag if (itests.gt.0.0and.jtests.gt.0) &
-!diag write (lp,'(i9,2i5,i3,'' th,s,dp after advection  '',2f9.3,f8.2)') &
+!diag write (lp,'(i9,2i6,i4,'' th,s,dp after advection  '',2f9.3,f8.2)') &
 !diag nstep,itests,jtests,k,temp(itests,jtests,k,n),saln(itests,jtests,k,n), &
 !diag dp(itests,jtests,k,n)*qonem
 !
@@ -2102,7 +2102,7 @@
               do i=1,ii
                 if (SEA_P) then
                   if (saln(i,j,k,n).eq.sminn) then
-                    write (lp,'(i9,a,2i5,i3,a,f10.2)')  &
+                    write (lp,'(i9,a,2i6,i4,a,f10.2)')  &
                       nstep,' i,j,k =',i+i0,j+j0,k, &
                       ' neg. saln after advem call ', &
                       saln(i,j,k,n)
@@ -2116,12 +2116,12 @@
           if (diagno) then
             if     (mnproc.eq.1) then
             if     (sminn.le.smaxx) then
-              write (lp,'(i9,i3, a,2f9.3, a,1pe9.2,a)') &
+              write (lp,'(i9,i4, a,2f9.3, a,1pe9.2,a)') &
                 nstep,k, &
                 ' min/max of s after advection:',sminn,smaxx, &
                 '   (range:',smaxx-sminn,')'
             else
-              write (lp,'(i9,i3, a,a)') &
+              write (lp,'(i9,i4, a,a)') &
                 nstep,k, &
                 ' min/max of s after advection:',' N/A (thin layer)'
             endif !normal:thin layer
@@ -2245,7 +2245,7 @@
         endif
 !
 !diag   if (itests.gt.0.and.jtests.gt.0) then &
-!diag     write (lp,'(i9,2i5,i3,a,2f9.3,f8.2)') &
+!diag     write (lp,'(i9,2i6,i4,a,2f9.3,f8.2)') &
 !diag       nstep,itests+i0,jtests+j0,k, &
 !diag       ' t,s,dp after isopyc.mix.', &
 !diag       temp(itests,jtests,k,n),saln(itests,jtests,k,n), &
@@ -2388,54 +2388,54 @@
         i=itests
         j=jtests
         if (SEA_U) then
-          write (lp,'(a,2i5,3e16.6)') &
+          write (lp,'(a,2i6,3e16.6)') &
             'tsdff: u dp ',i+i0,j+j0, &
             uflux(i,j),  dp(i-1,j,k,n)*qonem,dp(i  ,j,k,n)*qonem
-          write (lp,'(a,2i5,3e16.6)') &
+          write (lp,'(a,2i6,3e16.6)') &
             'tsdff: u fld',i+i0,j+j0, &
             uflux(i,j),fld1(i-1,j    ),    fld1(i  ,j    )
         else
-          write (lp,'(a,2i5,1e16.6)') &
+          write (lp,'(a,2i6,1e16.6)') &
             'tsdff: u LND',i+i0,j+j0, &
             uflux(i,j)
         endif
         if (SEA_V) then
-          write (lp,'(a,2i5,3e16.6)') &
+          write (lp,'(a,2i6,3e16.6)') &
             'tsdff: v dp ',i+i0,j+j0, &
             vflux(i,j),  dp(i,j-1,k,n)*qonem,dp(i,j  ,k,n)*qonem
-          write (lp,'(a,2i5,3e16.6)') &
+          write (lp,'(a,2i6,3e16.6)') &
             'tsdff: v fld',i+i0,j+j0, &
             vflux(i,j),fld1(i,j-1    ),    fld1(i,j      )
         else
-          write (lp,'(a,2i5,1e16.6)') &
+          write (lp,'(a,2i6,1e16.6)') &
             'tsdff: v LND',i+i0,j+j0, &
             vflux(i,j)
         endif
         i=itests+1
         j=jtests
         if (SEA_U) then
-          write (lp,'(a,2i5,3e16.6)') &
+          write (lp,'(a,2i6,3e16.6)') &
             'tsdff: u dp ',i+i0,j+j0, &
             uflux(i,j),  dp(i-1,j,k,n)*qonem,dp(i  ,j,k,n)*qonem
-          write (lp,'(a,2i5,3e16.6)') &
+          write (lp,'(a,2i6,3e16.6)') &
             'tsdff: u fld',i+i0,j+j0, &
             uflux(i,j),fld1(i-1,j    ),    fld1(i  ,j    )
         else
-          write (lp,'(a,2i5,1e16.6)') &
+          write (lp,'(a,2i6,1e16.6)') &
             'tsdff: u LND',i+i0,j+j0, &
             uflux(i,j)
         endif
         i=itests
         j=jtests+1
         if (SEA_V) then
-          write (lp,'(a,2i5,3e16.6)') &
+          write (lp,'(a,2i6,3e16.6)') &
             'tsdff: v dp ',i+i0,j+j0, &
             vflux(i,j),  dp(i,j-1,k,n)*qonem,dp(i,j  ,k,n)*qonem
-          write (lp,'(a,2i5,3e16.6)') &
+          write (lp,'(a,2i6,3e16.6)') &
             'tsdff: v fld',i+i0,j+j0, &
             vflux(i,j),fld1(i,j-1    ),    fld1(i,j      )
         else
-          write (lp,'(a,2i5,1e16.6)') &
+          write (lp,'(a,2i6,1e16.6)') &
             'tsdff: u LND',i+i0,j+j0, &
             vflux(i,j)
         endif
@@ -2482,7 +2482,7 @@
       if     (ldebug_tsdif .and. itests.gt.0 .and. jtests.gt.0) then
         i=itests
         j=jtests
-        write (lp,'(a,2i5,3e16.6)') &
+        write (lp,'(a,2i6,3e16.6)') &
           'tsdff: p fld',i+i0,j+j0, &
           fld1(i,j),util1(i,j), &
           -delt1/(scp2(i,j)*max(dp(i,j,k,n)*onetamas(i,j,n),eps_har))
@@ -2527,3 +2527,4 @@
 !> Aug. 2018 - replaced itest,jtest with itests,jtests
 !> Nov. 2018 - always use oneta for diffusion
 !> Nov. 2018 - replaced min(1.0,A/B) with if(A<B) to avoid overflows
+!> Feb. 2025 - printout now ok for kdm<1000 and idm,jdm<100,000

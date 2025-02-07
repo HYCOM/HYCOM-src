@@ -262,15 +262,15 @@
 !
 !diag       if     (sshflg.eq.1 .or. sshflg.eq.3) then
 !diag         if     (itest.gt.0 .and. jtest.gt.0) then
-!diag           write (lp,'(i9,2i5,3x,a,2f12.6,f12.2)') &
+!diag           write (lp,'(i9,2i6,3x,a,2f12.6,f12.2)') &
 !diag             nstep,itest+i0,jtest+j0, &
 !diag               'sssh =', &
 !diag               steric(i,j),sshgmn(i,j),sumdp
-!diag           write (lp,'(i9,2i5,3x,a,3f12.6)') &
+!diag           write (lp,'(i9,2i6,3x,a,3f12.6)') &
 !diag             nstep,itest+i0,jtest+j0, &
 !diag               'thmn =', &
 !diag               sumth,thmean(i,j),1000.0+thbase+sumth
-!diag           write (lp,'(i9,2i5,3x,a,3f12.6)') &
+!diag           write (lp,'(i9,2i6,3x,a,3f12.6)') &
 !diag             nstep,itest+i0,jtest+j0, &
 !diag               'ssh  =', &
 !diag               srfhgt(i,j),steric(i,j),srfhgt(i,j)-steric(i,j)
@@ -1386,11 +1386,11 @@
                                    vatuk0      *ql2+ &
                                    vatukp      *ql3 )
 !diag         if (max(abs(i-itest),abs(j-jtest)).eq.0) then
-!diag           write(lp,'(a,i3,3g20.10)') &
+!diag           write(lp,'(a,i4,3g20.10)') &
 !diag             'dp,k =',k,dp12,dp23,ql1+ql2+ql3
-!diag           write(lp,'(a,i3,3g20.10)') &
+!diag           write(lp,'(a,i4,3g20.10)') &
 !diag             'ql,k =',k,ql1,ql2,ql3
-!diag           write(lp,'(a,i3,2g20.10)') &
+!diag           write(lp,'(a,i4,2g20.10)') &
 !diag             'dz,k =',k,dudzu(i,j,k),dvdzu(i,j,k)
 !diag         endif !test
             endif !iu
@@ -2598,13 +2598,13 @@
 !diag       if (k.eq.kk) then
 !diag         if (iv(ia,j).eq.0 .and. dpv(ia,j,k,m).ne.0.) then
 !diag!$OMP CRITICAL
-!diag           write(lp,'(i9,2i5,a,1p,2e9.1)') nstep,i,j, &
+!diag           write(lp,'(i9,2i6,a,1p,2e9.1)') nstep,i,j, &
 !diag             '  error - nonzero dpv(ia):',dpv(ia,j,k,m)
 !diag!$OMP END CRITICAL
 !diag         endif
 !diag         if (iv(ib,j).eq.0 .and. dpv(ib,j,k,m).ne.0.) then
 !diag!$OMP CRITICAL
-!diag           write(lp,'(i9,2i5,a,1p,2e9.1)') nstep,i,j, &
+!diag           write(lp,'(i9,2i6,a,1p,2e9.1)') nstep,i,j, &
 !diag             '  error - nonzero dpv(ib):',dpv(ib,j,k,m)
 !diag!$OMP END CRITICAL
 !diag         endif
@@ -3119,7 +3119,7 @@
           if     (uvkclp(k).gt.uvkmax(k)) then
             if     (mnproc.eq.1) then
               write(lp, &
-                '(i9,a,i3,a,f7.2,a)') &
+                '(i9,a,i4,a,f7.2,a)') &
                 nstep,' k=',k, &
                 ' velocty clipped, max=',uvkclp(k),' m/s'
             endif !mnproc
@@ -3555,23 +3555,23 @@
               endif !iu.i+1
 !
 !idag         if (max(abs(i-itest),abs(j-jtest)).le.0) then
-!idag           write(lp,'(a,2i5,5f10.5)')
+!idag           write(lp,'(a,2i6,5f10.5)')
 !idag.            'x5 (km)  =',
 !idag.            i+i0,j+j0,
 !idag.            x5(:)*1.e-3
-!idag           write(lp,'(a,2i5,5f10.5)')
+!idag           write(lp,'(a,2i6,5f10.5)')
 !idag.            'scluad.1 =',
 !idag.            i+i0,j+j0,
 !idag.            scluad(:,1,i,j)
-!idag           write(lp,'(a,2i5,5f10.5)')
+!idag           write(lp,'(a,2i6,5f10.5)')
 !idag.            'scluad.2 =',
 !idag.            i+i0,j+j0,
 !idag.            scluad(:,2,i,j)
-!idag           write(lp,'(a,2i5,5f10.5)')
+!idag           write(lp,'(a,2i6,5f10.5)')
 !idag.            'scluad.3 =',
 !idag.            i+i0,j+j0,
 !idag.            scluad(:,3,i,j)
-!idag           write(lp,'(a,2i5,5f10.5)')
+!idag           write(lp,'(a,2i6,5f10.5)')
 !idag.            'scluad.13=',
 !idag.            i+i0,j+j0,
 !idag.            sum(scluad(:,1,i,j)),
@@ -3677,23 +3677,23 @@
               endif !iu.j+1
 !
 !idag         if (max(abs(i-itest),abs(j-jtest)).le.0) then
-!idag           write(lp,'(a,2i5,5f10.5)')
+!idag           write(lp,'(a,2i6,5f10.5)')
 !idag.            'y5 (km)  =',
 !idag.            i+i0,j+j0,
 !idag.            x5(:)*1.e-3
-!idag           write(lp,'(a,2i5,5f10.5)')
+!idag           write(lp,'(a,2i6,5f10.5)')
 !idag.            'scluad.4 =',
 !idag.            i+i0,j+j0,
 !idag.            scluad(:,4,i,j)
-!idag           write(lp,'(a,2i5,5f10.5)')
+!idag           write(lp,'(a,2i6,5f10.5)')
 !idag.            'scluad.5 =',
 !idag.            i+i0,j+j0,
 !idag.            scluad(:,5,i,j)
-!idag           write(lp,'(a,2i5,5f10.5)')
+!idag           write(lp,'(a,2i6,5f10.5)')
 !idag.            'scluad.6 =',
 !idag.            i+i0,j+j0,
 !idag.            scluad(:,6,i,j)
-!idag           write(lp,'(a,2i5,5f10.5)')
+!idag           write(lp,'(a,2i6,5f10.5)')
 !idag.            'scluad.46=',
 !idag.            i+i0,j+j0,
 !idag.            sum(scluad(:,4,i,j)),
@@ -3809,23 +3809,23 @@
               endif !!iv.j+1
 !
 !idag         if (max(abs(i-itest),abs(j-jtest)).le.0) then
-!idag           write(lp,'(a,2i5,5f10.5)')
+!idag           write(lp,'(a,2i6,5f10.5)')
 !idag.            'y5 (km)  =',
 !idag.            i+i0,j+j0,
 !idag.            x5(:)*1.e-3
-!idag           write(lp,'(a,2i5,5f10.5)')
+!idag           write(lp,'(a,2i6,5f10.5)')
 !idag.            'sclvad.1 =',
 !idag.            i+i0,j+j0,
 !idag.            sclvad(:,1,i,j)
-!idag           write(lp,'(a,2i5,5f10.5)')
+!idag           write(lp,'(a,2i6,5f10.5)')
 !idag.            'sclvad.2 =',
 !idag.            i+i0,j+j0,
 !idag.            sclvad(:,2,i,j)
-!idag           write(lp,'(a,2i5,5f10.5)')
+!idag           write(lp,'(a,2i6,5f10.5)')
 !idag.            'sclvad.3 =',
 !idag.            i+i0,j+j0,
 !idag.            sclvad(:,3,i,j)
-!idag           write(lp,'(a,2i5,5f10.5)')
+!idag           write(lp,'(a,2i6,5f10.5)')
 !idag.            'sclvad.13=',
 !idag.            i+i0,j+j0,
 !idag.            sum(sclvad(:,1,i,j)),
@@ -3932,23 +3932,23 @@
               endif !iv.i+1
 !
 !idag         if (max(abs(i-itest),abs(j-jtest)).le.0) then
-!idag           write(lp,'(a,2i5,5f10.5)')
+!idag           write(lp,'(a,2i6,5f10.5)')
 !idag.            'x5 (km)  =',
 !idag.            i+i0,j+j0,
 !idag.            x5(:)*1.e-3
-!idag           write(lp,'(a,2i5,5f10.5)')
+!idag           write(lp,'(a,2i6,5f10.5)')
 !idag.            'sclvad.4 =',
 !idag.            i+i0,j+j0,
 !idag.            sclvad(:,4,i,j)
-!idag           write(lp,'(a,2i5,5f10.5)')
+!idag           write(lp,'(a,2i6,5f10.5)')
 !idag.            'sclvad.5 =',
 !idag.            i+i0,j+j0,
 !idag.            sclvad(:,5,i,j)
-!idag           write(lp,'(a,2i5,5f10.5)')
+!idag           write(lp,'(a,2i6,5f10.5)')
 !idag.            'sclvad.6 =',
 !idag.            i+i0,j+j0,
 !idag.            sclvad(:,6,i,j)
-!idag           write(lp,'(a,2i5,5f10.5)')
+!idag           write(lp,'(a,2i6,5f10.5)')
 !idag.            'sclvad.46=',
 !idag.            i+i0,j+j0,
 !idag.            sum(sclvad(:,4,i,j)),
@@ -4607,51 +4607,51 @@
                )*scuxi(i,j)/max(hmindiff,dpu(i,j,k,n))
 !
 !idag       if (max(abs(i-itest),abs(j-jtest)).le.0.and.k.eq.1) then
-!idag         write(lp,'(a,2i5,i3,5f10.5)')
+!idag         write(lp,'(a,2i6,i4,5f10.5)')
 !idag.          'ut.m =',
 !idag.          i+i0,j+j0,k,
 !idag.          0.0,utotm(i-1,j),utotm(i,j),utotm(i+1,j)
-!idag         write(lp,'(a,2i5,i3,5f10.5)')
+!idag         write(lp,'(a,2i6,i4,5f10.5)')
 !idag.          'uwim =',
 !idag.          i+i0,j+j0,k,
 !idag.          0.0,uwim(-1),uwim(0),uwim(+1)
-!idag         write(lp,'(a,2i5,i3,5f10.5)')
+!idag         write(lp,'(a,2i6,i4,5f10.5)')
 !idag.          'ut.n =',
 !idag.          i+i0,j+j0,k,
 !idag.          utotn(i-2,j),utotn(i-1,j),utotn(i,j),
 !idag.          utotn(i+1,j),utotn(i+2,j)
-!idag         write(lp,'(a,2i5,i3,5f10.5)')
+!idag         write(lp,'(a,2i6,i4,5f10.5)')
 !idag.          'uwin =',
 !idag.          i+i0,j+j0,k,
 !idag.          uwin(-2),uwin(-1),uwin(0),uwin(+1),uwin(+2)
-!idag         write(lp,'(a,2i5,i3,5f10.2)')
+!idag         write(lp,'(a,2i6,i4,5f10.2)')
 !idag.          'dpHD =',
 !idag.          i+i0,j+j0,k,
 !idag.          max(hmindiff,dpo(i-1,j,k,n))*qonem,
 !idag.          max(hmindiff,dpo(i,  j,k,n))*qonem,
 !idag.          max(hmindiff,dpu(i,  j,k,n))*qonem
-!idag         write(lp,'(a,2i5,i3,5f10.5)')
+!idag         write(lp,'(a,2i6,i4,5f10.5)')
 !idag.          'adfX =',
 !idag.          i+i0,j+j0,k,
 !idag.          -delt1*advu(i,j),delt1*diffu(i,j)
-!idag         write(lp,'(a,2i5,i3,5f10.5)')
+!idag         write(lp,'(a,2i6,i4,5f10.5)')
 !idag.          'uaXc =',
 !idag.          i+i0,j+j0,k,
 !idag.          scluad(-2,1,i,j),scluad(-1,1,i,j),scluad( 0,1,i,j),
 !idag.          scluad(+1,1,i,j),scluad(+2,1,i,j)
-!idag         write(lp,'(a,2i5,i3,5f10.5)')
+!idag         write(lp,'(a,2i6,i4,5f10.5)')
 !idag.          'udXr =',
 !idag.          i+i0,j+j0,k,
 !idag.          0.0,scluad(-1,2,i,j),scluad( 0,2,i,j),
 !idag.              scluad(+1,2,i,j),scluad(+2,2,i,j)
-!idag         write(lp,'(a,2i5,i3,5f10.5)')
+!idag         write(lp,'(a,2i6,i4,5f10.5)')
 !idag.          'udXl =',
 !idag.          i+i0,j+j0,k,
 !idag.          scluad(-2,3,i,j),scluad(-1,3,i,j),
 !idag.          scluad( 0,3,i,j),scluad(+1,3,i,j),0.0
 !idag       endif !test
 !idag       if (max(abs(i-itest),abs(j-jtest)).le.0.and.k.eq.1) then
-!idag         write(lp,'(a,2i5,i3,4f12.5)')
+!idag         write(lp,'(a,2i6,i4,4f12.5)')
 !idag.          'advu-x =',
 !idag.          i+i0,j+j0,k,
 !idag.          -delt1*advu(i,j),
@@ -4711,24 +4711,24 @@
                )*scuyi(i,j)/max(hmindiff,dpu(i,j,k,n))
 !
 !diag       if (max(abs(i-itest),abs(j-jtest)).le.0.and.k.eq.1) then
-!diag         write(lp,'(a,2i5,i3,5f10.5)') &
+!diag         write(lp,'(a,2i6,i4,5f10.5)') &
 !diag           'vt.m =', &
 !diag           i+i0,j+j0,k, &
 !diag           0.0,vtotm(i,j-1),vtotm(i,j),vtotm(i,j+1)
-!diag         write(lp,'(a,2i5,i3,5f10.5)') &
+!diag         write(lp,'(a,2i6,i4,5f10.5)') &
 !diag           'uwjm =', &
 !diag           i+i0,j+j0,k, &
 !diag           0.0,uwjm(-1),uwjm(0),uwjm(+1)
-!diag         write(lp,'(a,2i5,i3,5f10.5)') &
+!diag         write(lp,'(a,2i6,i4,5f10.5)') &
 !diag           'vt.n =', &
 !diag           i+i0,j+j0,k, &
 !diag           vtotn(i,j-2),vtotn(i,j-1),vtotn(i,j), &
 !diag           vtotn(i,j+1),vtotn(i,j+2)
-!diag         write(lp,'(a,2i5,i3,5f10.5)') &
+!diag         write(lp,'(a,2i6,i4,5f10.5)') &
 !diag           'uwjn =', &
 !diag           i+i0,j+j0,k, &
 !diag           uwjn(-2),uwjn(-1),uwjn(0),uwjn(+1),uwjn(+2)
-!diag         write(lp,'(a,2i5,i3,5f10.2)') &
+!diag         write(lp,'(a,2i6,i4,5f10.2)') &
 !diag           'dpHD =', &
 !diag           i+i0,j+j0,k, &
 !diag         max(hmindiff,sclu2q(2,i,j+1)*dpu(i,j,  k,n)+ &
@@ -4736,28 +4736,28 @@
 !diag         max(hmindiff,sclu2q(2,i,j  )*dpu(i,j-1,k,n)+ &
 !diag                      sclu2q(1,i,j  )*dpu(i,j,  k,n) )*qonem, &
 !diag         max(hmindiff,dpu(i,j,k,n))*qonem
-!diag         write(lp,'(a,2i5,i3,5f10.5)') &
+!diag         write(lp,'(a,2i6,i4,5f10.5)') &
 !diag           'adfY =', &
 !diag           i+i0,j+j0,k, &
 !diag           -delt1*advu(i,j),delt1*diffu(i,j)
-!diag         write(lp,'(a,2i5,i3,5f10.5)') &
+!diag         write(lp,'(a,2i6,i4,5f10.5)') &
 !diag           'uaYc =', &
 !diag           i+i0,j+j0,k, &
 !diag           scluad(-2,4,i,j),scluad(-1,4,i,j),scluad( 0,4,i,j), &
 !diag           scluad(+1,4,i,j),scluad(+2,4,i,j)
-!diag         write(lp,'(a,2i5,i3,5f10.5)') &
+!diag         write(lp,'(a,2i6,i4,5f10.5)') &
 !diag           'udYr =', &
 !diag           i+i0,j+j0,k, &
 !diag           0.0,scluad(-1,5,i,j),scluad( 0,5,i,j), &
 !diag               scluad(+1,5,i,j),scluad(+2,5,i,j)
-!diag         write(lp,'(a,2i5,i3,5f10.5)') &
+!diag         write(lp,'(a,2i6,i4,5f10.5)') &
 !diag           'udYl =', &
 !diag           i+i0,j+j0,k, &
 !diag           scluad(-2,6,i,j),scluad(-1,6,i,j), &
 !diag           scluad( 0,6,i,j),scluad(+1,6,i,j),0.0
 !diag       endif !test
 !diag       if (max(abs(i-itest),abs(j-jtest)).le.0.and.0.eq.1) then
-!diag         write(lp,'(a,2i5,i3,4f12.5)') &
+!diag         write(lp,'(a,2i6,i4,4f12.5)') &
 !diag           'advu-y =', &
 !diag           i+i0,j+j0,k, &
 !diag           -delt1*advu(i,j), &
@@ -4828,51 +4828,51 @@
                )*scvyi(i,j)/max(hmindiff,dpv(i,j,k,n))
 !
 !diag       if (max(abs(i-itest),abs(j-jtest)).le.0.and.k.eq.1) then
-!diag         write(lp,'(a,2i5,i3,5f10.5)') &
+!diag         write(lp,'(a,2i6,i4,5f10.5)') &
 !diag           'vt.m =', &
 !diag           i+i0,j+j0,k, &
 !diag           0.0,vtotm(i,j-1),vtotm(i,j),vtotm(i,j+1)
-!diag         write(lp,'(a,2i5,i3,5f10.5)') &
+!diag         write(lp,'(a,2i6,i4,5f10.5)') &
 !diag           'vwjm =', &
 !diag           i+i0,j+j0,k, &
 !diag           0.0,vwjm(-1),vwjm(0),vwjm(+1)
-!diag         write(lp,'(a,2i5,i3,5f10.5)') &
+!diag         write(lp,'(a,2i6,i4,5f10.5)') &
 !diag           'vt.n =', &
 !diag           i+i0,j+j0,k, &
 !diag           vtotn(i,j-2),vtotn(i,j-1),vtotn(i,j), &
 !diag           vtotn(i,j+1),vtotn(i,j+2)
-!diag         write(lp,'(a,2i5,i3,5f10.5)') &
+!diag         write(lp,'(a,2i6,i4,5f10.5)') &
 !diag           'vwjn =', &
 !diag           i+i0,j+j0,k, &
 !diag           vwjn(-2),vwjn(-1),vwjn(0),vwjn(+1),vwjn(+2)
-!diag         write(lp,'(a,2i5,i3,5f10.2)') &
+!diag         write(lp,'(a,2i6,i4,5f10.2)') &
 !diag           'dpHD =', &
 !diag           i+i0,j+j0,k, &
 !diag           max(hmindiff,dpo(i,j-1,k,n))*qonem, &
 !diag           max(hmindiff,dpo(i,j,  k,n))*qonem, &
 !diag           max(hmindiff,dpv(i,j,  k,n))*qonem
-!diag         write(lp,'(a,2i5,i3,5f10.5)') &
+!diag         write(lp,'(a,2i6,i4,5f10.5)') &
 !diag           'adfY =', &
 !diag           i+i0,j+j0,k, &
 !diag           -delt1*advv(i,j),delt1*diffv(i,j)
-!diag         write(lp,'(a,2i5,i3,5f10.5)') &
+!diag         write(lp,'(a,2i6,i4,5f10.5)') &
 !diag           'vaYc =', &
 !diag           i+i0,j+j0,k, &
 !diag           sclvad(-2,1,i,j),sclvad(-1,1,i,j),sclvad( 0,1,i,j), &
 !diag           sclvad(+1,1,i,j),sclvad(+2,1,i,j)
-!diag         write(lp,'(a,2i5,i3,5f10.5)') &
+!diag         write(lp,'(a,2i6,i4,5f10.5)') &
 !diag           'vdYr =', &
 !diag           i+i0,j+j0,k, &
 !diag           0.0,sclvad(-2,2,i,j),sclvad( 0,2,i,j), &
 !diag               sclvad(+1,2,i,j),sclvad(+2,2,i,j)
-!diag         write(lp,'(a,2i5,i3,5f10.5)') &
+!diag         write(lp,'(a,2i6,i4,5f10.5)') &
 !diag           'vdYl =', &
 !diag           i+i0,j+j0,k, &
 !diag           sclvad(-2,3,i,j),sclvad(-1,3,i,j), &
 !diag           sclvad( 0,3,i,j),sclvad(+1,3,i,j),0.0
 !diag       endif !test
 !diag       if (max(abs(i-itest),abs(j-jtest)).le.0.and.k.eq.1) then
-!diag         write(lp,'(a,2i5,i3,4f12.5)') &
+!diag         write(lp,'(a,2i6,i4,4f12.5)') &
 !diag           'advv-y =', &
 !diag           i+i0,j+j0,k, &
 !diag           -delt1*advv(i,j), &
@@ -4933,24 +4933,24 @@
                )*scvxi(i,j)/max(hmindiff,dpv(i,j,k,n))
 !
 !diag       if (max(abs(i-itest),abs(j-jtest)).le.0.and.k.eq.1) then
-!diag         write(lp,'(a,2i5,i3,5f10.5)') &
+!diag         write(lp,'(a,2i6,i4,5f10.5)') &
 !diag           'ut.m =', &
 !diag           i+i0,j+j0,k, &
 !diag           0.0,utotm(i-1,j),utotm(i,j),utotm(i+1,j)
-!diag         write(lp,'(a,2i5,i3,5f10.5)') &
+!diag         write(lp,'(a,2i6,i4,5f10.5)') &
 !diag           'vwim =', &
 !diag           i+i0,j+j0,k, &
 !diag           0.0,vwim(-1),vwim(0),vwim(+1)
-!diag         write(lp,'(a,2i5,i3,5f10.5)') &
+!diag         write(lp,'(a,2i6,i4,5f10.5)') &
 !diag           'ut.n =', &
 !diag           i+i0,j+j0,k, &
 !diag           utotn(i-2,j),utotn(i-1,j),utotn(i,j), &
 !diag           utotn(i+1,j),utotn(i+2,j)
-!diag         write(lp,'(a,2i5,i3,5f10.5)') &
+!diag         write(lp,'(a,2i6,i4,5f10.5)') &
 !diag           'vwin =', &
 !diag           i+i0,j+j0,k, &
 !diag           vwin(-2),vwin(-1),vwin(0),vwin(+1),vwin(+2)
-!diag         write(lp,'(a,2i5,i3,5f10.2)') &
+!diag         write(lp,'(a,2i6,i4,5f10.2)') &
 !diag           'dpHD =', &
 !diag           i+i0,j+j0,k, &
 !diag         max(hmindiff,sclv2q(2,i+1,j)*dpv(i,  j,k,n)+ &
@@ -4958,28 +4958,28 @@
 !diag         max(hmindiff,sclv2q(2,i,  j)*dpv(i-1,j,k,n)+ &
 !diag                      sclv2q(1,i,  j)*dpv(i,  j,k,n) )*qonem, &
 !diag         max(hmindiff,dpv(i,j,k,n))*qonem
-!diag         write(lp,'(a,2i5,i3,5f10.5)') &
+!diag         write(lp,'(a,2i6,i4,5f10.5)') &
 !diag           'adfX =', &
 !diag           i+i0,j+j0,k, &
 !diag           -delt1*advv(i,j),delt1*diffv(i,j)
-!diag         write(lp,'(a,2i5,i3,5f10.5)') &
+!diag         write(lp,'(a,2i6,i4,5f10.5)') &
 !diag           'vaXc =', &
 !diag           i+i0,j+j0,k, &
 !diag           sclvad(-2,4,i,j),sclvad(-1,4,i,j),sclvad( 0,4,i,j), &
 !diag           sclvad(+1,4,i,j),sclvad(+2,4,i,j)
-!diag         write(lp,'(a,2i5,i3,5f10.5)') &
+!diag         write(lp,'(a,2i6,i4,5f10.5)') &
 !diag           'vdXr =', &
 !diag           i+i0,j+j0,k, &
 !diag           0.0,sclvad(-1,5,i,j),sclvad( 0,5,i,j), &
 !diag               sclvad(+1,5,i,j),sclvad(+2,5,i,j)
-!diag         write(lp,'(a,2i5,i3,5f10.5)') &
+!diag         write(lp,'(a,2i6,i4,5f10.5)') &
 !diag           'vdXl =', &
 !diag           i+i0,j+j0,k, &
 !diag           sclvad(-2,6,i,j),sclvad(-1,6,i,j), &
 !diag           sclvad( 0,6,i,j),sclvad(+1,6,i,j),0.0
 !diag       endif !test
 !diag       if (max(abs(i-itest),abs(j-jtest)).le.0.and.k.eq.1) then
-!diag         write(lp,'(a,2i5,i3,4f12.5)') &
+!diag         write(lp,'(a,2i6,i4,4f12.5)') &
 !diag           'advX =', &
 !diag           i+i0,j+j0,k, &
 !diag           -delt1*advv(i,j), &
@@ -5254,10 +5254,10 @@
 !diag do j=jtest-1,jtest+1
 !diag do i=itest-1,itest+1
 !diag if     (iu(i,j).ne.1) then
-!diag write (lp,'(2i5,i3,2f8.3)') i+i0,j+j0,k, &
+!diag write (lp,'(2i6,i4,2f8.3)') i+i0,j+j0,k, &
 !diag   0.0,0.0
 !diag else
-!diag write (lp,'(2i5,i3,8f8.3)') i+i0,j+j0,k, &
+!diag write (lp,'(2i6,i4,8f8.3)') i+i0,j+j0,k, &
 !diag   util4(i,j),u(i,j,k,n), &
 !diag   -delt1*gradx(i,j), &
 !diag   -delt1*advu(i,j), &
@@ -5498,10 +5498,10 @@
 !diag do j=jtest-1,jtest+1
 !diag do i=itest-1,itest+1
 !diag if     (iv(i,j).ne.1) then
-!diag write (lp,'(2i5,i3,2f8.3)') i+i0,j+j0,k, &
+!diag write (lp,'(2i6,i4,2f8.3)') i+i0,j+j0,k, &
 !diag   0.0,0.0
 !diag else
-!diag write (lp,'(2i5,i3,8f8.3)') i+i0,j+j0,k, &
+!diag write (lp,'(2i6,i4,8f8.3)') i+i0,j+j0,k, &
 !diag   util4(i,j),v(i,j,k,n), &
 !diag   -delt1*grady(i,j), &
 !diag   -delt1*advv(i,j), &
@@ -5795,3 +5795,4 @@
 !> Feb. 2025 - added spdtid,   strflg=723
 !> Feb. 2025 - if cbar is negative, cbarp represents tidal amplitude
 !> Feb. 2025 - optionally add observed tidal velocities to bottom speed
+!> Feb. 2025 - printout now ok for kdm<1000 and idm,jdm<100,000

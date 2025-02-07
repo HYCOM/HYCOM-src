@@ -117,7 +117,7 @@
             borrow=max( -fluxmx, min( fluxmx, borrow ) )
 !
 !diag       if (i.eq.itest .and. j.eq.jtest) then
-!diag         write (lp,'(i9,2i5,a,5f9.3)') &
+!diag         write (lp,'(i9,2i6,a,5f9.3)') &
 !diag           nstep,i+i0,j+j0,'  t,tfrz,flx,hfrz,cov:', &
 !diag           tmxl,tfrz,borrow,hfrz*qonem,covice(i,j)
 !diag       endif
@@ -383,3 +383,4 @@
 !> Nov. 2018 - virtual salt flux replaced with water and actual salt flux
 !> Nov. 2018 - added lwflag=-1 for input radflx=Qlwdn
 !> Nov. 2018 - allow for difference in ocean and sea ice albedo when lwflag=-1
+!> Feb. 2025 - printout now ok for kdm<1000 and idm,jdm<100,000

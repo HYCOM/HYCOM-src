@@ -603,11 +603,11 @@
 !
       if (debug_tides) then
         if     (itest.gt.0 .and. jtest.gt.0) then
-          write (lp,'(i9,2i5,3x,a,i2.2,a,2f10.6)') &
+          write (lp,'(i9,2i6,3x,a,i2.2,a,2f10.6)') &
             nstep,itest+i0,jtest+j0, &
               ' hr',nhrly,' = ', &
                uhrly(itest,jtest,nhrly), vhrly(itest,jtest,nhrly)
-          write (lp,'(i9,2i5,3x,a,2f10.6)') &
+          write (lp,'(i9,2i6,3x,a,2f10.6)') &
             nstep,itest+i0,jtest+j0, &
               'ntide = ', &
                untide(itest,jtest),     vntide(itest,jtest)
@@ -726,11 +726,11 @@
 !
       if (debug_tides) then
         if     (itest.gt.0 .and. jtest.gt.0) then
-          write (lp,'(i9,2i5,3x,a,i2.2,a,f10.6)') &
+          write (lp,'(i9,2i6,3x,a,i2.2,a,f10.6)') &
             nstep,itest+i0,jtest+j0, &
               ' hr',mhrly,' = ', &
                hhrly(itest,jtest,mhrly)
-          write (lp,'(i9,2i5,3x,a,f10.6)') &
+          write (lp,'(i9,2i6,3x,a,f10.6)') &
             nstep,itest+i0,jtest+j0, &
               'hntide = ', &
                hntide(itest,jtest)
@@ -859,7 +859,7 @@
 !
       if (debug_tides) then
         if     (itest.gt.0 .and. jtest.gt.0) then
-          write (lp,'(i9,i3,2f14.6,2i5,3x,a,f10.6)') &
+          write (lp,'(i9,i3,2f14.6,2i6,3x,a,f10.6)') &
             nstep,ll,timeref+timet,timet,itest+i0,jtest+j0, &
               ' htide = ',htide(itest,jtest)
         endif !test point
@@ -1023,7 +1023,7 @@
 !
       if (debug_tides) then
         if     (itest.gt.0 .and. jtest.gt.0) then
-          write (lp,'(i9,i3,2f14.6,2i5,3x,2(a,f10.6))') &
+          write (lp,'(i9,i3,2f14.6,2i6,3x,2(a,f10.6))') &
            nstep,ll,timeref+timet,timet,itest+i0,jtest+j0, &
               ' utide = ',utide(itest,jtest), &
               ' vtide = ',vtide(itest,jtest)
@@ -1147,19 +1147,19 @@
 !
       if (debug_tides) then
         if     (itest.gt.0 .and. jtest.gt.0) then
-          write (lp,'(i9,2i5,3x,a,2f10.6)') &
+          write (lp,'(i9,2i6,3x,a,2f10.6)') &
             nstep,itest+i0,jtest+j0, &
               'fm2 = ', &
                uvf(itest,jtest,1),vvf(itest,jtest,1)
-          write (lp,'(i9,2i5,3x,a,2f10.6)') &
+          write (lp,'(i9,2i6,3x,a,2f10.6)') &
             nstep,itest+i0,jtest+j0, &
               'fs2 = ', &
                uvf(itest,jtest,2),vvf(itest,jtest,2)
-          write (lp,'(i9,2i5,3x,a,2f10.6)') &
+          write (lp,'(i9,2i6,3x,a,2f10.6)') &
             nstep,itest+i0,jtest+j0, &
               'fk1 = ', &
                uvf(itest,jtest,3),vvf(itest,jtest,3)
-          write (lp,'(i9,2i5,3x,a,2f10.6)') &
+          write (lp,'(i9,2i6,3x,a,2f10.6)') &
             nstep,itest+i0,jtest+j0, &
               'fo1 = ', &
                uvf(itest,jtest,4),vvf(itest,jtest,4)
@@ -1294,7 +1294,7 @@
 !
       if (debug_tides) then
         if     (itest.gt.0 .and. jtest.gt.0) then
-          write (lp,'(i9,i3,2f14.6,2i5,3x,2(a,f10.6))') &
+          write (lp,'(i9,i3,2f14.6,2i6,3x,2(a,f10.6))') &
             nstep,ll,timeref+timet,timet,itest+i0,jtest+j0, &
               ' etide = ',etide(itest,jtest)
         endif !test point
@@ -2159,3 +2159,4 @@
 !> Jan. 2025 - added the option to nudge towards the observed tides
 !> Feb. 2025 - added cbtidc for adding tidal velocities to bottom drag
 !> Feb. 2025 - pang is required for cbtidc
+!> Feb. 2025 - printout now ok for kdm<1000 and idm,jdm<100,000

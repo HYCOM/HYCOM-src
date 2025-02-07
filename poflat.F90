@@ -84,7 +84,7 @@
         pinthi=p1*(1.-x)+p2*x
         press =(pintlo*(1.-z)+pinthi*z)*onem
         endif
-!diag   write (lp,'('' poflat'',2f7.2,2i5,2f7.2,f7.1)') &
+!diag   write (lp,'('' poflat'',2f7.2,2i6,2f7.2,f7.1)') &
 !diag     theta,xlat,ix,kz,x,z,press/onem
       else
 !
@@ -112,7 +112,7 @@
         z=max((pinthi-pz)/(pinthi-pintlo),0.0)
         theta=thet1+(kz-z-1.0)*dthet
         endif
-!diag   write (lp,'('' roflat'',2f7.2,2i5,2f7.2,f7.1)') &
+!diag   write (lp,'('' roflat'',2f7.2,2i6,2f7.2,f7.1)') &
 !diag     theta,xlat,ix,kz,x,z,pz
       endif
       return
@@ -151,3 +151,4 @@
 !>
 !> May  2000 - conversion to SI units
 !> Aug  2001 - added roflat and profile_lat to poflat.
+!> Feb. 2025 - printout now ok for kdm<1000 and idm,jdm<100,000

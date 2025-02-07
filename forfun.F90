@@ -4175,21 +4175,21 @@
         call xcsync(flush_lp)
         if     (i0.lt.ittest .and. i0+ii.ge.ittest .and. &
                 j0.lt.jttest .and. j0+jj.ge.jttest      ) then
-          write(lp,'(i5,i4,a,1p5e13.5)') &
+          write(lp,'(i6,i6,a,1p5e13.5)') &
              itest+i0,jtest+j0,' rdbaro: ub,vb,pb,ubp,vbp = ', &
              ubnest(itest,jtest,lslot), &
              vbnest(itest,jtest,lslot), &
              pbnest(itest,jtest,lslot), &
              ubpnst(itest,jtest,lslot), &
              vbpnst(itest,jtest,lslot)
-          write(lp,'(i5,i4,a,1p5e13.5)') &
+          write(lp,'(i6,i6,a,1p5e13.5)') &
              itest+1+i0,jtest+j0,' rdbaro: ub,vb,pb,ubp,vbp = ', &
              ubnest(itest+1,jtest,lslot), &
              vbnest(itest+1,jtest,lslot), &
              pbnest(itest+1,jtest,lslot), &
              ubpnst(itest+1,jtest,lslot), &
              vbpnst(itest+1,jtest,lslot)
-          write(lp,'(i5,i4,a,1p5e13.5)') &
+          write(lp,'(i6,i6,a,1p5e13.5)') &
              itest+i0,jtest+1+j0,' rdbaro: ub,vb,pb,ubp,vbp = ', &
              ubnest(itest,jtest+1,lslot), &
              vbnest(itest,jtest+1,lslot), &
@@ -4783,8 +4783,8 @@
         call xcsync(flush_lp)
         if     (i0.lt.ittest .and. i0+ii.ge.ittest .and. &
                 j0.lt.jttest .and. j0+jj.ge.jttest      ) then
- 103      format(i8,i5,i4,1x,a,a/ &
-                 (i8,5x,i4,1x,a,a,2f7.3,2f7.3,f8.4,f9.3,f9.2))
+ 103      format( i9,i6,i6,1x,a,a/ &
+                 (i9,6x,i6,1x,a,a,2f7.3,2f7.3,f8.4,f9.3,f9.2))
           write(lp,103) &
              nstep,itest+i0,jtest+j0,'rdnest', &
              ':   utot   vtot   temp   saln    dens    thkns     dpth', &
@@ -5047,3 +5047,4 @@
 !> Jan. 2025 - added forfunn for nudging towards the observed tides
 !> Jan. 2025 - salfac and hnudge in mod_tides
 !> Feb. 2025 - cbarmin (forfundf) ensures that BBL speed is not zero
+!> Feb. 2025 - printout now ok for kdm<1000 and idm,jdm<100,000

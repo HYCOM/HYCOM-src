@@ -354,7 +354,7 @@
       endif
 !
 !diag if (mod(k,3).ne.1) go to 55
-!diag write (text,'(''intf.pressure (m), k='',i3)') k+1
+!diag write (text,'(''intf.pressure (m), k='',i4)') k+1
 !diag call prtmsk(ip,p(1-nbdy,1-nbdy,k+1),util1,idm,ii,jj,0.,1.*qonem,text)
 !
       enddo !k
@@ -569,7 +569,7 @@
           (p(itest,jtest,k+1)+p(itest,jtest,k))*0.5*qonem, &
           montg(itest,jtest,k,1)/g,k=1,kk)
          write(lp,104) depths(itest,jtest)
- 103     format (i9,2i5,a/23x,'mxl',32x,     f8.1/ &
+ 103     format (i9,2i6,a/25x,'mxl',32x,     f8.1/ &
                          (23x,i3,2f8.2,f8.2,2f8.1,f8.3))
  104     format (         23x,'bot',32x,     f8.1)
       endif !test tile
@@ -598,3 +598,4 @@
 !> Feb  2019 - onetai is 1.0
 !> Feb  2019 - montg_c correction to pbavg (see momtum for correction to psikk)
 !> Feb  2019 - removed onetai
+!> Feb. 2025 - printout now ok for kdm<1000 and idm,jdm<100,000

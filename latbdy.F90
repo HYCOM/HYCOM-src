@@ -782,7 +782,7 @@
             write (char3,'(i3)') ilast-ifrst
             fmt(8:10)=char3
             if     (mnproc.eq.1) then
-              write (lp,'(a,i5,a,i5)') &
+              write (lp,'(a,i6,a,i6)') &
                      'iu array, cols',ifrst+1,' --',ilast
             endif
             do j= jtdm,1,-1
@@ -804,7 +804,7 @@
             write (char3,'(i3)') ilast-ifrst
             fmt(8:10)=char3
             if     (mnproc.eq.1) then
-              write (lp,'(a,i5,a,i5)') &
+              write (lp,'(a,i6,a,i6)') &
                      'iv array, cols',ifrst+1,' --',ilast
             endif
             do j= jtdm,1,-1
@@ -1615,7 +1615,7 @@
             write (char3,'(i3)') ilast-ifrst
             fmt(8:10)=char3
             if     (mnproc.eq.1) then
-            write (lp,'(a,i5,a,i5)') &
+            write (lp,'(a,i6,a,i6)') &
               'iu array, cols',ifrst+1,' --',ilast
             endif
             do j= jtdm,1,-1
@@ -1637,7 +1637,7 @@
             write (char3,'(i3)') ilast-ifrst
             fmt(8:10)=char3
             if     (mnproc.eq.1) then
-            write (lp,'(a,i5,a,i5)') &
+            write (lp,'(a,i6,a,i6)') &
               'iv array, cols',ifrst+1,' --',ilast
             endif
             do j= jtdm,1,-1
@@ -1702,7 +1702,7 @@
               speedw(j) = sqrt(svref/(onem*dline(j)))
               rspedw(j) = 1.0/speedw(j)
               if     (mnproc.eq.1) then
-              write(lp,'(a,i2,2i5,1p2e13.5)')  &
+              write(lp,'(a,i2,2i6,1p2e13.5)')  &
                 'w port: ',l,i,j,uportw(j),speedw(j)
               endif
 !
@@ -1732,7 +1732,7 @@
               speede(j) = sqrt(svref/(onem*dline(j)))
               rspede(j) = 1.0/speede(j)
               if     (mnproc.eq.1) then
-              write(lp,'(a,i2,2i5,1p2e13.5)')  &
+              write(lp,'(a,i2,2i6,1p2e13.5)')  &
                 'e port: ',l,i,j,uporte(j),speede(j)
               endif
 !
@@ -1762,7 +1762,7 @@
               speedn(i) = sqrt(svref/(onem*dline(i)))
               rspedn(i) = 1.0/speedn(i)
               if     (mnproc.eq.1) then
-              write(lp,'(a,i2,2i5,1p2e13.5)')  &
+              write(lp,'(a,i2,2i6,1p2e13.5)')  &
                 'n port: ',l,i,j,vportn(i),speedn(i)
               endif
 !
@@ -1792,7 +1792,7 @@
               speeds(i) = sqrt(svref/(onem*dline(i)))
               rspeds(i) = 1.0/speeds(i)
               if     (mnproc.eq.1) then
-              write(lp,'(a,i2,2i5,1p2e13.5)')  &
+              write(lp,'(a,i2,2i6,1p2e13.5)')  &
                 's port: ',l,i,j,vports(i),speeds(i)
               endif
 !
@@ -1872,9 +1872,9 @@
                       ubavg(1-nbdy,1-nbdy,n), i,  j,0,1)
 !
               if     (ldebug_latbdp .and. mnproc.eq.1) then
-                write(lp,'(a,i2,3i5,2i2)') 'l,xclput(pb - ', &
+                write(lp,'(a,i2,3i6,2i2)') 'l,xclput(pb - ', &
                                             l,lnport(l),i,  j,0,1
-                write(lp,'(a,i2,3i5,2i2)') 'l,xclput(ub - ', &
+                write(lp,'(a,i2,3i6,2i2)') 'l,xclput(ub - ', &
                                             l,lnport(l),i,  j,0,1
                 call flush(lp)
               endif
@@ -1910,7 +1910,7 @@
             uline(j,1)=(fin+crs)-uline(j,1)
             sum=sum+uline(j,1)*dline(j)*xline(j)
 !             if     (mnproc.eq.1) then
-!             write(lp,'(a,i2,2i5,1p2e13.5)') 
+!             write(lp,'(a,i2,2i6,1p2e13.5)') 
 !    &          'e port: ',l,i,j,pline(j),uline(j,1)
 !             endif
           enddo
@@ -1921,9 +1921,9 @@
                       ubavg(1-nbdy,1-nbdy,n), i+1,j,0,1)
 !
               if     (ldebug_latbdp .and. mnproc.eq.1) then
-                write(lp,'(a,i2,3i5,2i2)') 'l,xclput(pb - ', &
+                write(lp,'(a,i2,3i6,2i2)') 'l,xclput(pb - ', &
                                             l,lnport(l),i,  j,0,1
-                write(lp,'(a,i2,3i5,2i2)') 'l,xclput(ub - ', &
+                write(lp,'(a,i2,3i6,2i2)') 'l,xclput(ub - ', &
                                             l,lnport(l),i+1,j,0,1
                 call flush(lp)
               endif
@@ -1966,9 +1966,9 @@
                       vbavg(1-nbdy,1-nbdy,n), i,j+1,1,0)
 !
               if     (ldebug_latbdp .and. mnproc.eq.1) then
-                write(lp,'(a,i2,3i5,2i2)') 'l,xclput(pb - ', &
+                write(lp,'(a,i2,3i6,2i2)') 'l,xclput(pb - ', &
                                             l,lnport(l),i,j,  1,0
-                write(lp,'(a,i2,3i5,2i2)') 'l,xclput(vb - ', &
+                write(lp,'(a,i2,3i6,2i2)') 'l,xclput(vb - ', &
                                             l,lnport(l),i,j+1,1,0
                 call flush(lp)
               endif
@@ -2011,9 +2011,9 @@
                       vbavg(1-nbdy,1-nbdy,n), i,j,  1,0)
 !
               if     (ldebug_latbdp .and. mnproc.eq.1) then
-                write(lp,'(a,i2,3i5,2i2)') 'l,xclput(pb - ', &
+                write(lp,'(a,i2,3i6,2i2)') 'l,xclput(pb - ', &
                                             l,lnport(l),i,j,  1,0
-                write(lp,'(a,i2,3i5,2i2)') 'l,xclput(vb - ', &
+                write(lp,'(a,i2,3i6,2i2)') 'l,xclput(vb - ', &
                                             l,lnport(l),i,j,  1,0
                 call flush(lp)
               endif
@@ -2394,7 +2394,7 @@
             write (char3,'(i3)') ilast-ifrst
             fmt(8:10)=char3
             if     (mnproc.eq.1) then
-            write (lp,'(a,i5,a,i5)') &
+            write (lp,'(a,i6,a,i6)') &
               'iu array, cols',ifrst+1,' --',ilast
             endif !1st tile
             do j= jtdm,1,-1
@@ -2416,7 +2416,7 @@
             write (char3,'(i3)') ilast-ifrst
             fmt(8:10)=char3
             if     (mnproc.eq.1) then
-            write (lp,'(a,i5,a,i5)') &
+            write (lp,'(a,i6,a,i6)') &
               'iv array, cols',ifrst+1,' --',ilast
             endif !1st tile
             do j= jtdm,1,-1
@@ -2500,7 +2500,7 @@
               endif
               if     (ldebug_latbdt .and. np+j.eq.nptest &
                                     .and. mnproc.eq.1) then
-                write(lp,'(a,5i5)') 'n,ia,ja w:',np+j, &
+                write(lp,'(a,5i6)') 'n,ia,ja w:',np+j, &
                   iaub(np+j),jaub(np+j),iaui(np+j),jaui(np+j)
               endif !ldebug_latbdt
             enddo !j
@@ -2532,7 +2532,7 @@
               endif
               if     (ldebug_latbdt .and. np+j.eq.nptest &
                                     .and. mnproc.eq.1) then
-                write(lp,'(a,5i5)') 'n,ia,ja e:',np+j, &
+                write(lp,'(a,5i6)') 'n,ia,ja e:',np+j, &
                   iaub(np+j),jaub(np+j),iaui(np+j),jaui(np+j)
               endif !ldebug_latbdt
             enddo !j
@@ -2564,7 +2564,7 @@
               endif
               if     (ldebug_latbdt .and. np+i.eq.nptest &
                                     .and. mnproc.eq.1) then
-                write(lp,'(a,5i5)') 'n,ia,ja n:',np+i, &
+                write(lp,'(a,5i6)') 'n,ia,ja n:',np+i, &
                   iavb(np+i),javb(np+i),iavi(np+i),javi(np+i)
               endif !ldebug_latbdt
             enddo !i
@@ -2596,7 +2596,7 @@
               endif
               if     (ldebug_latbdt .and. np+i.eq.nptest &
                                     .and. mnproc.eq.1) then
-                write(lp,'(a,5i5)') 'n,ia,ja n:',np+i, &
+                write(lp,'(a,5i6)') 'n,ia,ja n:',np+i, &
                   iavb(np+i),javb(np+i),iavi(np+i),javi(np+i)
               endif !ldebug_latbdt
             enddo !i
@@ -2610,7 +2610,7 @@
                            .and. japi(i).eq.japi(j)  ) then
               ndup(i) = j
               if     (ldebug_latbdt .and. mnproc.eq.1) then
-                write(lp,'(a,4i5)') 'n,ndup,ia,ja', &
+                write(lp,'(a,4i6)') 'n,ndup,ia,ja', &
                                     i,j,iapi(i),japi(i)
               endif !ldebug_latbdt
             endif
@@ -2647,7 +2647,7 @@
               rspeed(np+j) = 1.0/pspeed(np+j)
               if     (ldebug_latbdt .and. np+j.eq.nptest &
                                     .and. mnproc.eq.1) then
-                write(lp,'(a,i2,4i5,1pe13.5)')  &
+                write(lp,'(a,i2,4i6,1pe13.5)')  &
                   'w port: ',l,i,j,iapi(np+j),japi(np+j),pspeed(np+j)
               endif !ldebug_latbdt
 !
@@ -2670,7 +2670,7 @@
               rspeed(np+j) = 1.0/pspeed(np+j)
               if     (ldebug_latbdt .and. np+j.eq.nptest &
                                     .and. mnproc.eq.1) then
-                write(lp,'(a,i2,4i5,1pe13.5)')  &
+                write(lp,'(a,i2,4i6,1pe13.5)')  &
                   'e port: ',l,i,j,iapi(np+j),japi(np+j),pspeed(np+j)
               endif !ldebug_latbdt
 !
@@ -2693,7 +2693,7 @@
               rspeed(np+i) = 1.0/pspeed(np+i)
               if     (ldebug_latbdt .and. np+i.eq.nptest &
                                     .and. mnproc.eq.1) then
-                write(lp,'(a,i2,4i5,1pe13.5)')  &
+                write(lp,'(a,i2,4i6,1pe13.5)')  &
                   'n port: ',l,i,j,iapi(np+i),japi(np+i),pspeed(np+i)
               endif !ldebug_latbdt
 !
@@ -2716,7 +2716,7 @@
               rspeed(np+i) = 1.0/pspeed(np+i)
               if     (ldebug_latbdt .and. np+i.eq.nptest &
                                     .and. mnproc.eq.1) then
-                write(lp,'(a,i2,4i5,1pe13.5)')  &
+                write(lp,'(a,i2,4i6,1pe13.5)')  &
                   's port: ',l,i,j,iapi(np+i),japi(np+i),pspeed(np+i)
               endif !ldebug_latbdt
 !
@@ -2773,7 +2773,7 @@
             do j= jfport(l),jlport(l)
               utrans(np+j) = uline(np+j)*ulin2(np+j)*qonem
               if     (ltrans_latbdt .and. mnproc.eq.1) then
-                write(lp,'(a,i2,4i5,1p3e13.5)')  &
+                write(lp,'(a,i2,4i6,1p3e13.5)')  &
                   'w tran: ',l,i,j,iaub(np+j),jaub(np+j), &
                   utrans(np+j),uline(np+j)*qonem,ulin2(np+j)
               endif !ltrans_latbdt
@@ -2788,7 +2788,7 @@
             do j= jfport(l),jlport(l)
               utrans(np+j) = uline(np+j)*ulin2(np+j)*qonem
               if     (ltrans_latbdt .and. mnproc.eq.1) then
-                write(lp,'(a,i2,4i5,1p3e13.5)')  &
+                write(lp,'(a,i2,4i6,1p3e13.5)')  &
                   'e tran: ',l,i,j,iaub(np+j),jaub(np+j), &
                   utrans(np+j),uline(np+j)*qonem,ulin2(np+j)
               endif !ltrans_latbdt
@@ -2803,7 +2803,7 @@
             do i= ifport(l),ilport(l)
               vtrans(np+i) = vline(np+i)*vlin2(np+i)*qonem
               if     (ltrans_latbdt .and. mnproc.eq.1) then
-                write(lp,'(a,i2,4i5,1p3e13.5)')  &
+                write(lp,'(a,i2,4i6,1p3e13.5)')  &
                   'n tran: ',l,i,j,iavb(np+i),javb(np+i), &
                   vtrans(np+i),vline(np+i)*qonem,vlin2(np+i)
               endif !ltrans_latbdt
@@ -2818,7 +2818,7 @@
             do i= ifport(l),ilport(l)
               vtrans(np+i) = vline(np+i)*vlin2(np+i)*qonem
               if     (ltrans_latbdt .and. mnproc.eq.1) then
-                write(lp,'(a,i2,4i5,1p3e13.5)')  &
+                write(lp,'(a,i2,4i6,1p3e13.5)')  &
                   's tran: ',l,i,j,iavb(np+i),javb(np+i), &
                   vtrans(np+i),vline(np+i)*qonem,vlin2(np+i)
               endif !ltrans_latbdt
@@ -2943,15 +2943,15 @@
             if     (ldebug_latbdt .and. &
                            l.eq.1 .and. mnproc.eq.max(mnp,1)) then
               i=nptest
-              write(lp,'(a,2i5,1pe13.5)') 'e port, uline:', &
+              write(lp,'(a,2i6,1pe13.5)') 'e port, uline:', &
                                    iaui(i),jaui(i),uline(i)
-              write(lp,'(a,2i5,1pe13.5)') 'e port, ulin2:', &
+              write(lp,'(a,2i6,1pe13.5)') 'e port, ulin2:', &
                                    iau2(i),jau2(i),ulin2(i)
-              write(lp,'(a,2i5,1pe13.5)') 'e port, pline:', &
+              write(lp,'(a,2i6,1pe13.5)') 'e port, pline:', &
                                    iapi(i),japi(i),pline(i)
-              write(lp,'(a,2i5,1pe13.5)') 'e port, plnst:', &
+              write(lp,'(a,2i6,1pe13.5)') 'e port, plnst:', &
                                    iapi(i),japi(i),plnst(i)
-              write(lp,'(a,2i5,1pe13.5)') 'e port, ulnst:', &
+              write(lp,'(a,2i6,1pe13.5)') 'e port, ulnst:', &
                                    iapi(i),japi(i),ulnst(i)
             endif !ldebug_latbdt
           if     (mnp.eq.0 .or. mnp.eq.mnproc) then
@@ -2985,13 +2985,13 @@
             if     (ldebug_latbdt .and. &
                            l.eq.1 .and. mnproc.eq.max(mnp,1)) then
               i=nptest
-              write(lp,'(a,2i5,1p2e13.5)') 'e port,   crs:', &
+              write(lp,'(a,2i6,1p2e13.5)') 'e port,   crs:', &
                                    iapi(i),japi(i),  crs(i),fin(i)
-              write(lp,'(a,2i5,1p1e13.5)') 'e port, pbavg:', &
+              write(lp,'(a,2i6,1p1e13.5)') 'e port, pbavg:', &
                                    iapi(i),japi(i),pline(i)
-              write(lp,'(a,2i5,1p1e13.5)') 'e port, ubavg:', &
+              write(lp,'(a,2i6,1p1e13.5)') 'e port, ubavg:', &
                                    iaub(i),jaub(i),uline(i)
-              write(lp,'(a,2i5,1p1e13.5)') 'e port, vbavg:', &
+              write(lp,'(a,2i6,1p1e13.5)') 'e port, vbavg:', &
                                    iavb(i),javb(i),vline(i)
               write(lp,*)
               call flush(lp)
@@ -3004,15 +3004,15 @@
             if     (ldebug_latbdt .and. &
                            l.eq.1 .and. mnproc.eq.max(mnp,1)) then
               j=nptest
-              write(lp,'(a,2i5,1pe13.5)') 'n port, vline:', &
+              write(lp,'(a,2i6,1pe13.5)') 'n port, vline:', &
                                    iavi(j),javi(j),vline(j)
-              write(lp,'(a,2i5,1pe13.5)') 'n port, vlin2:', &
+              write(lp,'(a,2i6,1pe13.5)') 'n port, vlin2:', &
                                    iav2(j),jav2(j),vlin2(j)
-              write(lp,'(a,2i5,1p1e13.5)') 'n port, pline:', &
+              write(lp,'(a,2i6,1p1e13.5)') 'n port, pline:', &
                                    iapi(j),japi(j),pline(j)
-              write(lp,'(a,2i5,1p1e13.5)') 'n port, plnst:', &
+              write(lp,'(a,2i6,1p1e13.5)') 'n port, plnst:', &
                                    iapi(j),japi(j),vlnst(j)
-              write(lp,'(a,2i5,1p1e13.5)') 'n port, plnst:', &
+              write(lp,'(a,2i6,1p1e13.5)') 'n port, plnst:', &
                                    iapi(j),japi(j),vlnst(j)
             endif !ldebug_latbdt
           if     (mnp.eq.0 .or. mnp.eq.mnproc) then
@@ -3046,13 +3046,13 @@
             if     (ldebug_latbdt .and. &
                            l.eq.1 .and. mnproc.eq.max(mnp,1)) then
               j=nptest
-              write(lp,'(a,2i5,1p2e13.5)') 'n port,   crs:', &
+              write(lp,'(a,2i6,1p2e13.5)') 'n port,   crs:', &
                                    iapi(j),japi(j),  crs(j),fin(j)
-              write(lp,'(a,2i5,1p1e13.5)') 'n port, pbavg:', &
+              write(lp,'(a,2i6,1p1e13.5)') 'n port, pbavg:', &
                                    iapi(j),japi(j),pline(j)
-              write(lp,'(a,2i5,1p1e13.5)') 'n port, vbavg:', &
+              write(lp,'(a,2i6,1p1e13.5)') 'n port, vbavg:', &
                                    iavb(j),javb(j),vline(j)
-              write(lp,'(a,2i5,1p1e13.5)') 'n port, ubavg:', &
+              write(lp,'(a,2i6,1p1e13.5)') 'n port, ubavg:', &
                                    iaub(j),jaub(j),uline(j)
               write(lp,*)
               call flush(lp)
@@ -3472,7 +3472,7 @@
             write (char3,'(i3)') ilast-ifrst
             fmt(8:10)=char3
             if     (mnproc.eq.1) then
-            write (lp,'(a,i5,a,i5)') &
+            write (lp,'(a,i6,a,i6)') &
               'iu array, cols',ifrst+1,' --',ilast
             endif !1st tile
             do j= jtdm,1,-1
@@ -3494,7 +3494,7 @@
             write (char3,'(i3)') ilast-ifrst
             fmt(8:10)=char3
             if     (mnproc.eq.1) then
-            write (lp,'(a,i5,a,i5)') &
+            write (lp,'(a,i6,a,i6)') &
               'iv array, cols',ifrst+1,' --',ilast
             endif !1st tile
             do j= jtdm,1,-1
@@ -3563,7 +3563,7 @@
               iavi(np+j) = i
               javi(np+j) = j
                 if     (ldebug_latbdtf .and. mnproc.eq.1) then
-                  write(lp,'(a,5i5)') 'n,ia,ja w:',np+j, &
+                  write(lp,'(a,5i6)') 'n,ia,ja w:',np+j, &
                     iaub(np+j),jaub(np+j),iaui(np+j),jaui(np+j)
                 endif !ldebug_latbdtf
             enddo !j
@@ -3583,7 +3583,7 @@
               iavi(np+j) = i
               javi(np+j) = j
                 if     (ldebug_latbdtf .and. mnproc.eq.1) then
-                  write(lp,'(a,5i5)') 'n,ia,ja e:',np+j, &
+                  write(lp,'(a,5i6)') 'n,ia,ja e:',np+j, &
                     iaub(np+j),jaub(np+j),iaui(np+j),jaui(np+j)
                 endif !ldebug_latbdtf
             enddo !j
@@ -3603,7 +3603,7 @@
               iaui(np+i) = i
               jaui(np+i) = j
                 if     (ldebug_latbdtf .and. mnproc.eq.1) then
-                  write(lp,'(a,5i5)') 'n,ia,ja n:',np+i, &
+                  write(lp,'(a,5i6)') 'n,ia,ja n:',np+i, &
                     iavb(np+i),javb(np+i),iavi(np+i),javi(np+i)
                 endif !ldebug_latbdtf
             enddo !i
@@ -3623,7 +3623,7 @@
               iaui(np+i) = i
               jaui(np+i) = j
                 if     (ldebug_latbdtf .and. mnproc.eq.1) then
-                  write(lp,'(a,5i5)') 'n,ia,ja n:',np+i, &
+                  write(lp,'(a,5i6)') 'n,ia,ja n:',np+i, &
                     iavb(np+i),javb(np+i),iavi(np+i),javi(np+i)
                 endif !ldebug_latbdtf
             enddo !i
@@ -3653,7 +3653,7 @@
             do j= jfport(l),jlport(l)
               pspeed(np+j) = qonem*sqrt(g/pline(np+j))
               if     (ldebug_latbdtf .and. mnproc.eq.1) then
-              write(lp,'(a,i2,2i5,1pe13.5)')  &
+              write(lp,'(a,i2,2i6,1pe13.5)')  &
                 'w port: ',l,i,j,pspeed(np+j)
               endif !ldebug_latbdtf
 !
@@ -3674,7 +3674,7 @@
             do j= jfport(l),jlport(l)
               pspeed(np+j) = qonem*sqrt(g/pline(np+j))
               if     (ldebug_latbdtf .and. mnproc.eq.1) then
-              write(lp,'(a,i2,2i5,1pe13.5)')  &
+              write(lp,'(a,i2,2i6,1pe13.5)')  &
                 'e port: ',l,i,j,pspeed(np+j)
               endif !ldebug_latbdtf
 !
@@ -3695,7 +3695,7 @@
             do i= ifport(l),ilport(l)
               pspeed(np+i) = qonem*sqrt(g/pline(np+i))
               if     (ldebug_latbdtf .and. mnproc.eq.1) then
-              write(lp,'(a,i2,2i5,1pe13.5)')  &
+              write(lp,'(a,i2,2i6,1pe13.5)')  &
                 'n port: ',l,i,j,pspeed(np+i)
               endif !ldebug_latbdtf
 !
@@ -3716,7 +3716,7 @@
             do i= ifport(l),ilport(l)
               pspeed(np+i) = qonem*sqrt(g/pline(np+i))
               if     (ldebug_latbdtf .and. mnproc.eq.1) then
-              write(lp,'(a,i2,2i5,1pe13.5)')  &
+              write(lp,'(a,i2,2i6,1pe13.5)')  &
                 's port: ',l,i,j,pspeed(np+i)
               endif !ldebug_latbdtf
 !
@@ -4093,7 +4093,7 @@
                          (z_R(j,i,1),z_I(j,i,1),j=1,ncon) 
             endif
           elseif (mnproc.eq.1) then
-            write(lp,'(a,i5,a / a)') &
+            write(lp,'(a,i6,a / a)') &
               'WARNING: port location',i,' treated as all zeros', &
               trim(Tide_Line)
           endif
@@ -4197,7 +4197,7 @@
                          (z_R(j,i,2),z_I(j,i,2),j=1,ncon) 
             endif
           elseif (mnproc.eq.1) then
-            write(lp,'(a,i5,a / a)') &
+            write(lp,'(a,i6,a / a)') &
               'WARNING: port location',i,' treated as all zeros', &
               trim(Tide_Line)
           endif
@@ -4302,7 +4302,7 @@
                          (z_R(j,i,3),z_I(j,i,3),j=1,ncon) 
             endif
           elseif (mnproc.eq.1) then
-            write(lp,'(a,i5,a / a)') &
+            write(lp,'(a,i6,a / a)') &
               'WARNING: port location',i,' treated as all zeros', &
               trim(Tide_Line)
           endif
@@ -4347,3 +4347,4 @@
 !> Oct  2019 -- update pline in latbdt every npline time steps
 !> Oct  2019 -- smooth the Browning&Kreiss normal transport
 !> Oct  2019 -- npline=3 via a CPP macro
+!> Feb. 2025 - printout now ok for kdm<1000 and idm,jdm<100,000

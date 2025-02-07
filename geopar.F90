@@ -193,7 +193,7 @@
       if (itest.gt.0 .and. jtest.gt.0) then
         i=itest
         j=jtest
-        write (lp,'(/ a,2i5,a,f8.3,a,f12.9,2f10.2/)') &
+        write (lp,'(/ a,2i6,a,f8.3,a,f12.9,2f10.2/)') &
          ' i,j=',i+i0,j+j0, &
          ' plat=',plat(i,j), &
          ' corio,scux,vy=',corio(i,j),scux(i,j),scvy(i,j)
@@ -480,7 +480,7 @@
       write(lp,125)  1,dx0k( 1)*qonem
       write(lp,125) kk,dx0k(kk)*qonem
       endif
- 125  format('dx0k(',i2,') =',f7.2,' m')
+ 125  format('dx0k(',i3,') =',f7.2,' m')
 !
 ! --- calculate dp0k and ds0k?
       if     (dp00.lt.0.0) then
@@ -535,7 +535,7 @@
         write(lp,*)
         write(lp,135) 1,dp0k(1)*qonem,dpm,dpms
         endif
- 135    format('dp0k(',i2,') =',f7.2,' m', &
+ 135    format('dp0k(',i3,') =',f7.2,' m', &
                   '    thkns =',f7.2,' m', &
                   '    depth =',f8.2,' m')
         call xcsync(flush_lp)
@@ -578,7 +578,7 @@
         write(lp,*)
         write(lp,130) 1,ds0k(1)*qonem,dsm,dsms
         endif
- 130    format('ds0k(',i2,') =',f7.2,' m', &
+ 130    format('ds0k(',i3,') =',f7.2,' m', &
                   '    thkns =',f7.2,' m', &
                   '    depth =',f8.2,' m')
         call xcsync(flush_lp)
@@ -632,7 +632,7 @@
       if     (mnproc.eq.1) then
       write(lp,131) nsigma,dpns,dsns
       endif
- 131  format('nsigma = ',i2, &
+ 131  format('nsigma = ',i3, &
              '    deep    =',f8.2,' m', &
              '    shallow =',f8.2,' m' )
       call flush(lp)
@@ -994,44 +994,44 @@
 !diag
 !diag if (itest.gt.0 .and. jtest.gt.0) then
 !diag   do j= 1,jtdm
-!diag     write(lp,'(a,2i5,e16.8)') &
+!diag     write(lp,'(a,2i6,e16.8)') &
 !diag     'g_sc =',ittest,j,g_sc(ittest,j)
 !diag   enddo
 !diag   do i= 1,itdm
-!diag     write(lp,'(a,2i5,e16.8)') &
+!diag     write(lp,'(a,2i6,e16.8)') &
 !diag     'g_sc =',i,jttest,g_sc(i,jttest)
 !diag   enddo
 !diag   i = itest
-!diag   write(lp,'(a,2i5,5f10.5)') &
+!diag   write(lp,'(a,2i6,5f10.5)') &
 !diag             'sc   (km) =', &
 !diag             i+i0,1+j0, &
 !diag             (sc(i,j)*1.e-3,j=1,-3,-1)
-!diag   write(lp,'(a,2i5,5f10.5)') &
+!diag   write(lp,'(a,2i6,5f10.5)') &
 !diag             'g_sc (km) =', &
 !diag             i+i0,1+j0, &
 !diag             (g_sc(i+i0,j+j0)*1.e-3,j=1,-3,-1)
-!diag   write(lp,'(a,2i5,5f10.5)') &
+!diag   write(lp,'(a,2i6,5f10.5)') &
 !diag             'sc   (km) =', &
 !diag             i+i0,jj+j0, &
 !diag             (sc(i,j)*1.e-3,j=jj,jj+4)
-!diag   write(lp,'(a,2i5,5f10.5)') &
+!diag   write(lp,'(a,2i6,5f10.5)') &
 !diag             'g_sc (km) =', &
 !diag             i+i0,jj+j0, &
 !diag             (g_sc(i+i0,j+j0)*1.e-3,j=jj,jj+4)
 !diag   j = jtest
-!diag   write(lp,'(a,2i5,5f10.5)') &
+!diag   write(lp,'(a,2i6,5f10.5)') &
 !diag             'sc   (km) =', &
 !diag             1+i0,j+j0, &
 !diag             (sc(i,j)*1.e-3,i=1,-3,-1)
-!diag   write(lp,'(a,2i5,5f10.5)') &
+!diag   write(lp,'(a,2i6,5f10.5)') &
 !diag             'g_sc (km) =', &
 !diag             1+i0,j+j0, &
 !diag             (g_sc(i+i0,j+j0)*1.e-3,i=1,-3,-1)
-!diag   write(lp,'(a,2i5,5f10.5)') &
+!diag   write(lp,'(a,2i6,5f10.5)') &
 !diag             'sc   (km) =', &
 !diag             ii+i0,j+j0, &
 !diag             (sc(i,j)*1.e-3,i=ii,ii+4)
-!diag   write(lp,'(a,2i5,5f10.5)') &
+!diag   write(lp,'(a,2i6,5f10.5)') &
 !diag             'g_sc (km) =', &
 !diag             ii+i0,j+j0, &
 !diag             (g_sc(i+i0,j+j0)*1.e-3,i=ii,ii+4)
@@ -1064,3 +1064,4 @@
 !> Apr. 2023 - added dx0k
 !> Jan. 2025 - converted displd_mn and dispqd_mn to surface tracers
 !> Feb. 2025 - always read pang in case it is used in mod_tides 
+!> Feb. 2025 - printout now ok for kdm<1000 and idm,jdm<100,000

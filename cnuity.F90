@@ -389,7 +389,7 @@
 !diag   enddo
 !diag   enddo
 !diag endif
- 101  format (i9,2i5,i3,1p,e15.2,e30.2/a17,6e10.2/e37.2,e30.2)
+ 101  format (i9,2i6,i4,1p,e15.2,e30.2/a17,6e10.2/e37.2,e30.2)
 !
 ! --- at each grid point, determine the ratio of the largest permissible
 ! --- pos. (neg.) change in -dp- to the sum of all incoming (outgoing) fluxes
@@ -512,7 +512,7 @@
 !
 ! --- check for negative thicknesses.
 !
- 100  format (i9,' i,j,k=',2i5,i3,' neg. dp (m) in loop ',i2,g15.2,a)
+ 100  format (i9,' i,j,k=',2i6,i4,' neg. dp (m) in loop ',i2,g15.2,a)
 !
       if     (mod(nstep,3).eq.0) then  !skip some time steps for efficiency
         call xcminr(dpkmin(1:2*kk))
@@ -928,7 +928,7 @@
 !$OMP   END PARALLEL DO
 !
 !diag if (itest.gt.0.and.jtest.gt.0) &
-!diag write (lp,'(i9,2i5,i3,'' intfc.depth diffusion -- p_old,p_new ='', &
+!diag write (lp,'(i9,2i6,i4,'' intfc.depth diffusion -- p_old,p_new ='', &
 !diag 2f9.3)') nstep,itest,jtest,k,pold(itest,jtest)*qonem,p(itest, &
 !diag jtest,k)*qonem
 !
@@ -946,7 +946,7 @@
           do i=1-margin,ii+margin
             if (SEA_P) then
               if (p(i,j,k+1).lt.p(i,j,k)) then
-!diag           write (lp,'(i9,2i5,i3,a,g15.2,i4)') nstep,i+i0,j+j0,k, &
+!diag           write (lp,'(i9,2i6,i4,a,g15.2,i4)') nstep,i+i0,j+j0,k, &
 !diag           '  neg. dp after thknss smoothing', &
 !diag           qonem*(p(i,j,k+1)-p(i,j,k)),iflip
                 p(i,j,k+1)=p(i,j,k)
@@ -1080,7 +1080,7 @@
 !$OMP   END PARALLEL DO
 !
 !diag if (itest.gt.0.and.jtest.gt.0) &
-!diag write (lp,'(i9,2i5,i3," intfc.depth diffusion -- p_old,p_new =", &
+!diag write (lp,'(i9,2i6,i4," intfc.depth diffusion -- p_old,p_new =", &
 !diag 2f9.3)') nstep,itest+i0,jtest+j0,k,pold(itest,jtest)*qonem, &
 !diag p(itest,jtest,k)*qonem
 !
@@ -1098,7 +1098,7 @@
           do i=1-margin,ii+margin
             if (SEA_P) then
               if (p(i,j,k+1).lt.p(i,j,k)) then
-!diag           write (lp,'(i9,2i5,i3,a,g15.2,i4)') nstep,i+i0,j+j0,k, &
+!diag           write (lp,'(i9,2i6,i4,a,g15.2,i4)') nstep,i+i0,j+j0,k, &
 !diag           '  neg. dp after thknss smoothing', &
 !diag           qonem*(p(i,j,k+1)-p(i,j,k)),iflip
                 p(i,j,k+1)=p(i,j,k)
@@ -1449,3 +1449,4 @@
 !> Aug. 2018 - btrmas added, use onetamas to simplify logic
 !> Nov. 2018 - added oneta_u and oneta_v to correct and simplify logic
 !> Mar. 2023 - neg. dp in loop 19 is not fatal, might be corrected in loop 15
+!> Feb. 2025 - printout now ok for kdm<1000 and idm,jdm<100,000

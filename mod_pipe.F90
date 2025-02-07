@@ -324,7 +324,7 @@
                     status='old',form='formatted')
               read (     17,*) ishift,jshift
               close(unit=17)
-              write(lp,'(a,2i5)') 'slave periodic shift is:', &
+              write(lp,'(a,2i6)') 'slave periodic shift is:', &
                                   ishift,jshift
               call flush(lp)
             endif ! shift
@@ -420,12 +420,12 @@
                   if     (.not. &
                           (field2(i,j).ge.-huge(fnan) .and. &
                            field2(i,j).le. huge(fnan)      )) then
-                    write (lpunit,'(a,2i5,1p,2(a,e12.5),4x,a)') &
+                    write (lpunit,'(a,2i6,1p,2(a,e12.5),4x,a)') &
                       'i,j=',i,j, &
                       '  master:',field2(i,j), &
                       '  slave:', field1(i,j),what
                   else
-                    write (lpunit,'(a,2i5,1p,2(a,e12.5),4x,a)') &
+                    write (lpunit,'(a,2i6,1p,2(a,e12.5),4x,a)') &
                       'i,j=',i,j, &
                       '  master:',field2(i,j), &
                       '  error:', field2(i,j)-field1(i,j),what
@@ -526,12 +526,12 @@
                   if     (.not. &
                           (field2(i,j).ge.-huge(fnan) .and. &
                            field2(i,j).le. huge(fnan)      )) then
-                    write (lpunit,'(a,2i5,1p,2(a,e12.5),4x,a)') &
+                    write (lpunit,'(a,2i6,1p,2(a,e12.5),4x,a)') &
                       'i,j=',i,j, &
                       '  master:',field2(i,j), &
                       '  slave:', field1(i,j),what
                   else
-                    write (lpunit,'(a,2i5,1p,2(a,e12.5),4x,a)') &
+                    write (lpunit,'(a,2i6,1p,2(a,e12.5),4x,a)') &
                       'i,j=',i,j, &
                       '  master:',field2(i,j), &
                       '  error:', field2(i,j)-field1(i,j),what
@@ -552,7 +552,7 @@
 !     if     (ldebugpnt) then
 !       if     (i0.lt.ittest .and. i0+ii.ge.ittest .and.
 !    &          j0.lt.jttest .and. j0+jj.ge.jttest      ) then
-!         write (lp,'(a,2i5,2x,a,a,1pg24.10)')
+!         write (lp,'(a,2i6,2x,a,a,1pg24.10)')
 !    &      'i,j=',itest+i0,jtest+j0,
 !    &      what,': ',
 !    &      field(itest,jtest)
@@ -603,7 +603,7 @@
               io = itdm-mod(i-1,itdm)
               if (tmask(i,j).gt.0.0 .and. &
                   field1(i,j).ne.field1(io,jo)) then
-                write (lpunit,'(a,2i5,1p,2(a,e12.5),4x,a)') &
+                write (lpunit,'(a,2i6,1p,2(a,e12.5),4x,a)') &
                   'i,j=',i,j, &
                   '  orig :',field1(i,j), &
                   '  error:',field1(i,j)-field1(io,jo),what
@@ -616,7 +616,7 @@
               if (tmask(i,j).gt.0.0) then
               if     (nsym.eq.0) then  ! constant field
                 if (field1(i,j).ne.field1(1,1)) then
-                  write (lpunit,'(a,2i5,1p,2(a,e12.5),4x,a)') &
+                  write (lpunit,'(a,2i6,1p,2(a,e12.5),4x,a)') &
                     'i,j=',i,j, &
                     '  orig :',field1(i,j), &
                     '  error:',field1(i,j)-field1(1,1),what
@@ -624,7 +624,7 @@
                 endif
               elseif (nsym.eq.2) then  ! constant field in j direction
                 if (field1(i,j).ne.field1(i,1)) then
-                  write (lpunit,'(a,2i5,1p,2(a,e12.5),4x,a)') &
+                  write (lpunit,'(a,2i6,1p,2(a,e12.5),4x,a)') &
                     'i,j=',i,j, &
                     '  orig :',field1(i,j), &
                     '  error:',field1(i,j)-field1(i,1),what
@@ -633,7 +633,7 @@
               elseif (nsym.eq.1) then  ! p=p.transpose
                 if (tmask(i,j).gt.0.0 .and. &
                     field1(i,j).ne.field1(j,i)) then
-                  write (lpunit,'(a,2i5,1p,2(a,e12.5),4x,a)') &
+                  write (lpunit,'(a,2i6,1p,2(a,e12.5),4x,a)') &
                     'i,j=',i,j, &
                     '  orig :',field1(i,j), &
                     '  error:',field1(i,j)-field1(j,i),what
@@ -666,7 +666,7 @@
               if     (.not. &
                       (field(i,j).ge.-huge(fnan) .and. &
                        field(i,j).le. huge(fnan)      )) then
-                write (lpunit,'(a,a,2i5)') &
+                write (lpunit,'(a,a,2i6)') &
                   what,' (NaN): i,j=',i+i0,j+j0
                 lnan_anyfailed = .true.  !local fail
               endif
@@ -732,7 +732,7 @@
               io = mod(itdm-(i-1),itdm)+1
               if (tmask(i,j).gt.0.0 .and. &
                   field1(i,j).ne.-field1(io,jo)) then
-                write (lpunit,'(a,2i5,1p,2(a,e12.5),4x,a)') &
+                write (lpunit,'(a,2i6,1p,2(a,e12.5),4x,a)') &
                   'i,j=',i,j, &
                   '  orig :',field1(i,j), &
                   '  error:',field1(i,j)+field1(io,jo),what_u
@@ -745,7 +745,7 @@
               io = itdm-mod(i-1,itdm)
               if (vmask(i,j).gt.0.0 .and. &
                   field2(i,j).ne.-field2(io,jo)) then
-                write (lpunit,'(a,2i5,1p,2(a,e12.5),4x,a)') &
+                write (lpunit,'(a,2i6,1p,2(a,e12.5),4x,a)') &
                   'i,j=',i,j, &
                   '  orig :',field2(i,j), &
                   '  error:',field2(i,j)+field2(io,jo),what_v
@@ -757,14 +757,14 @@
             do i=1,itdm
               if     (nsym.eq.0) then  ! constant field
                 if (field1(i,j).ne.field1(1,1)) then
-                  write (lpunit,'(a,2i5,1p,2(a,e12.5),4x,a)') &
+                  write (lpunit,'(a,2i6,1p,2(a,e12.5),4x,a)') &
                     'i,j=',i,j, &
                     '  orig :',field1(i,j), &
                     '  error:',field1(i,j)-field1(1,1),what_u
                   fail=.true.
                 endif
                 if (field2(i,j).ne.field2(1,1)) then
-                  write (lpunit,'(a,2i5,1p,2(a,e12.5),4x,a)') &
+                  write (lpunit,'(a,2i6,1p,2(a,e12.5),4x,a)') &
                     'i,j=',i,j, &
                     '  orig :',field2(i,j), &
                     '  error:',field2(i,j)-field2(1,1),what_v
@@ -772,14 +772,14 @@
                 endif
               elseif (nsym.eq.2) then  ! constant field in j direction
                 if (field1(i,j).ne.field1(i,1)) then
-                  write (lpunit,'(a,2i5,1p,2(a,e12.5),4x,a)') &
+                  write (lpunit,'(a,2i6,1p,2(a,e12.5),4x,a)') &
                     'i,j=',i,j, &
                     '  orig :',field1(i,j), &
                     '  error:',field1(i,j)-field1(i,1),what_u
                   fail=.true.
                 endif
                 if (field2(i,j).ne.field2(i,1)) then
-                  write (lpunit,'(a,2i5,1p,2(a,e12.5),4x,a)') &
+                  write (lpunit,'(a,2i6,1p,2(a,e12.5),4x,a)') &
                     'i,j=',i,j, &
                     '  orig :',field2(i,j), &
                     '  error:',field2(i,j)-field2(i,1),what_v
@@ -788,7 +788,7 @@
               elseif (nsym.eq.1) then  ! u==v.transpose
                 if (tmask(i,j).gt.0.0 .and. &
                     field1(i,j).ne.field2(j,i)) then
-                  write (lpunit,'(a,2i5,1p,2(a,e12.5),4x,a)') &
+                  write (lpunit,'(a,2i6,1p,2(a,e12.5),4x,a)') &
                     'i,j=',i,j, &
                     '  uvel :',field1(i,j), &
                     '  error:',field1(i,j)-field2(j,i),what_u
@@ -846,7 +846,7 @@
             do i=1,itdm
               if (tmask(i,j).gt.0.0 .and. &
                   field1(i,j).ne.field2(i,j)) then
-                write (lpunit,'(a,2i5,1p,2(a,e12.5),4x,a)') &
+                write (lpunit,'(a,2i6,1p,2(a,e12.5),4x,a)') &
                   'i,j=',i,j, &
                   '  orig :',field1(i,j), &
                   '  error:',field1(i,j)-field2(i,j),what
@@ -902,7 +902,7 @@
               if     (.not. &
                       (field(i,j).ge.-huge(fnan) .and. &
                        field(i,j).le. huge(fnan)      )) then
-                write (lpunit,'(a,a,2i5)') &
+                write (lpunit,'(a,a,2i6)') &
                   what,' (NaN): i,j=',i+i0,j+j0
                 fail=.true.
               endif
@@ -933,13 +933,13 @@
             do i=1,itdm
               if (tmask(i,j).gt.0.0) then
                 if (field1(i,j).lt.0.0) then
-                  write (lpunit,'(a,2i5,1p,2(a,e12.5),4x,a)') &
+                  write (lpunit,'(a,2i6,1p,2(a,e12.5),4x,a)') &
                     'i,j=',i,j, &
                     '  orig :',field1(i,j), &
                     '  error:',field1(i,j),what
                   fail=.true.
                 elseif (field1(i,j).gt.field_max) then
-                  write (lpunit,'(a,2i5,1p,2(a,e12.5),4x,a)') &
+                  write (lpunit,'(a,2i6,1p,2(a,e12.5),4x,a)') &
                     'i,j=',i,j, &
                     '  orig :',field1(i,j), &
                     '  error:',field1(i,j)-field_max,what
@@ -948,7 +948,7 @@
                 elseif (.not. &
                         (field1(i,j).ge.-huge(fnan) .and. &
                          field1(i,j).le. huge(fnan)      )) then
-                  write (lpunit,'(a,2i5,1p,2(a,e12.5),4x,a)') &
+                  write (lpunit,'(a,2i6,1p,2(a,e12.5),4x,a)') &
                     'i,j=',i,j, &
                     '  orig :',field1(i,j), &
                     '  error:',field1(i,j),what
@@ -1015,7 +1015,7 @@
         if     (i0.lt.ittest .and. i0+ii.ge.ittest .and. &
                 j0.lt.jttest .and. j0+jj.ge.jttest      ) then
 !         ssh,montg,svref*pbavg (cm)
-          write (lp,"(i9,i5,i5,1x,a,a,3f15.8)") &
+          write (lp,"(i9,i6,i6,1x,a,a,3f15.8)") &
              nstep,itest+i0,jtest+j0,cinfo(1:6),':', &
              (100.0/g)*srfhgt(itest,jtest), &
              (100.0/g)*montg1(itest,jtest), &
@@ -1033,7 +1033,7 @@
               if     (.not. &
                       (srfhgt(i,j).ge.-huge(fnan) .and. &
                        srfhgt(i,j).le. huge(fnan)      )) then
-                write (lp,"(i9,i5,i5,1x,a,a,3f15.8)") &
+                write (lp,"(i9,i6,i6,1x,a,a,3f15.8)") &
                    nstep,i+i0,j+j0,cinfo(1:6),':   NaN'
               endif !hycom_isnaninf
             endif !ip
@@ -1061,8 +1061,8 @@
         endif
         if     (cinfo(1:6).eq.'momtum') then
           write(cformat,'(a,a)') &
-            '(i9,i5,i5,1x,a,a/', &
-            '(i9,5x,i5,1x,a,a,1p4e12.4))'
+            '(i9,i6,i6,1x,a,a/', &
+            '(i9,6x,i6,1x,a,a,1p4e12.4))'
           write (lp,cformat)  &
              nstep,itest+i0,jtest+j0,cinfo(1:6), &
              ':       surtx       surty      srfhgt      montg1', &
@@ -1074,12 +1074,12 @@
         endif  !'momtum'
         if     (ntracr.eq.0) then
           write(cformat,'(a,a)') &
-            '(i9,i5,i5,1x,a,a/', &
-            '(i9,5x,i5,1x,a,a,2f7.3,2f7.3,f8.4,f9.3,f10.3))'
+            '(i9,i6,i6,1x,a,a/', &
+            '(i9,6x,i6,1x,a,a,2f7.3,2f7.3,f8.4,f9.3,f10.3))'
         else
           write(cformat,'(a,i2,a,a,i2,a)') &
-            '(i9,i5,i5,1x,a,a,',ntracr,'a / ', &
-            '(i9,5x,i5,1x,a,a,2f7.3,2f7.3,f8.4,f9.3,f10.3,', &
+            '(i9,i6,i6,1x,a,a,',ntracr,'a / ', &
+            '(i9,6x,i6,1x,a,a,2f7.3,2f7.3,f8.4,f9.3,f10.3,', &
             ntracr,'f8.4))'
         endif
 !       write(lp,'(3a)') '"',trim(cformat),'"'
@@ -1184,8 +1184,8 @@
         endif
         if     (mxlmy) then
           write(cformat,'(a,a)') &
-            '(i9,i5,i5,1x,a,a/', &
-            '(i9,5x,i5,1x,a,a,g15.5,g15.5,f9.3,f9.2))'
+            '(i9,i6,i6,1x,a,a/', &
+            '(i9,6x,i6,1x,a,a,g15.5,g15.5,f9.3,f9.2))'
           write (lp,cformat)  &
              nstep,itest+i0,jtest+j0,cinfo(1:6), &
              ':             q2            q2l    thkns     dpth', &
@@ -1198,8 +1198,8 @@
         endif  !'mxlmy'
         if     (cinfo(1:6).eq.'mxkprf' .and. .not.mxlkrt) then
           write(cformat,'(a,a)') &
-            '(i9,i5,i5,1x,a,a/', &
-            '(i9,5x,i5,1x,a,a,f7.3,f8.2,f7.3,f8.2,f9.3,f9.2))'
+            '(i9,i6,i6,1x,a,a/', &
+            '(i9,6x,i6,1x,a,a,f7.3,f8.2,f7.3,f8.2,f9.3,f9.2))'
           write (lp,cformat)  &
              nstep,itest+i0,jtest+j0,cinfo(1:6), &
              ':   temp  t-diff   saln  s-diff    thkns     dpth', &
@@ -1220,11 +1220,11 @@
 !
 ! ---   printout min/max/iospycnal th3d
 !
- 104    format (i9,a3,1x,a,a)
- 105    format (i9,i3,1x,a,a,2i5,f9.5,f7.3,f9.5,2i5,i7)
+ 104    format (i9,a4,1x,a,a)
+ 105    format (i9,i4,1x,a,a,2i6,f9.5,f7.3,f9.5,2i6,i7)
         if     (mnproc.eq.1) then
         write(lp,104) &
-             nstep,'  k',cinfo(1:6), &
+             nstep,'   k',cinfo(1:6), &
              ': imin jmin  denamin deniso  denamax imax jmax mnproc'
         endif
         call xcsync(flush_lp)
@@ -1450,7 +1450,7 @@
 ! ---       check that tracer is non-negative.
 !
             do k=1,kk
-              write (txt1,'(a6,i3,i3)') 'tracer',ktr,k
+              write (txt1,'(a6,i2,i4)') 'tracer',ktr,k
               call pipe_compare_notneg(tracer(1-nbdy,1-nbdy,k,n,ktr), &
                                        ip,txt1,trcmax(ktr))
             enddo
@@ -1626,3 +1626,4 @@
 !> Feb. 2019 - replaced onetai by 1.0
 !> Sep. 2019 - added oneta0
 !> Dec. 2024 - added checks on tides
+!> Feb. 2025 - printout now ok for kdm<1000 and idm,jdm<100,000

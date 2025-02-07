@@ -438,7 +438,7 @@
                 saln(i,j,k1,n) = saln(i,j,k1,n) * max(epsil, dplay1) &
                                                 / max(epsil, dp(i,j,k1,n))
                 if     (.false. .and. i.eq.itest.and.j.eq.jtest) then
-                  write(lp,'(i9,i3,a,1p5g12.4)') &
+                  write(lp,'(i9,i4,a,1p5g12.4)') &
                     nstep,k1,' 1e,dp = ', &
                     onetanew,dpemnp*qonem,dpemnp1*qonem, &
                     dplay1*qonem,dp(i,j,k1,n)*qonem
@@ -492,7 +492,7 @@
       empcum=empcum+d2
 !
       if     (.false. .and. itest.gt.0 .and. jtest.gt.0) then
-        write(lp,'(i9,2i5,a/19x,4f10.4)') &
+        write(lp,'(i9,2i6,a/21x,4f10.4)') &
           nstep,i0+itest,j0+jtest, &
           '    sswflx    surflx    sstflx    wtrflx', &
           sswflx(itest,jtest), &
@@ -882,14 +882,14 @@
 !$OMP END PARALLEL DO
 !
       if     (.false. .and. itest.gt.0 .and. jtest.gt.0) then
-        write(lp,'(i9,2i5,a/19x,4f10.4)') &
+        write(lp,'(i9,2i6,a/21x,4f10.4)') &
           nstep,i0+itest,j0+jtest, &
           '    sstflx     ustar    hekman    surflx', &
           sstflx(itest,jtest), &
           ustar( itest,jtest), &
           hekman(itest,jtest), &
           surflx(itest,jtest)
-        write(lp,'(i9,2i5,a/19x,4f10.4)') &
+        write(lp,'(i9,2i6,a/21x,4f10.4)') &
           nstep,i0+itest,j0+jtest, &
           '    sswflx     wtrflx   rivflx    sssflx', &
           sswflx(itest,jtest), &
@@ -1329,7 +1329,7 @@
             swfl  =  swscl     *swfl
           endif
               if     (.false. .and. i.eq.itest.and.j.eq.jtest) then
-                write(lp,'(i9,a,2i5,2f8.5)') &
+                write(lp,'(i9,a,2i6,2f8.5)') &
                   nstep,', hr,lat =',ihr,ilat,xhr,xlat
                 write(lp,'(i9,a,5f8.5)') &
                   nstep,', swscl  =',swscl,diurnl(ihr,  ilat  ), &
@@ -1559,9 +1559,9 @@
         surflx(i,j) = radfl - snsibl - evap
 !
         if     (.false. .and. i.eq.itest.and.j.eq.jtest) then
-          write(lp,'(i9,2i5,a,4f8.5)') &
+          write(lp,'(i9,2i6,a,4f8.5)') &
           nstep,i0+i,j0+j,' cl0,cl,cs,cd    = ',cl0,clh,csh,cd0
-          write(lp,'(i9,2i5,a,2f8.2,f8.5)') &
+          write(lp,'(i9,2i6,a,2f8.2,f8.5)') &
           nstep,i0+i,j0+j,' wsph,tdif,ustar = ',wsph,tdif,ustar(i,j)
           call flush(lp)
         endif
@@ -1661,9 +1661,9 @@
         surflx(i,j) = radfl - snsibl - evap
 !
         if     (.false. .and. i.eq.itest.and.j.eq.jtest) then
-          write(lp,'(i9,2i5,a,3f8.5)') &
+          write(lp,'(i9,2i6,a,3f8.5)') &
           nstep,i0+i,j0+j,' cl,cs,cd    = ',clh,csh,cd0
-          write(lp,'(i9,2i5,a,2f8.2,f8.5)') &
+          write(lp,'(i9,2i6,a,2f8.2,f8.5)') &
           nstep,i0+i,j0+j,' va,tamst,ustar = ',va,tamts,ustar(i,j)
           call flush(lp)
         endif
@@ -1768,9 +1768,9 @@
         surflx(i,j) = radfl - snsibl - evap
 !
         if     (.false. .and. i.eq.itest.and.j.eq.jtest) then
-          write(lp,'(i9,2i5,a,3f8.5)') &
+          write(lp,'(i9,2i6,a,3f8.5)') &
           nstep,i0+i,j0+j,' cl,cs,cd    = ',clh,csh,cd0
-          write(lp,'(i9,2i5,a,2f8.2,f8.5)') &
+          write(lp,'(i9,2i6,a,2f8.2,f8.5)') &
           nstep,i0+i,j0+j,' va,tamst,ustar = ',va,tamts,ustar(i,j)
           call flush(lp)
         endif
@@ -2381,3 +2381,4 @@
 !> Jan. 2024 - evap with epmass==1 can extend below a thin enough layer 1
 !> Jan. 2024 - evap with epmass==1 may be clipped for small oneta
 !> May  2024 - added epmass=2 for river only mass exchange
+!> Feb. 2025 - printout now ok for kdm<1000 and idm,jdm<100,000

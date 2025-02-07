@@ -182,7 +182,7 @@
           if     (tidnud.eq.2) then
             q = pbavg(i,j,m)-hntide(i,j)
           endif !tidnud=2
-          write (lp,'(i9,2i5,3x,a,8g15.6)') &
+          write (lp,'(i9,2i6,3x,a,8g15.6)') &
             nstep,i+i0,j+j0, &
             'nudge,h,tide =', &
             q, &
@@ -422,7 +422,7 @@
 !
 !                 if (ldebug_barotp .and.
 !    &                i.eq.itest.and.j.eq.jtest) then
-!                   write (lp,'(i9,2i5,i3,3x,a,4g15.6)')
+!                   write (lp,'(i9,2i6,i4,3x,a,4g15.6)')
 !    &                nstep,i+i0,j+j0,lll,
 !    &                'ubp,new,vbp,new =',
 !    &              ubp,ubp+util5(i,j),
@@ -503,7 +503,7 @@
                             depths(i,j)*rhoref/dlt
 !
 !             if (ldebug_barotp .and. i.eq.itest.and.j.eq.jtest) then
-!               write (lp,'(i9,2i5,i3,3x,a,4g15.6)')
+!               write (lp,'(i9,2i6,i4,3x,a,4g15.6)')
 !    &            nstep,i+i0,j+j0,lll,
 !    &            'ubp,new,vbp,new =',
 !    &          ubp,ubp+util5(i,j),
@@ -551,7 +551,7 @@
             endif
 !
 !           if (ldebug_barotp .and. i.eq.itest.and.j.eq.jtest) then
-!             write (lp,'(i9,2i5,i3,3x,a,8g15.6)')
+!             write (lp,'(i9,2i6,i4,3x,a,8g15.6)')
 !    &          nstep,i+i0,j+j0,lll,
 !    &          'u_old,u_new,p_grad,t_g,m_g,corio,u_star,drag =',
 !    &          ubavg(i,j,ml),ubavg(i,j,nl),
@@ -602,7 +602,7 @@
             endif
 !
 !           if (ldebug_barotp .and. i.eq.itest.and.j.eq.jtest) then
-!             write (lp,'(i9,2i5,i3,3x,a,8g15.6)')
+!             write (lp,'(i9,2i6,i4,3x,a,8g15.6)')
 !    &          nstep,i+i0,j+j0,lll,
 !    &          'v_old,v_new,p_grad,t_g,m_g,corio,v_star,drag =',
 !    &          vbavg(i,j,ml),vbavg(i,j,nl),
@@ -734,7 +734,7 @@
 !
 !                 if (ldebug_barotp .and.
 !    &                i.eq.itest.and.j.eq.jtest) then
-!                   write (lp,'(i9,2i5,i3,3x,a,4g15.6)')
+!                   write (lp,'(i9,2i6,i4,3x,a,4g15.6)')
 !    &                nstep,i+i0,j+j0,lll,
 !    &                'ubp,new,vbp,new =',
 !    &              ubp,ubp+util5(i,j),
@@ -826,7 +826,7 @@
                             depths(i,j)*rhoref/dlt
 !
 !             if (ldebug_barotp .and. i.eq.itest.and.j.eq.jtest) then
-!               write (lp,'(i9,2i5,i3,3x,a,4g15.6)')
+!               write (lp,'(i9,2i6,i4,3x,a,4g15.6)')
 !    &            nstep,i+i0,j+j0,lll+1,
 !    &            'ubp,new,vbp,new =',
 !    &          ubp,ubp+util5(i,j),
@@ -874,7 +874,7 @@
             endif
 !
 !           if (ldebug_barotp .and. i.eq.itest.and.j.eq.jtest) then
-!             write (lp,'(i9,2i5,i3,3x,a,8g15.6)')
+!             write (lp,'(i9,2i6,i4,3x,a,8g15.6)')
 !    &          nstep,i+i0,j+j0,lll+1,
 !    &          'v_old,v_new,p_grad,t_g,m_g,corio,v_star,drag =',
 !    &          vbavg(i,j,ml),vbavg(i,j,nl),
@@ -926,7 +926,7 @@
             endif
 !
 !           if (ldebug_barotp .and. i.eq.itest.and.j.eq.jtest) then
-!             write (lp,'(i9,2i5,i3,3x,a,7g15.6)')
+!             write (lp,'(i9,2i6,i4,3x,a,7g15.6)')
 !    &          nstep,i+i0,j+j0,lll+1,
 !    &          'u_old,u_new,p_grad,t_g,m_g,corio,u_star,drag =',
 !    &          ubavg(i,j,ml),ubavg(i,j,nl),
@@ -1301,7 +1301,7 @@
                   if (oneta(i,j,mn).le.oneta0+epsil) then
                     oneclp(i,j) = oneclp(i,j) + 1
                     if     (oneclp(i,j).eq.1) then  !1st time clipped
-                      write (lp,'(i9,a,2i5,i3,a,f9.6)')  &
+                      write (lp,'(i9,a,2i6,i4,a,f9.6)')  &
                         nstep,' i,j,mn =',i+i0,j+j0,mn, &
                         ' clipped oneta after barotp call ', &
                         oneta(i,j,mn)
@@ -1415,3 +1415,4 @@
 !> Jan. 2025 - converted displd_mn to a surface tracer
 !> Jan. 2025 - added sshflg=3 for steric SSH and Montg. Potential
 !> Jan. 2025 - added the option to nudge towards the observed tides
+!> Feb. 2025 - printout now ok for kdm<1000 and idm,jdm<100,000

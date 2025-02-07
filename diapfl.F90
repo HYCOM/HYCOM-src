@@ -482,11 +482,11 @@
 !
       return
 !
- 101  format(25x,'   thick      viscty    t diff    s diff  ' &
-           /(i9,2i5,i3,2x,4f10.2))
+ 101  format(28x,'   thick      viscty    t diff    s diff  ' &
+           /(i9,2i6,i4,2x,4f10.2))
  102  format(25x, &
       ' diff t  t old   t new   t chng  diff s  s old   s new   s chng' &
-           /(i9,2i5,i3,1x,8f8.3))
+           /(i9,2i6,i4,1x,8f8.3))
       end
       subroutine diapf1uij(m,n, i,j)
       use mod_xc         ! HYCOM communication interface
@@ -570,7 +570,7 @@
 !diag  (nstep,i+i0,j+j0,k,hm(k),u1do(k),u1dn(k),k=1,nlayer)
 !
       return
- 106  format(23x,'   thick   u old   u new'/(i9,2i5,i3,1x,f10.3,2f8.3))
+ 106  format(26x,'   thick   u old   u new'/(i9,2i6,i4,1x,f10.3,2f8.3))
       end
       subroutine diapf1vij(m,n, i,j)
       use mod_xc         ! HYCOM communication interface
@@ -655,7 +655,7 @@
 !diag  (nstep,i+i0,j+j0,k,hm(k),v1do(k),v1dn(k),k=1,nlayer)
 !
       return
- 107  format(23x,'   thick   v old   v new'/(i9,2i5,i3,1x,f10.3,2f8.3))
+ 107  format(26x,'   thick   v old   v new'/(i9,2i6,i4,1x,f10.3,2f8.3))
       end
 !
       subroutine diapf2(m,n)
@@ -747,7 +747,7 @@
       enddo !ktr
 !
 !diag if (i.eq.itest.and.j.eq.jtest) &
-!diag   write (lp,'(i9,2i5,3x,a/(i36,4f10.3))') nstep,i+i0,j+j0, &
+!diag   write (lp,'(i9,2i6,3x,a/(i36,4f10.3))') nstep,i+i0,j+j0, &
 !diag   'before diapf2: thickness  salinity temperature density', &
 !diag   (k,dp(i,j,k,n)*qonem,saln(i,j,k,n), &
 !diag   temp(i,j,k,n),th3d(i,j,k,n)+thbase,k=1,kk)
@@ -768,7 +768,7 @@
       enddo !k
 !
 !diag if (j.eq.jtest.and.itest.ge.ifp(j,l).and.itest.le.ilp(j,l)) &
-!diag   write (lp,'(i9,2i5,a,2i5)') &
+!diag   write (lp,'(i9,2i6,a,2i4)') &
 !diag     nstep,itest+i0,j+j0,' kmin,kmax =',kmin(itest),kmax(itest)
 !
 ! --- find buoyancy frequency for each layer
@@ -852,7 +852,7 @@
         q=min(1.,.5*min(p(i,j,k)-p(i,j,k-1),p(i,j,k+2)-p(i,j,k+1))/ &
           max(flxu(i,k),flxl(i,k),epsil))
 !
-!diag   if (q.ne.1.) write (lp,'(i9,2i5,i3,a,1p,2e10.2,0p,2f7.2,f5.2)')  &
+!diag   if (q.ne.1.) write (lp,'(i9,2i6,i4,a,1p,2e10.2,0p,2f7.2,f5.2)')  &
 !diag     nstep,i+i0,j+j0,k,' flxu/l,dpu/l,q=',flxu(i,k),flxl(i,k), &
 !diag     (p(i,j,k)-p(i,j,k-1))*qonem,(p(i,j,k+2)-p(i,j,k+1))*qonem,q
 !
@@ -862,7 +862,7 @@
       endif				!  kmin < k < kmax
 !
 !diag if (i.eq.itest.and.j.eq.jtest.and.k.ge.kmin(i).and.k.le.kmax(i)) &
-!diag    write (lp,'(i9,2i5,i3,3x,a/22x,f9.3,2f7.3,1p,3e10.3)') &
+!diag    write (lp,'(i9,2i6,i4,3x,a/22x,f9.3,2f7.3,1p,3e10.3)') &
 !diag    nstep,i+i0,j+j0,k, &
 !diag    'thknss   temp   saln    flngth      flxu      flxl', &
 !diag    dp(i,j,k,n)*qonem,temp(i,j,k,n),saln(i,j,k,n),flngth(i,k), &
@@ -999,10 +999,10 @@
 !       if (abs(tndcys/tosal(i)).gt.1.e-11)
 !    .  write (lp,100)
 !    .  i+i0,j+i0,'  diapf2 saln.col.intgl.:',tosal(i),tndcys,clips(i)
-!100    format(2i5,a,1p,e16.8,2e13.5)
+!100    format(2i6,a,1p,e16.8,2e13.5)
 !
 !diag if (i.eq.itest.and.j.eq.jtest) &
-!diag   write (lp,'(i9,2i5,3x,a/(i36,0p,4f10.3))') &
+!diag   write (lp,'(i9,2i6,3x,a/(i36,0p,4f10.3))') &
 !diag   nstep,i+i0,j+j0, &
 !diag   'after  diapf2: thickness  salinity temperature density', &
 !diag   (k,dp(i,j,k,n)*qonem,saln(i,j,k,n), &
@@ -1090,7 +1090,7 @@
       flxl(i,1)=0.
 !
 !diag if (i.eq.itest .and. j.eq.jtest) &
-!diag   write (lp,'(i9,2i5,3x,a/(i36,0p,3f10.3,3p,f10.3))') &
+!diag   write (lp,'(i9,2i6,3x,a/(i36,0p,3f10.3,3p,f10.3))') &
 !diag   nstep,i+i0,j+j0, &
 !diag   'before diapfl: thickness  salinity temperature density', &
 !diag   1,dp(i,j,1,n)*qonem,saln(i,j,1,n),temp(i,j,1,n), &
@@ -1119,7 +1119,7 @@
       enddo !k
 !
 !diag if (j.eq.jtest.and.itest.ge.ifp(j,l).and.itest.le.ilp(j,l)) &
-!diag   write (lp,'(i9,2i5,a,2i5)') &
+!diag   write (lp,'(i9,2i6,a,2i4)') &
 !diag     nstep,itest+i0,j+j0,' kmin,kmax =',kmin(itest),kmax(itest)
 !
 ! --- temporarily swap layers  1  and  kmin-1
@@ -1229,7 +1229,7 @@
           max(flxu(i,k),flxl(i,k),epsil))
 !
 !diag   if (i.eq.itest .and. j.eq.jtest .and. q.ne.1.) &
-!diag     write (lp,'(i9,2i5,i3,a,1p,2e10.2,0p,2f7.2,f4.2)')  &
+!diag     write (lp,'(i9,2i6,i4,a,1p,2e10.2,0p,2f7.2,f4.2)')  &
 !diag     nstep,i+i0,j+j0,k,' flxu/l,dpu/l,q=',flxu(i,k),flxl(i,k), &
 !diag     (p(i,j,k)-p(i,j,k-1))*qonem,(p(i,j,k+2)-p(i,j,k+1))*qonem,q
 !
@@ -1239,7 +1239,7 @@
       end if				!  kmin < k < kmax
 !
 !diag if (i.eq.itest.and.j.eq.jtest.and.k.ge.kmin(i).and.k.le.kmax(i)) &
-!diag    write (lp,'(i9,2i5,i3,3x,a/22x,f9.3,2f7.3,1p,3e10.3)') &
+!diag    write (lp,'(i9,2i6,i4,3x,a/22x,f9.3,2f7.3,1p,3e10.3)') &
 !diag    nstep,i+i0,j+j0,k, &
 !diag    ' thknss   temp   saln   flngth      flxu      flxl', &
 !diag    dp(i,j,k,n)*qonem,temp(i,j,k,n),saln(i,j,k,n),flngth(i,k), &
@@ -1337,9 +1337,9 @@
       if (k.eq.kmin(i) .and. p(i,j,k).lt..1*onemm) then
 !
 !diag   if (i.eq.itest .and. j.eq.jtest) then
-!diag   write (lp,'(i9,2i5,3x,a,i3,a)') nstep,i,j,'diapfl -- layer',k, &
+!diag   write (lp,'(i9,2i6,a,i4,a)') nstep,i,j,'diapfl -- layer',k, &
 !diag   ' erodes mixed layer'
-!diag   write (lp,'(i9,2i5,i3,3x,a/22x,f9.3,2f7.3,1p,3e10.3)') &
+!diag   write (lp,'(i9,2i6,i4,3x,a/22x,f9.3,2f7.3,1p,3e10.3)') &
 !diag    nstep,i+i0,j+j0,k, &
 !diag    ' thknss   temp   saln   flngth      flxu      flxl', &
 !diag    (p(i,j,k+1)-p(i,j,k))*qonem,temp(i,j,k,n), &
@@ -1364,7 +1364,7 @@
 !
       dpmixl(i,j,n)=dp(i,j,1,n)
 !diag if (i.eq.itest.and.j.eq.jtest) &
-!diag   write (lp,'(i9,2i5,3x,a/(i36,0p,3f10.3,3p,f10.3))') &
+!diag   write (lp,'(i9,2i6,i4,a/(i36,0p,3f10.3,3p,f10.3))') &
 !diag   nstep,i+i0,j+j0, &
 !diag   'after  diapfl: thickness  salinity temperature density', &
 !diag   1,dp(i,j,1,n)*qonem,saln(i,j,1,n),temp(i,j,1,n), &
@@ -1403,3 +1403,4 @@
 !> May  2014 - use land/sea masks (e.g. ip) to skip land
 !> July 2017 - added needed halo updates (xctilr)
 !> Dec. 2018 - add /* USE_NUOPC_CESMBETA */ macro and riv_input for coupled simulation
+!> Feb. 2025 - printout now ok for kdm<1000 and idm,jdm<100,000

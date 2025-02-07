@@ -69,7 +69,7 @@
 !
       if     (itest.ne.itdm) then
         if (mnproc.eq.1) then
-        write(lp,'(/ a,i5 /)')  &
+        write(lp,'(/ a,i6 /)')  &
           'error - expected idm =',itdm
         call flush(lp)
         endif !1st tile
@@ -78,7 +78,7 @@
       endif !error
       if     (jtest.ne.jtdm) then
         if (mnproc.eq.1) then
-        write(lp,'(/ a,i5 /)')  &
+        write(lp,'(/ a,i6 /)')  &
           'error - expected jdm =',jtdm
         call flush(lp)
         endif !1st tile
@@ -96,7 +96,7 @@
 !
       if (ittest.gt.itdm) then
         if (mnproc.eq.1) then
-        write(lp,'(/ a,i5 /)')  &
+        write(lp,'(/ a,i6 /)')  &
           'error - maximum itest is',itdm
         call flush(lp)
         endif !1st tile
@@ -105,7 +105,7 @@
       endif !error
       if (jttest.gt.jtdm) then
         if (mnproc.eq.1) then
-        write(lp,'(/ a,i5 /)')  &
+        write(lp,'(/ a,i6 /)')  &
           'error - maximum jtest is',jtdm
         call flush(lp)
         endif !1st tile
@@ -129,7 +129,7 @@
 !     call xcsync(flush_lp)
 !     do k= 1,ijpr
 !       if     (mnproc.eq.k) then
-!         write(lp,'(a,3i5)') 'mnproc,[ij]test =',mnproc,itest,jtest
+!         write(lp,'(a,3i6)') 'mnproc,[ij]test =',mnproc,itest,jtest
 !       endif
 !       call xcsync(flush_lp)
 !     enddo !k
@@ -3087,3 +3087,4 @@
 !> Jan. 2025 - added tidnud to nudge towards the observed tides
 !> Feb. 2025 - Added cbtidc for adding tidal velocities to bottom speed
 !> Feb. 2025 - Negative cbar to input tidal amplitude flow speed
+!> Feb. 2025 - printout now ok for kdm<1000 and idm,jdm<100,000

@@ -172,7 +172,7 @@
               sigmlj = max(sigmlj,tmljmp*0.03)  !cold-water fix
 !
               if (ldebug_dpmixl .and. i.eq.itest.and.j.eq.jtest) then
-                write (lp,'(i9,2i5,i3,a,2f7.4)') &
+                write (lp,'(i9,2i6,i4,a,2f7.4)') &
                   nstep,i+i0,j+j0,k, &
                   '   sigmlj =', &
                   -tmljmp*dsigdt(temp(i,j,1,n),saln(i,j,1,n)), &
@@ -208,7 +208,7 @@
                                thjmp(k-1)) !stable profile simplifies the code
 !
                 if (ldebug_dpmixl .and. i.eq.itest.and.j.eq.jtest) then
-                  write (lp,'(i9,2i5,i3,a,2f7.3,f7.4,f9.2)') &
+                  write (lp,'(i9,2i6,i4,a,2f7.3,f7.4,f9.2)') &
                     nstep,i+i0,j+j0,k, &
                     '   th,thsur,jmp,zc =', &
                     thloc(k),thsur,thjmp(k),-zgrid(i,j,k)
@@ -270,7 +270,7 @@
 !
                     if (ldebug_dpmixl .and. &
                         i.eq.itest.and.j.eq.jtest) then
-                      write (lp,'(i9,2i5,i3,a,2f7.3,f7.4,f9.2)') &
+                      write (lp,'(i9,2i6,i4,a,2f7.3,f7.4,f9.2)') &
                         nstep,i+i0,j+j0,k, &
                         '  thi,thsur,jmp,zi =', &
                         thtop,thsur,thjmp(k),-zintf
@@ -299,7 +299,7 @@
 !
                   if (ldebug_dpmixl .and. &
                       i.eq.itest.and.j.eq.jtest) then
-                    write (lp,'(i9,2i5,i3,a,f7.3,f7.4,f9.2)') &
+                    write (lp,'(i9,2i6,i4,a,f7.3,f7.4,f9.2)') &
                       nstep,i+i0,j+j0,k, &
                       '   thsur,top,dpmixl =', &
                       thsur,thtop,dpmixl(i,j,n)*qonem
@@ -349,7 +349,7 @@
 !
               if (ldebug_dpmixl .and. &
                   i.eq.itest.and.j.eq.jtest) then
-                write (lp,'(i9,2i5,i3,a,f9.2)') &
+                write (lp,'(i9,2i6,i4,a,f9.2)') &
                   nstep,i+i0,j+j0,k, &
                   '   dpmixl =', &
                   dpmixl(i,j,n)*qonem
@@ -839,7 +839,7 @@
 !    &          '      u   uref      v   vref',
 !    &          '      b   bref    ritop   dvsq'
 !           endif
-!           write(lp,'(i2,f9.2,f6.2,4f7.3,2f7.3,f9.4,f7.4)')
+!           write(lp,'(i3,f9.2,f6.2,4f7.3,2f7.3,f9.4,f7.4)')
 !    &         k,zgrid(i,j,k),zref,
 !    &         uold(k),uref,vold(k),vref,
 !    &         -g*svref*(thold(k)+thbase),bref,
@@ -847,7 +847,7 @@
 !           call flush(lp)
 !         endif
 !diag     if (i.eq.itest.and.j.eq.jtest) then
-!diag       write (lp,'(i9,2i5,i3,a,f8.2,f8.3)') &
+!diag       write (lp,'(i9,2i6,i4,a,f8.2,f8.3)') &
 !diag           nstep,i+i0,j+j0,k, &
 !diag           '  z,swfrac =',zgrid(i,j,k),swfrac(k)
 !diag       call flush(lp)
@@ -1104,7 +1104,7 @@
         call swfrml_ij(chl,hbl*onem,pij(kdm+1),qonem*oneta(i,j,n), &
                        jerlov(i,j),swfrml)
 !diag   if (i.eq.itest.and.j.eq.jtest) then
-!diag     write (lp,'(i9,2i5,i3,a,f8.2,f6.3)') &
+!diag     write (lp,'(i9,2i6,i4,a,f8.2,f6.3)') &
 !diag         nstep,i+i0,j+j0,nbl, &
 !diag         '  hbl,swfrml =',hbl,swfrml
 !diag     call flush(lp)
@@ -1134,7 +1134,7 @@
         call swfrml_ij(chl,hbl*onem,pij(kdm+1),qonem*oneta(i,j,n), &
                        jerlov(i,j),swfrml)
 !diag   if (i.eq.itest.and.j.eq.jtest) then
-!diag     write (lp,'(i9,2i5,i3,a,f8.2,f6.3)') &
+!diag     write (lp,'(i9,2i6,i4,a,f8.2,f6.3)') &
 !diag         nstep,i+i0,j+j0,nbl, &
 !diag         '  hbl,swfrml =',hbl,swfrml
 !diag     call flush(lp)
@@ -1778,19 +1778,19 @@
 !
       enddo                           ! iteration loop
 !
- 101  format(i9,2i5,i3,'swfrac,dn,dtemp,dsaln ',2f8.3,2f12.6)
- 102  format(25x,'   thick      viscty    t diff    s diff  ' &
-           /(i9,i2,2i5,i3,2x,4f10.2))
- 103  format(25x,'   thick      viscty    t diff    s diff   nonlocal' &
-           /(i9,i2,2i5,i3,2x,4f10.2,f11.6))
- 104  format(25x, &
+ 101  format(i9,2i6,i4,'swfrac,dn,dtemp,dsaln ',2f8.3,2f12.6)
+ 102  format(28x,'   thick      viscty    t diff    s diff  ' &
+           /(i9,i2,2i6,i4,2x,4f10.2))
+ 103  format(28x,'   thick      viscty    t diff    s diff   nonlocal' &
+           /(i9,i2,2i6,i4,2x,4f10.2,f11.6))
+ 104  format(28x, &
            '  thick   t old   t new   s old   s new trc old trc new' &
-           /(i9,i2,2i5,i3,1x,f9.2,4f8.3,2f7.4))
- 114  format(25x, &
+           /(i9,i2,2i6,i4,1x,f9.2,4f8.3,2f7.4))
+ 114  format(28x, &
            '  thick   t old   t new   s old   S-new trc old trc new' &
-           /(i9,i2,2i5,i3,1x,f9.2,4f8.3,2f7.4))
- 105  format(25x,'   thick   u old   u new   v old   v new' &
-           /(i9,i2,2i5,i3,1x,f10.2,4f8.3))
+           /(i9,i2,2i6,i4,1x,f9.2,4f8.3,2f7.4))
+ 105  format(28x,'   thick   u old   u new   v old   v new' &
+           /(i9,i2,2i6,i4,1x,f10.2,4f8.3))
 !
       return
       end
@@ -2264,9 +2264,9 @@
       mixflx(i,j)=surflx(i,j)-swfrml*sswflx(i,j) !mixed layer heat flux
       bhtflx(i,j)=buoflx(i,j)-buoyfs             !buoyancy from heat flux
 !
- 101  format(25x,'   thick      viscty    t diff    s diff    q diff  ' &
-           /(i9,2i5,i3,2x,5f10.2))
- 102  format(i9,2i5,i3,'absorbup,dn,dtemp,dsaln ',2f6.3,2f10.6)
+ 101  format(28x,'   thick      viscty    t diff    s diff    q diff  ' &
+           /(i9,2i6,i4,2x,5f10.2))
+ 102  format(i9,2i6,i4,'absorbup,dn,dtemp,dsaln ',2f6.3,2f10.6)
 !
       return   
       end
@@ -2595,7 +2595,7 @@
 !
 !diag if (i.eq.itest .and. j.eq.jtest) then
 !diag   do k=1,klist(i,j)
-!diag   write(6,'(a,i9,i3,2f10.3,f9.1,f8.5,2f8.2)') 'giss1din1', &
+!diag   write(6,'(a,i9,i4,2f10.3,f9.1,f8.5,2f8.2)') 'giss1din1', &
 !diag         nstep,k,zgrid(i,j,k),hwide(k),z1d(k), &
 !diag         th1d(k),u1d(k),v1d(k)
 !diag   enddo
@@ -2603,7 +2603,7 @@
 !diag     'giss1din2','    nstep','  k', &
 !diag     '           s2','          ria','          rid'
 !diag   do k=1,klist(i,j)
-!diag   write(6,'(a,i9,i3,1p,3e13.5)') 'giss1din2', &
+!diag   write(6,'(a,i9,i4,1p,3e13.5)') 'giss1din2', &
 !diag         nstep,k,s2(k),ria(k),rid(k)
 !diag   enddo
 !diag endif
@@ -2979,7 +2979,7 @@
            v_back=2.0e-1
            t_back=5.0e-2
            s_back=5.0e-2
-!          write(lp,'(i9,a,2i5,i3,a)')
+!          write(lp,'(i9,a,2i6,i4,a)')
 !    &       nstep,' i,j,k=',i+i0,j+j0,k,' GISS neg. sX_back'
 !
 ! --- Skip background lengthscale calculation when using K_X/(epsilon/N^2) .
@@ -3208,7 +3208,7 @@
 !diag     '          tmp','       aldeep', &
 !diag     '          akm','          akh','          aks'
 !diag   do k=1,klist(i,j)
-!diag     write(6,'(a,i9,i3,1p,6e13.5)') 'giss1dout', &
+!diag     write(6,'(a,i9,i4,1p,6e13.5)') 'giss1dout', &
 !diag           nstep,k,tmpk(k),aldeep(k),akm(k),akh(k),aks(k)
 !diag   enddo
 !diag endif
@@ -3294,9 +3294,9 @@
 !diag       hm(k),t1do(k),temp(i,j,k,n),s1do(k),saln(i,j,k,n), &
 !diag       k=1,nlayer)
 !diag     call flush(lp)
- 102    format(25x, &
+ 102    format(28x, &
            '  thick   t old   t ijo   s old   s ijo' &
-           /(i9,2i5,i3,2x,f9.2,4f8.3))
+           /(i9,2i6,i4,2x,f9.2,4f8.3))
 !diag endif !test
 !
 ! --- do rivers here because difs is also used for tracers.
@@ -3394,15 +3394,15 @@
 !diag     write (lp,124) nstep,i+i0,j+j0, &
 !diag       sumh,sumo,sumn,sumn-sumo
 !diag     call flush(lp)
- 103    format(25x,'    thick     t diff     s diff   nonlocal' &
-           /(i9,2i5,i3,1x,3f11.4,f11.4))
- 104    format(25x, &
+ 103    format(28x,'    thick     t diff     s diff   nonlocal' &
+           /(i9,2i6,i4,1x,3f11.4,f11.4))
+ 104    format(28x, &
            '      thick    t old    t new    s old    s new' &
-           /(i9,2i5,i3,2x,f11.4,4f9.4))
- 114    format(25x, &
+           /(i9,2i6,i4,2x,f11.4,4f9.4))
+ 114    format(28x, &
            '      thick    t old    t new    s old    S new' &
-           /(i9,2i5,i3,2x,f11.4,4f9.4))
- 124    format(i9,2i5,' MN',2x,f11.4,18x,2f9.4,f16.10)
+           /(i9,2i6,i4,2x,f11.4,4f9.4))
+ 124    format(i9,2i6,' MN',2x,f11.4,18x,2f9.4,f16.10)
 !diag endif !test
 !
 ! --- standard tracer solution
@@ -3560,12 +3560,12 @@
 !diag   call flush(lp)
 !diag endif !test
       return
- 206  format( 'cijup',23x, &
-              '  m-visc  0-visc  u-diff (nlayer =',3i3,')' / &
-             ('cijup',i9,2i5,i3,1x,3f8.2))
- 106  format( 'ciju ',23x, &
-              '   thick   u old   u new  u-diff (nlayer =',i3,')' / &
-             ('ciju ',i9,2i5,i3,1x,f10.3,2f8.3,f8.2))
+ 206  format( 'cijup',24x, &
+              '  m-visc  0-visc  u-diff (nlayer =',3i4,')' / &
+             ('cijup',i9,2i6,i4,1x,3f8.2))
+ 106  format( 'ciju ',24x, &
+              '   thick   u old   u new  u-diff (nlayer =',i4,')' / &
+             ('ciju ',i9,2i6,i4,1x,f10.3,2f8.3,f8.2))
       end
 !
       subroutine mxkprfcijv(m,n, i,j)
@@ -3682,12 +3682,12 @@
 !diag   call flush(lp)
 !diag endif !test
       return
- 207  format( 'cijvp',23x, &
-              '  m-visc  0-visc  v-diff (nlayer =',3i3,')' / &
-             ('cijvp',i9,2i5,i3,1x,3f8.2))
- 107  format( 'cijv ',23x, &
-              '   thick   v old   v new  v-diff (nlayer =',i3,')' / &
-             ('cijv ',i9,2i5,i3,1x,f10.3,2f8.3,f8.2))
+ 207  format( 'cijvp',24x, &
+              '  m-visc  0-visc  v-diff (nlayer =',3i4,')' / &
+             ('cijvp',i9,2i6,i4,1x,3f8.2))
+ 107  format( 'cijv ',24x, &
+              '   thick   v old   v new  v-diff (nlayer =',i4,')' / &
+             ('cijv ',i9,2i6,i4,1x,f10.3,2f8.3,f8.2))
       return
       end
 !
@@ -3809,14 +3809,14 @@
         wm=wm*flang
 !
               if (ldebug_wscale .and. i.eq.itest.and.j.eq.jtest) then
-                write (lp,'(i9,2i5,a,1p3e12.3)') &
+                write (lp,'(i9,2i6,a,1p3e12.3)') &
                   nstep,i+i0,j+j0, &
                   '   ustk2  =',ustk2,usds(i,j),vsds(i,j)
-                write (lp,'(i9,2i5,a,3f12.8)') &
+                write (lp,'(i9,2i6,a,3f12.8)') &
                   nstep,i+i0,j+j0, &
                   '    La    =',sqrt(sqrt((ust*ust)/(ustk2 + epsil))), &
                                 ust,sqrt(ustk2)
-                write (lp,'(i9,2i5,a,f12.5,1p2e12.4,f12.5)') &
+                write (lp,'(i9,2i6,a,f12.5,1p2e12.4,f12.5)') &
                   nstep,i+i0,j+j0, &
                   '   flang  =',flang,ucube,wcube,cw
               endif !ldebug_wscale
@@ -3867,3 +3867,4 @@
 !> Mar  2023 - added /* MASSLESS_1MM */ macro
 !> July 2023 - detrain negative near-surface salinitites
 !> May  2024 - added epmass=2 for river only mass exchange
+!> Feb. 2025 - printout now ok for kdm<1000 and idm,jdm<100,000

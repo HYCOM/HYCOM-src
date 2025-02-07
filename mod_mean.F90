@@ -438,13 +438,13 @@
       call flush(nop)
       endif !1st tile
  116  format (a80/a80/a80/a80/ &
-       i5,4x,'''iversn'' = hycom version number x10'/ &
-       i5,4x,'''iexpt '' = experiment number x10'/ &
-       i5,4x,'''yrflag'' = days in year flag'/ &
-       i5,4x,'''idm   '' = longitudinal array size'/ &
-       i5,4x,'''jdm   '' = latitudinal  array size'/ &
+       i6,3x,'''iversn'' = hycom version number x10'/ &
+       i6,3x,'''iexpt '' = experiment number x10'/ &
+       i6,3x,'''yrflag'' = days in year flag'/ &
+       i6,3x,'''idm   '' = longitudinal array size'/ &
+       i6,3x,'''jdm   '' = latitudinal  array size'/ &
        'field       time step   mean day', &
-       '  k  dens        min              max')
+       '   k  dens        min              max')
 !
 ! --- surface fields
 !
@@ -666,7 +666,7 @@
 #endif
  75   continue
 !
- 117  format (a8,' =',i11,f11.3,i3,f7.3,1p2e16.7)
+ 117  format (a8,' =',i11,f11.3,i4,f7.3,1p2e16.7)
 !
       close (unit=nop)
       call zaiocl(nopa)
@@ -864,3 +864,4 @@
 !> July 2023 - added a number 01-99 to tracer output
 !> July 2023 - added mtracr for diagnostic tracers
 !> Jan. 2025 - Added sshflg=3 for steric SSH and Montg. Potential
+!> Feb. 2025 - printout now ok for kdm<1000 and idm,jdm<100,000

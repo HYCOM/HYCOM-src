@@ -293,8 +293,8 @@
            prij(k+1)=prij(k)+dp(itest,jtest,k,1)
          enddo !k
          write(cformat,'(a,i2,a,i2,a)') &
-           '(i9,2i5,a,',ntracr, &
-           'a / (23x,i3,2f8.2,', ntracr,'f8.4))'
+           '(i9,2i6,a,',ntracr, &
+           'a / (25x,i4,2f8.2,', ntracr,'f8.4))'
           write (lp,cformat) &
            nstep,i0+itest,j0+jtest, &
            '  istate:  thkns    dpth', &
@@ -304,7 +304,7 @@
             (prij(k+1)+prij(k))*0.5*qonem, &
             (tracer(itest,jtest,k,1,ktr),ktr=1,ntracr), &
             k=1,kk)
-         write(lp,'(23x,a,8x,f8.2)') 'bot',depths(itest,jtest)
+         write(lp,'(25x,a,8x,f8.2)') 'bot',depths(itest,jtest)
       endif !test tile
       call xcsync(flush_lp)
 !
@@ -1156,3 +1156,4 @@
 !> Oct. 2013 - added jerlv0=-1 and calls to swfrac_ij
 !> May  2014 - use land/sea masks (e.g. ip) to skip land
 !> Nov. 2018 - allow for oneta in swfrac except in initrc
+!> Feb. 2025 - printout now ok for kdm<1000 and idm,jdm<100,000

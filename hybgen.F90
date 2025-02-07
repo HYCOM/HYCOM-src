@@ -32,7 +32,7 @@
       real      q
       character text*12
 !
- 103  format (i9,2i5,a/(33x,i3,2f8.3,f8.3,f9.3,f9.2))
+ 103  format (i9,2i6,a/(33x,i3,2f8.3,f8.3,f9.3,f9.2))
 !diag if (itest.gt.0 .and. jtest.gt.0) then
 !diag   write (lp,103) nstep,itest+i0,jtest+j0, &
 !diag   '  entering hybgen:  temp    saln    dens     thkns     dpth', &
@@ -526,7 +526,7 @@
 !
 !diag      if (i.eq.itest .and. j.eq.jtest) then
 !diag        write(lp,'(a,i3)') &
-!diag              'hybgen, deepest inflated layer:',kp
+!diag              'hybgen, deepest inflated layer: ',kp
 !diag        call flush(lp)
 !diag      endif !debug
 !
@@ -570,7 +570,7 @@
           if (ndebug_tracer.gt.0 .and. ndebug_tracer.le.ntracr .and. &
               i.eq.itest .and. j.eq.jtest) then
             ktr = ndebug_tracer
-            write(lp,'(a,i3,f6.3,f9.4)') &
+            write(lp,'(a,i4,f6.3,f9.4)') &
               'hybgen, 11(+):', &
               k-1,0.0,tracer(i,j,k-1,n,ktr)
             call flush(lp)
@@ -583,13 +583,13 @@
           if (ndebug_tracer.gt.0 .and. ndebug_tracer.le.ntracr .and. &
               i.eq.itest .and. j.eq.jtest) then
             ktr = ndebug_tracer
-            write(lp,'(a,i3,f6.3,f9.4)') &
+            write(lp,'(a,i4,f6.3,f9.4)') &
               'hybgen, 11(+):', &
               k-1,q,tracer(i,j,k-1,n,ktr)
-            write(lp,'(a,i3,f6.3,f9.4)') &
+            write(lp,'(a,i4,f6.3,f9.4)') &
               'hybgen, 11(+):', &
               k,q,tracer(i,j,k,n,ktr)
-            write(lp,'(a,i3)') &
+            write(lp,'(a,i4)') &
                   'hybgen, deepest inflated layer:',kp
             call flush(lp)
           endif !debug_tracer
@@ -603,11 +603,11 @@
         p(i,j,k) = p(i,j,k+1)
         kp = k-1
 !diag        if (i.eq.itest .and. j.eq.jtest) then
-!diag          write(lp,'(a,i3,f6.3,5f8.3)') &
+!diag          write(lp,'(a,i4,f6.3,5f8.3)') &
 !diag            'hybgen, 11(+):', &
 !diag            k-1,q,temp(i,j,k-1,n),saln(i,j,k-1,n), &
 !diag                th3d(i,j,k-1,n)+thbase,theta(i,j,k-1)+thbase
-!diag          write(lp,'(a,i3)') &
+!diag          write(lp,'(a,i4)') &
 !diag                'hybgen, deepest inflated layer:',kp
 !diag          call flush(lp)
 !diag        endif !debug
@@ -621,11 +621,11 @@
 ! ---
 ! ---   swap the entire layer with the one above.
 !diag        if (i.eq.itest .and. j.eq.jtest) then
-!diag          write(lp,'(a,i3,f8.5,5f10.5)') &
+!diag          write(lp,'(a,i4,f8.5,5f10.5)') &
 !diag            'hybgen, original:', &
 !diag            k-1,0.0,temp(i,j,k-1,n),saln(i,j,k-1,n), &
 !diag                th3d(i,j,k-1,n)+thbase,theta(i,j,k-1)+thbase
-!diag          write(lp,'(a,i3,f8.5,5f10.5)') &
+!diag          write(lp,'(a,i4,f8.5,5f10.5)') &
 !diag            'hybgen, original:', &
 !diag            k,0.0,temp(i,j,k,  n),saln(i,j,k,  n), &
 !diag                th3d(i,j,k,  n)+thbase,theta(i,j,k  )+thbase
@@ -725,11 +725,11 @@
           endif
         endif !bottom too light
 !diag        if (i.eq.itest .and. j.eq.jtest) then
-!diag          write(lp,'(a,i3,f8.5,5f10.5)') &
+!diag          write(lp,'(a,i4,f8.5,5f10.5)') &
 !diag            'hybgen, overturn:', &
 !diag            k-1,q,temp(i,j,k-1,n),saln(i,j,k-1,n), &
 !diag                th3d(i,j,k-1,n)+thbase,theta(i,j,k-1)+thbase
-!diag          write(lp,'(a,i3,f8.5,5f10.5)') &
+!diag          write(lp,'(a,i4,f8.5,5f10.5)') &
 !diag            'hybgen, overturn:', &
 !diag            k,  q,temp(i,j,k,  n),saln(i,j,k,  n), &
 !diag                th3d(i,j,k,  n)+thbase,theta(i,j,k  )+thbase
@@ -761,7 +761,7 @@
 ! ---   It is also limited to a 50% change in layer thickness.
 !
 !diag        if (i.eq.itest .and. j.eq.jtest) then
-!diag          write(lp,'(a,i3)') &
+!diag          write(lp,'(a,i4)') &
 !diag            'hybgen, deepest inflated layer too light   (stable):',k
 !diag          call flush(lp)
 !diag        endif !debug
@@ -824,7 +824,7 @@
             if (ndebug_tracer.gt.0 .and. ndebug_tracer.le.ntracr .and. &
                 i.eq.itest .and. j.eq.jtest) then
               ktr = ndebug_tracer
-              write(lp,'(a,i3,f6.3,f9.4)') &
+              write(lp,'(a,i4,f6.3,f9.4)') &
                 'hybgen, 10(+):', &
                 k-1,0.0,tracer(i,j,k-1,n,ktr)
               call flush(lp)
@@ -852,13 +852,13 @@
             if (ndebug_tracer.gt.0 .and. ndebug_tracer.le.ntracr .and. &
                 i.eq.itest .and. j.eq.jtest) then
               ktr = ndebug_tracer
-              write(lp,'(a,i3,f6.3,f9.4)') &
+              write(lp,'(a,i4,f6.3,f9.4)') &
                 'hybgen, 10(+):', &
                 k-1,qtr,tracer(i,j,k-1,n,ktr)
-              write(lp,'(a,i3,f6.3,f9.4)') &
+              write(lp,'(a,i4,f6.3,f9.4)') &
                 'hybgen, 10(+):', &
                 k,qtr,tracer(i,j,k,n,ktr)
-              write(lp,'(a,i3)') &
+              write(lp,'(a,i4)') &
                     'hybgen, deepest inflated layer:',kp
               call flush(lp)
             endif !debug_tracer
@@ -871,7 +871,7 @@
           q2l(i,j,k-1,n)=q2l(i,j,k-1,n)+ &
                            qtr*(q2l(i,j,k,n)-q2l(i,j,k-1,n))
 !diag              if (i.eq.itest .and. j.eq.jtest) then
-!diag               write(lp,'(a,i4,i3,6e12.3)') &
+!diag               write(lp,'(a,i4,i4,6e12.3)') &
 !diag                  'hybgen, 10(+):', &
 !diag                  k,0,p_hat,p(i,j,k)-p(i,j,k-1),p(i,j,k+1)-p(i,j,k), &
 !diag                  qtr,q2(i,j,k-1,n),q2l(i,j,k-1,n)
@@ -879,14 +879,14 @@
 !diag              endif !debug
         endif
 !diag        if (i.eq.itest .and. j.eq.jtest) then
-!diag          write(lp,'(a,i3,f6.3,5f8.3)') &
+!diag          write(lp,'(a,i4,f6.3,5f8.3)') &
 !diag            'hybgen, 10(+):', &
 !diag            k,q,temp(i,j,k,n),saln(i,j,k,n), &
 !diag                th3d(i,j,k,n)+thbase,theta(i,j,k)+thbase
 !diag          call flush(lp)
 !diag        endif !debug
 !diag        if (i.eq.itest .and. j.eq.jtest) then
-!diag          write(lp,'(a,i3,f6.3,5f8.3)') &
+!diag          write(lp,'(a,i4,f6.3,5f8.3)') &
 !diag            'hybgen, 10(-):', &
 !diag            k,0.0,temp(i,j,k,n),saln(i,j,k,n), &
 !diag                th3d(i,j,k,n)+thbase,theta(i,j,k)+thbase
@@ -922,7 +922,7 @@
             if (ndebug_tracer.gt.0 .and. ndebug_tracer.le.ntracr .and. &
                 i.eq.itest .and. j.eq.jtest) then
               ktr = ndebug_tracer
-              write(lp,'(a,i3,f9.4)') &
+              write(lp,'(a,i4,f9.4)') &
                 'hybgen, massless:', &
                 k,tracer(i,j,k,n,ktr)
               call flush(lp)
@@ -991,18 +991,18 @@
 !
 !diag   if (i.eq.itest .and. j.eq.jtest) then
 !diag     write(cinfo,'(a9,i2.2,1x)') '  do 88 k=',k
-!diag     write(lp,'(i9,2i5,a,a)') nstep,itest+i0,jtest+j0, &
+!diag     write(lp,'(i9,2i6,a,a)') nstep,itest+i0,jtest+j0, &
 !diag       cinfo,':     othkns    odpth    nthkns    ndpth'
 !diag     do ka=1,kk
 !diag       if     (pres(ka+1).eq.p(itest,jtest,ka+1) .and. &
 !diag               pres(ka  ).eq.p(itest,jtest,ka  )      ) then
-!diag         write(lp,'(i9,8x,a,a,i3,f10.3,f9.3)') &
+!diag         write(lp,'(i9,8x,a,a,i4,f10.3,f9.3)') &
 !diag          nstep,cinfo,':',ka, &
 !diag         (pres(ka+1)- &
 !diag          pres(ka)   )*qonem, &
 !diag          pres(ka+1)  *qonem
 !diag       else
-!diag         write(lp,'(i9,8x,a,a,i3,f10.3,f9.3,f10.3,f9.3)') &
+!diag         write(lp,'(i9,8x,a,a,i4,f10.3,f9.3,f10.3,f9.3)') &
 !diag          nstep,cinfo,':',ka, &
 !diag         (pres(ka+1)- &
 !diag          pres(ka)   )*qonem, &
@@ -1033,7 +1033,7 @@
           endif !k.lt.kk
 !
 !diag     if (i.eq.itest .and. j.eq.jtest) then
-!diag       write(lp,'(a,i3.2,f8.2)') 'hybgen, fixlay :', &
+!diag       write(lp,'(a,i4.2,f8.2)') 'hybgen, fixlay :', &
 !diag                                 k+1,p(i,j,k+1)*qonem
 !diag       call flush(lp)
 !diag     endif !debug
@@ -1236,7 +1236,7 @@
                                   qhrlx(k-1) *max(p_hat2, &
                                           2.0*p(i,j,k-1)-p_hat)
 !diag             if (i.eq.itest .and. j.eq.jtest) then
-!diag               write(lp,'(a,i3.2,f8.2)') 'hybgen,  1blocking :', &
+!diag               write(lp,'(a,i4.2,f8.2)') 'hybgen,  1blocking :', &
 !diag                     k-1,p(i,j,k-1)*qonem
 !diag               call flush(lp)
 !diag             endif !debug
@@ -1262,7 +1262,7 @@
                                     qhrlx(k-2)*max(p_hat3, &
                                             2.0*p(i,j,k-2)-p(i,j,k-1))
 !diag               if (i.eq.itest .and. j.eq.jtest) then
-!diag                 write(lp,'(a,i3.2,f8.2)') 'hybgen,  2blocking :', &
+!diag                 write(lp,'(a,i4.2,f8.2)') 'hybgen,  2blocking :', &
 !diag                       k-2,p(i,j,k-2)*qonem
 !diag                 call flush(lp)
 !diag               endif !debug
@@ -1274,7 +1274,7 @@
                                       qhrlx(k-1) *max(p_hat2, &
                                               2.0*p(i,j,k-1)-p_hat)
 !diag                 if (i.eq.itest .and. j.eq.jtest) then
-!diag                   write(lp,'(a,i3.2,f8.2)') 'hybgen,  3blocking :', &
+!diag                   write(lp,'(a,i4.2,f8.2)') 'hybgen,  3blocking :', &
 !diag                              k-1,p(i,j,k-1)*qonem
 !diag                   call flush(lp)
 !diag                 endif !debug
@@ -1292,7 +1292,7 @@
               endif !entrain
 !
 !diag         if (i.eq.itest .and. j.eq.jtest) then
-!diag           write(lp,'(a,i3.2,f8.2)') 'hybgen, entrain(k) :', &
+!diag           write(lp,'(a,i4.2,f8.2)') 'hybgen, entrain(k) :', &
 !diag                                     k,p(i,j,k)*qonem
 !diag           call flush(lp)
 !diag         endif !debug
@@ -1379,7 +1379,7 @@
                 endif !entrain
 !
 !diag           if (i.eq.itest .and. j.eq.jtest) then
-!diag             write(lp,'(a,i3.2,f8.2)') &
+!diag             write(lp,'(a,i4.2,f8.2)') &
 !diag                  'hybgen, entrain(k+):',k,p(i,j,k+1)*qonem
 !diag             call flush(lp)
 !diag           endif !debug
@@ -1408,7 +1408,7 @@
             p(i,j,k)=min(p_hat,p(i,j,k+1))
 !
 !diag       if (i.eq.itest .and. j.eq.jtest) then
-!diag         write(lp,'(a,i3.2,f8.2)') &
+!diag         write(lp,'(a,i4.2,f8.2)') &
 !diag              'hybgen, min. thknss (k+):',k-1,p(i,j,k)*qonem
 !diag         call flush(lp)
 !diag       endif !debug
@@ -1426,7 +1426,7 @@
           lcm(k-1) = .false.
 !
 !diag     if (i.eq.itest .and. j.eq.jtest) then
-!diag       write(lp,'(a,i3.2,f8.2)') &
+!diag       write(lp,'(a,i4.2,f8.2)') &
 !diag            'hybgen, max. thknss (k+):',k,p(i,j,k+1)*qonem
 !diag       call flush(lp)
 !diag     endif !debug
@@ -1495,7 +1495,7 @@
             if (ndebug_tracer.gt.0 .and. ndebug_tracer.le.ntracr .and. &
                 i.eq.itest .and. j.eq.jtest) then
               ktr = ndebug_tracer
-              write(lp,'(a,i3,2f9.4)') &
+              write(lp,'(a,i4,2f9.4)') &
                 'hybgen,  old2new:', &
                 k,s1d(k,2+ktr),tracer(i,j,k,n,ktr)
               call flush(lp)
@@ -1641,7 +1641,7 @@
 !diag   call flush(lp)
 !diag endif
 !
-!diag 103  format (i9,2i5,a/(33x,i3,2f8.3,f8.3,f9.3,f9.2))
+!diag 103  format (i9,2i6,a/(33x,i4,2f8.3,f8.3,f9.3,f9.2))
 !diag      if (i.eq.itest .and. j.eq.jtest) then
 !diag       if     (hybflg.eq.0) then  !T&S
 !diag        write (lp,103) nstep,itest+i0,jtest+j0, &
@@ -1757,7 +1757,7 @@
             endif
           enddo !k
 !
- 104  format (i9,2i5,a/(33x,i3,f8.3,f9.3,f9.2))
+ 104  format (i9,2i6,a/(33x,i4,f8.3,f9.3,f9.2))
 !diag if (i.eq.itest .and. j.eq.jtest) then
 !diag   write (lp,104) nstep,itest+i0,jtest+j0, &
 !diag   '   hybgen, do 412:  u       thkns     dpth', &
@@ -2159,7 +2159,7 @@
 !diag   call flush(lp)
 !diag endif
 !
-!diag 103  format (i9,2i5,a/(33x,i3,2f8.3,f8.3,f9.3,f9.2))
+!diag 103  format (i9,2i6,a/(33x,i4,2f8.3,f8.3,f9.3,f9.2))
 !diag      if (i.eq.itest .and. j.eq.jtest) then
 !diag       if     (hybflg.eq.0) then  !T&S
 !diag        write (lp,103) nstep,itest+i0,jtest+j0, &
@@ -3093,3 +3093,4 @@
 !> July 2023 - added trcflg=803: change in layer salinity    due to hybgen
 !> Sep. 2024 - dx0k-ed layers are never remapped with PCM
 !> Sep. 2024 - added hybthk
+!> Feb. 2025 - printout now ok for kdm<1000 and idm,jdm<100,000

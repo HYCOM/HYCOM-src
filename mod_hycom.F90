@@ -877,13 +877,13 @@
       call flush(nop)
       endif !1st tile
  116  format (a80/a80/a80/a80/ &
-       i5,4x,'''iversn'' = hycom version number x10'/ &
-       i5,4x,'''iexpt '' = experiment number x10'/ &
-       i5,4x,'''yrflag'' = days in year flag'/ &
-       i5,4x,'''idm   '' = longitudinal array size'/ &
-       i5,4x,'''jdm   '' = latitudinal  array size'/ &
+       i6,3x,'''iversn'' = hycom version number x10'/ &
+       i6,3x,'''iexpt '' = experiment number x10'/ &
+       i6,3x,'''yrflag'' = days in year flag'/ &
+       i6,3x,'''idm   '' = longitudinal array size'/ &
+       i6,3x,'''jdm   '' = latitudinal  array size'/ &
        'field       time step  model day', &
-       '  k  dens        min              max')
+       '   k  dens        min              max')
 !
 ! --- surface fields
 !
@@ -1027,7 +1027,7 @@
       write (nop,117) cname,nstep,time,0,coord,xmin,xmax
       call flush(nop)
       endif !1st tile
- 117  format (a8,' =',i11,f11.3,i3,f7.3,1p2e16.7)
+ 117  format (a8,' =',i11,f11.3,i4,f7.3,1p2e16.7)
 !
       close (unit=nop)
       call zaiocl(nopa)
@@ -1397,6 +1397,15 @@
 #endif
 
 !
+#if defined(STOKES)
+!
+! --- set up fields for Stokes Drift Velocities
+!       (set to zero if stdflg==0)
+! --- note that stokes_set calls stokes_forfun if necessary
+!
+      call stokes_set(dtime0)
+#endif
+!
 ! --- set up forcing functions
 !
       if (yrflag.lt.2) then
@@ -1652,7 +1661,7 @@
         if (.false. .and. itest.gt.0 .and. jtest.gt.0) then
           i = itest
           j = jtest
-          write (lp,'(2i5,3x,a,g15.6)') &
+          write (lp,'(2i6,3x,a,g15.6)') &
             i+i0,j+j0, &
             'nudge =', &
             hnudge(i,j)
@@ -1874,15 +1883,6 @@
           call forfunhz
         endif
       endif
-!
-#if defined(STOKES)
-!
-! --- set up fields for Stokes Drift Velocities
-!       (set to zero if stdflg==0)
-! --- note that stokes_set calls stokes_forfun if necessary
-!
-      call stokes_set(dtime0)
-#endif
 !
       if (jerlv0.le.0) then
 ! ---   read in kpar or chk field for 4 consecutive months
@@ -3381,14 +3381,14 @@
           endif
           if (mnproc.eq.1) then
           write (lp,'(i9,a, &
-                     &'' mean L '',i2,'' thk. (m):'',f8.2, &
+                     &'' mean L '',i3,'' thk. (m):'',f8.2, &
                                         &''  temp:'',f7.3, &
                                          &'' saln:'',f7.3)') &
               nstep,c_ydh, &
               k,sum,smt,sms
           call flush(lp)
           write(nod,'(i9,a, &
-                     &'' mean L '',i2,'' thk. (m):'',f8.2, &
+                     &'' mean L '',i3,'' thk. (m):'',f8.2, &
                                         &''  temp:'',f7.3, &
                                          &'' saln:'',f7.3)') &
               nstep,c_ydh, &
@@ -4141,3 +4141,4 @@
 !> Jan. 2025 - added the option to nudge towards the observed tides
 !> Jan. 2025 - call overtn only at the end of one month or shorter runs
 !> Feb. 2025 - tidflg==-1 adds tidal velocities to bottom speed
+!> Feb. 2025 - printout now ok for kdm<1000 and idm,jdm<100,000
