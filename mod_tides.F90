@@ -126,7 +126,7 @@
 !           expand tidcon
             tidcon1 = tidcon
             do i =1,ncon
-              tidv_on(i) = 0
+              tidv_on(i) = .false.
               tide_on(i) = mod(tidcon1,10) .eq. 1
               tidcon1    =     tidcon1/10  ! shift by one decimal digit
             enddo
@@ -134,7 +134,7 @@
 !           expand cbtidc
             tidcon1 = cbtidc
             do i =1,ncon
-              tide_on(i) = 0
+              tide_on(i) = .false.
               tidv_on(i) = mod(tidcon1,10) .eq. 1
               tidcon1    =     tidcon1/10  ! shift by one decimal digit
             enddo
