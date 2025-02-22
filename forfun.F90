@@ -1891,7 +1891,7 @@
         do j= 1,jj
           do i= 1,ii
             if     (ip(i,j).eq.1) then
-              montg_c(i,j) = (util1(i,j)-util2(i,j))*g  !mean montg-ssh in m * g
+              montg_c(i,j) = (util2(i,j)-util1(i,j))*g  !mean ssh-montg in m * g
             else
               montg_c(i,j) = 0.0
             endif
@@ -5048,3 +5048,4 @@
 !> Jan. 2025 - salfac and hnudge in mod_tides
 !> Feb. 2025 - cbarmin (forfundf) ensures that BBL speed is not zero
 !> Feb. 2025 - printout now ok for kdm<1000 and idm,jdm<100,000
+!> Feb. 2025 - Fixed sshflg=3 bug
