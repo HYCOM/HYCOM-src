@@ -124,7 +124,8 @@
       endif
       ldot = min(ldot,len(flnmarcvs)-11)  !need 11 characters for archive date
 !
-      if     (dsurfq.ge.1.0/24.0) then
+      if     ((kkout.eq.0 .and. dsurfq.ge.1.0/24.0) .or. &
+              (kkout.ne.0 .and. diagfq.ge.1.0/24.0)     ) then
 ! ---   indicate the archive date
         write(flnmarcvs(ldot+1:ldot+11),'(i4.4,a1,i3.3,a1,i2.2)')  &
          iyear,'_',iday,'_',ihour
@@ -1931,3 +1932,4 @@
 !> Jan. 2025 - tidnud adds extra surface fields to archiv_prof_out
 !> Feb. 2025 - Added efold_cb,spdbot,spdtid: strflg=721,722,723
 !> Feb. 2025 - printout now ok for kdm<1000 and idm,jdm<100,000
+!> Mar. 2025 - update archv filename logic
