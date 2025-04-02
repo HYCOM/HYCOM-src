@@ -3979,7 +3979,6 @@
       character flnm*22, cline*80, cvarin*6, cfield*8
       integer   i,idmtst,ios,j,jdmtst,k,layer
       integer   iyear,iday,ihour
-      logical   nodens
       real      hqpbot
 !
       call forday(dtime, yrflag, iyear,iday,ihour)
@@ -4058,82 +4057,17 @@
 !
       call zagetc(cline,ios, uoff+921)
 !
-! --- skip some surface fields.
+! --- read four fields.
 !
-      call rd_archive(util1, cfield,layer, 921)  ! montg1
-      if     (cfield.ne.'montg1  ') then
-        if     (mnproc.eq.1) then
-        write(lp,'(/ a / a,a /)') cfield, &
-               'error in rdbaro_in - expected ','montg1  '
-        endif !1st tile
-        call xcstop('(rdbaro_in)')
-               stop '(rdbaro_in)'
-      endif
-      nodens = layer.ne.0  !new or original archive type
-!
-      call rd_archive(util2, cfield,layer, 921)  ! srfhgt=montg1+svref*pbnest
-      if     (cfield.ne.'srfhgt  ') then
-        if     (mnproc.eq.1) then
-        write(lp,'(/ a / a,a /)') cfield, &
-               'error in rdbaro_in - expected ','srfhgt  '
-        endif !1st tile
-        call xcstop('(rdbaro_in)')
-               stop '(rdbaro_in)'
-      endif
-      do !skip to salflx
-        call zagetc(cline,ios, uoff+921) !steric/oneta/surflx/wtrflx/salflx
-        call zaiosk(921)
-        if     (cline(1:8).eq.'salflx  ') then  !salflx
-          exit
-        endif
-      enddo !skip
-      if     (nodens) then
-        do i= 1,2 !dpbl,dpmixl
-          if     (mnproc.eq.1) then  ! .b file from 1st tile only
-            read (uoff+921,*)
-          endif
-          call zaiosk(921)
-        enddo
-      else
-        do i= 1,7 !dpbl,dpmixl,tmix,smix,thmix,umix,vmix
-          if     (mnproc.eq.1) then  ! .b file from 1st tile only
-            read (uoff+921,*)
-          endif
-          call zaiosk(921)
-        enddo
-      endif !nodens:else
+      cfield = 'montg1  '
+      call rd_archive(util1, cfield,layer, 921)
+      cfield = 'srfhgt  '
+      call rd_archive(util2, cfield,layer, 921)
+      cfield = 'u_btrop '
       call rd_archive(ubnest(1-nbdy,1-nbdy,lslot), cfield,layer, 921)
-      if     (cfield.eq.'kemix   ') then
-        call rd_archive(ubnest(1-nbdy,1-nbdy,lslot), cfield,layer, 921)
-      endif
-      if     (cfield.eq.'covice  ') then
-        if     (mnproc.eq.1) then  ! .b file from 1st tile only
-          read (uoff+921,*)
-        endif
-        call zaiosk(921)
-        if     (mnproc.eq.1) then  ! .b file from 1st tile only
-          read (uoff+921,*)
-        endif
-        call zaiosk(921)
-        call rd_archive(ubnest(1-nbdy,1-nbdy,lslot), cfield,layer, 921)
-      endif
-      if     (cfield.ne.'u_btrop ') then
-        if     (mnproc.eq.1) then
-        write(lp,'(/ a / a,a /)') cfield, &
-               'error in rdbaro_in - expected ','u_btrop '
-        endif !1st tile
-        call xcstop('(rdbaro_in)')
-               stop '(rdbaro_in)'
-      endif
+      cfield = 'v_btrop '
       call rd_archive(vbnest(1-nbdy,1-nbdy,lslot), cfield,layer, 921)
-      if     (cfield.ne.'v_btrop ') then
-        if     (mnproc.eq.1) then
-        write(lp,'(/ a / a,a /)') cfield, &
-               'error in rdbaro_in - expected ','v_btrop '
-        endif !1st tile
-        call xcstop('(rdbaro_in)')
-               stop '(rdbaro_in)'
-      endif
+!
       if     (mnproc.eq.1) then  ! .b file from 1st tile only
       close( unit=uoff+921)
       endif
@@ -4430,7 +4364,7 @@
       character flnm*22, cline*80, cvarin*6, cfield*8
       integer   i,idmtst,ios,j,jdmtst,k,layer
       integer   iyear,iday,ihour,nucnt,nvcnt
-      logical   meanar,nodens
+      logical   meanar
       real      sumn(2)
 !
       call forday(dtime, yrflag, iyear,iday,ihour)
@@ -4507,182 +4441,56 @@
                stop '(rdnest_in)'
       endif
 !
-      if     (mnproc.eq.1) then  ! .b file from 1st tile only
-        read (uoff+920,*)
-      endif
+      call zagetc(cline,ios, uoff+920)
+      i = index(cline,'mean')
+      meanar = i .gt. 0
+!     if     (mnproc.eq.1) then
+!     write(lp,'(3a)') "header  "," --- ",cline
+!     write(lp,'(3a)') "meanar = ",meanar
+!     endif !1st tile
 !
-! --- skip surface fields.
+! --- skip most surface fields.
 !
-      call rd_archive(util1, cfield,layer, 920)  ! montg1 (discarded)
-      if     (cfield.ne.'montg1  ') then
-        if     (mnproc.eq.1) then
-        write(lp,'(/ a / a,a /)') cfield, &
-               'error in rdnest_in - expected ','montg1  '
-        endif !1st tile
-        call xcstop('(rdbaro_in)')
-               stop '(rdbaro_in)'
-      endif
-      nodens = layer.ne.0  !new or original archive type
-      if     (mnproc.eq.1) then  ! .b file from 1st tile only
-        read (uoff+920,*)
-      endif
-      call zaiosk(920)                  !srfhgt
-      do !skip to salflx
-        call zagetc(cline,ios, uoff+920) !steric/oneta/surflx/wtrflx/salflx
-        call zaiosk(920)
-        if     (cline(1:8).eq.'salflx  ') then  !salflx
-          exit
-        endif
-      enddo !skip
-      if     (nodens) then
-        do i= 1,2 !dpbl,dpmixl
-          if     (mnproc.eq.1) then  ! .b file from 1st tile only
-            read (uoff+920,*)
-          endif
-          call zaiosk(920)
-        enddo
-      else
-        do i= 1,7 !dpbl,dpmixl,tmix,smix,thmix,umix,vmix
-          if     (mnproc.eq.1) then  ! .b file from 1st tile only
-            read (uoff+920,*)
-          endif
-          call zaiosk(920)
-        enddo
-      endif !nodens:else
-      call zagetc(cline,ios, uoff+920)  !kemix or covice or u_btrop
-      meanar = cline(1:8).eq.'kemix   '
       if     (meanar) then
-        call zaiosk(920)  !skip kemix
-        call rd_archive(util1, cfield,layer, 920) !covice or u_btrop
-        if     (cfield.eq.'covice  ') then
-          if     (mnproc.eq.1) then  ! .b file from 1st tile only
-            read (uoff+920,*)
-          endif
-          call zaiosk(920) !skip thkice
-          if     (mnproc.eq.1) then  ! .b file from 1st tile only
-            read (uoff+920,*)
-          endif
-          call zaiosk(920) !skip temice
-          call rd_archive(util1, cfield,layer, 920) !u_btrop
-        endif
-        call rd_archive(util2, cfield,layer, 920) !v_btrop
-        if     (mnproc.eq.1) then  ! .b file from 1st tile only
-          read (uoff+920,*)
-        endif
-        call zaiosk(920)  !skip kebtrop
-      else !standard archive file
-        if     (cline(1:8).eq.'covice  ') then
-          call zaiosk(920) !skip covice
-          if     (mnproc.eq.1) then  ! .b file from 1st tile only
-            read (uoff+920,*)
-          endif
-          call zaiosk(920) !skip thkice
-          if     (mnproc.eq.1) then  ! .b file from 1st tile only
-            read (uoff+920,*)
-          endif
-          call zaiosk(920) !skip temice
-          if     (mnproc.eq.1) then  ! .b file from 1st tile only
-            read (uoff+920,*)
-          endif
-        endif
-        call zaiosk(920)  !skip u_btrop
-        if     (mnproc.eq.1) then  ! .b file from 1st tile only
-          read (uoff+920,*)
-        endif
-        call zaiosk(920)  !skip v_btrop
-      endif !meanar:else
+        cfield = 'u_btrop '
+        call rd_archive(util1, cfield,layer, 920)
+        cfield = 'v_btrop '
+        call rd_archive(util2, cfield,layer, 920)
+      endif !meanar
 !
 ! --- 3-d fields.
 !
       do k=1,kk
         if     (k.eq.1) then
+          cfield = 'u-vel.  '
           call rd_archive_rng(unest(1-nbdy,1-nbdy,k,lslot), &
                               un1min(lslot),un1max(lslot), &
                               cfield,layer, 920)
           un1min(lslot) = un1min(lslot) - 0.1
           un1max(lslot) = un1max(lslot) + 0.1
-        else
-          do !skip tracers
-            call rd_archive(unest(1-nbdy,1-nbdy,k,lslot), &
-                            cfield,layer, 920)
-            if     (cfield.eq.'u-vel.  ') then
-              exit
-            endif
-          enddo !skip
-        endif !k==1:else
-        if     (cfield.ne.'u-vel.  ') then
-          if     (mnproc.eq.1) then
-          write(lp,'(/ a / a,a /)') cfield, &
-                 'error in rdnest_in - expected ','u-vel.  '
-          endif !1st tile
-          call xcstop('(rdnest_in)')
-                 stop '(rdnest_in)'
-        endif
-        if     (k.eq.1) then
+          cfield = 'v-vel.  '
           call rd_archive_rng(vnest(1-nbdy,1-nbdy,k,lslot), &
                               vn1min(lslot),vn1max(lslot), &
                               cfield,layer, 920)
           vn1min(lslot) = vn1min(lslot) - 0.1
           vn1max(lslot) = vn1max(lslot) + 0.1
         else
-          call rd_archive(    vnest(1-nbdy,1-nbdy,k,lslot), &
-                                           cfield,layer, 920)
-        endif
-        if     (cfield.ne.'v-vel.  ') then
-          if     (mnproc.eq.1) then
-          write(lp,'(/ a / a,a /)') cfield, &
-                 'error in rdnest_in - expected ','v-vel.  '
-          endif !1st tile
-          call xcstop('(rdnest_in)')
-                 stop '(rdnest_in)'
-        endif
-        if     (meanar) then
-          if     (mnproc.eq.1) then  ! .b file from 1st tile only
-            read (uoff+920,*)
-          endif
-          call zaiosk(920)  !skip k.e.
-        endif
+          cfield = 'u-vel.  '
+          call rd_archive(unest(1-nbdy,1-nbdy,k,lslot), &
+                          cfield,layer, 920)
+          cfield = 'v-vel.  '
+          call rd_archive(vnest(1-nbdy,1-nbdy,k,lslot), &
+                          cfield,layer, 920)
+        endif !k==1:else
         if     (k.ne.kk) then
+          cfield = 'thknss  '
           call rd_archive(pnest(1-nbdy,1-nbdy,k+1,lslot), &
                           cfield,layer, 920)
-          if     (cfield.ne.'thknss  ') then
-            if     (mnproc.eq.1) then
-            write(lp,'(/ a / a,a /)') cfield, &
-                   'error in rdnest_in - expected ','thknss  '
-            endif !1st tile
-            call xcstop('(rdnest_in)')
-                   stop '(rdnest_in)'
-          endif
-        else
-          if     (mnproc.eq.1) then  ! .b file from 1st tile only
-            read (uoff+920,*)
-          endif
-          call zaiosk(920)
         endif
+        cfield = 'temp    '
         call rd_archive(tnest(1-nbdy,1-nbdy,k,lslot), cfield,layer, 920)
-        if     (cfield.ne.'temp    ') then
-          if     (mnproc.eq.1) then
-          write(lp,'(/ a / a,a /)') cfield, &
-                 'error in rdnest_in - expected ','temp    '
-          endif !1st tile
-          call xcstop('(rdnest_in)')
-                 stop '(rdnest_in)'
-        endif
+        cfield = 'salin   '
         call rd_archive(snest(1-nbdy,1-nbdy,k,lslot), cfield,layer, 920)
-        if     (cfield.ne.'salin   ') then
-          if     (mnproc.eq.1) then
-          write(lp,'(/ a / a,a /)') cfield, &
-                 'error in rdnest_in - expected ','salin   '
-          endif !1st tile
-          call xcstop('(rdnest_in)')
-                 stop '(rdnest_in)'
-        endif
-        if     (.not. nodens) then
-          if     (mnproc.eq.1) then  ! .b file from 1st tile only
-            read (uoff+920,*)
-          endif
-          call zaiosk(920)  !skip density
-        endif !.not.nodens
       enddo
 !
       if     (mnproc.eq.1) then  ! .b file from 1st tile only
@@ -4826,51 +4634,54 @@
       real, dimension (1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy) :: &
                 field
 !
-! --- read a single archive array field from unit iunit.
+! --- read the archive array field named cfield from unit iunit.
 !
-      integer   i,ios,nnstep
+      integer   irec,i,ios,nnstep
       real      hmina,hminb,hmaxa,hmaxb,timein,thet
       character cline*80
 !
-      call zagetc(cline,ios, uoff+iunit)
-      if     (ios.ne.0) then
-        if     (mnproc.eq.1) then
-          write(lp,*)
-          write(lp,*) 'error in rd_archive - hit end of input'
-          write(lp,*) 'iunit,ios = ',iunit,ios
-          write(lp,*)
-        endif !1st tile
-        call xcstop('(rd_archive)')
-               stop '(rd_archive)'
-      endif
-!     if     (mnproc.eq.1) then
-!     write(lp,'(a)') cline
-!     endif !1st tile
-!
-      cfield = cline(1:8)
-!
-      i = index(cline,'=')
-      read(cline(i+1:),*) nnstep,timein,layer,thet,hminb,hmaxb
-!
-      if     (hminb.eq.hmaxb) then  !constant field
-        field(:,:) = hminb
-        call zaiosk(iunit)
-      else
-        call zaiord(field,ip,.false., hmina,hmaxa, &
-                    iunit)
-!
-        if     (abs(hmina-hminb).gt.abs(hminb)*1.e-4 .or. &
-                abs(hmaxa-hmaxb).gt.abs(hmaxb)*1.e-4     ) then
+      do irec= 1,9999
+        call zagetc(cline,ios, uoff+iunit)
+        if     (ios.ne.0) then
           if     (mnproc.eq.1) then
-          write(lp,'(/ a / a,1p3e14.6 / a,1p3e14.6 /)') &
-            'error - .a and .b files not consistent:', &
-            '.a,.b min = ',hmina,hminb,hmina-hminb, &
-            '.a,.b max = ',hmaxa,hmaxb,hmaxa-hmaxb
+            write(lp,*)
+            write(lp,*) 'error in rd_archive - hit end of input'
+            write(lp,*) 'iunit,ios = ',iunit,ios
+            write(lp,*)
           endif !1st tile
-!nostop   call xcstop('(rd_archive)')
-!nostop          stop '(rd_archive)'
+          call xcstop('(rd_archive)')
+                 stop '(rd_archive)'
         endif
-      endif
+!       if     (mnproc.eq.1) then
+!       write(lp,'(3a)') cfield," --- ",cline
+!       endif !1st tile
+!
+        if     (cline(1:8).ne.cfield) then
+          call zaiosk(iunit)
+        else
+          i = index(cline,'=')
+          read(cline(i+1:),*) nnstep,timein,layer,thet,hminb,hmaxb
+          if     (hminb.eq.hmaxb) then  !constant field
+            field(:,:) = hminb
+            call zaiosk(iunit)
+          else
+            call zaiord(field,ip,.false., hmina,hmaxa, &
+                        iunit)
+            if     (abs(hmina-hminb).gt.abs(hminb)*1.e-4 .or. &
+                    abs(hmaxa-hmaxb).gt.abs(hmaxb)*1.e-4     ) then
+              if     (mnproc.eq.1) then
+              write(lp,'(/ a / a,1p3e14.6 / a,1p3e14.6 /)') &
+                'error - .a and .b files not consistent:', &
+                '.a,.b min = ',hmina,hminb,hmina-hminb, &
+                '.a,.b max = ',hmaxa,hmaxb,hmaxa-hmaxb
+              endif !1st tile
+!nostop       call xcstop('(rd_archive)')
+!nostop              stop '(rd_archive)'
+            endif !abs
+          endif !constant field:else
+          exit
+        endif !skip:exit
+      enddo !irec
       return
       end
 !
@@ -4887,52 +4698,55 @@
       real, dimension (1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy) :: &
                 field
 !
-! --- read a single archive array field from unit iunit.
+! --- read the archive array field named cfield from unit iunit.
 ! --- return its range in fmin,fmax
 !
-      integer   i,ios,nnstep
+      integer   irec,i,ios,nnstep
       real      hmina,hminb,hmaxa,hmaxb,timein,thet
       character cline*80
 !
-      call zagetc(cline,ios, uoff+iunit)
-      if     (ios.ne.0) then
-        if     (mnproc.eq.1) then
-          write(lp,*)
-          write(lp,*) 'error in rd_archive - hit end of input'
-          write(lp,*) 'iunit,ios = ',iunit,ios
-          write(lp,*)
-        endif !1st tile
-        call xcstop('(rd_archive)')
-               stop '(rd_archive)'
-      endif
-!     if     (mnproc.eq.1) then
-!     write(lp,'(a)') cline
-!     endif !1st tile
-!
-      cfield = cline(1:8)
-!
-      i = index(cline,'=')
-      read(cline(i+1:),*) nnstep,timein,layer,thet,hminb,hmaxb
-!
-      if     (hminb.eq.hmaxb) then  !constant field
-        field(:,:) = hminb
-        call zaiosk(iunit)
-      else
-        call zaiord(field,ip,.false., hmina,hmaxa, &
-                    iunit)
-!
-        if     (abs(hmina-hminb).gt.abs(hminb)*1.e-4 .or. &
-                abs(hmaxa-hmaxb).gt.abs(hmaxb)*1.e-4     ) then
+      do irec= 1,9999
+        call zagetc(cline,ios, uoff+iunit)
+        if     (ios.ne.0) then
           if     (mnproc.eq.1) then
-          write(lp,'(/ a / a,1p3e14.6 / a,1p3e14.6 /)') &
-            'error - .a and .b files not consistent:', &
-            '.a,.b min = ',hmina,hminb,hmina-hminb, &
-            '.a,.b max = ',hmaxa,hmaxb,hmaxa-hmaxb
+            write(lp,*)
+            write(lp,*) 'error in rd_archive - hit end of input'
+            write(lp,*) 'iunit,ios = ',iunit,ios
+            write(lp,*)
           endif !1st tile
-!nostop   call xcstop('(rd_archive)')
-!nostop          stop '(rd_archive)'
+          call xcstop('(rd_archive)')
+                 stop '(rd_archive)'
         endif
-      endif
+!       if     (mnproc.eq.1) then
+!       write(lp,'(3a)') cfield," --- ",cline
+!       endif !1st tile
+!
+        if     (cline(1:8).ne.cfield) then
+          call zaiosk(iunit)
+        else
+          i = index(cline,'=')
+          read(cline(i+1:),*) nnstep,timein,layer,thet,hminb,hmaxb
+          if     (hminb.eq.hmaxb) then  !constant field
+            field(:,:) = hminb
+            call zaiosk(iunit)
+          else
+            call zaiord(field,ip,.false., hmina,hmaxa, &
+                        iunit)
+            if     (abs(hmina-hminb).gt.abs(hminb)*1.e-4 .or. &
+                    abs(hmaxa-hmaxb).gt.abs(hmaxb)*1.e-4     ) then
+              if     (mnproc.eq.1) then
+              write(lp,'(/ a / a,1p3e14.6 / a,1p3e14.6 /)') &
+                'error - .a and .b files not consistent:', &
+                '.a,.b min = ',hmina,hminb,hmina-hminb, &
+                '.a,.b max = ',hmaxa,hmaxb,hmaxa-hmaxb
+              endif !1st tile
+!nostop       call xcstop('(rd_archive)')
+!nostop              stop '(rd_archive)'
+            endif !abs
+          endif !constant field:else
+          exit
+        endif !skip:exit
+      enddo !irec
       fmin = hminb
       fmax = hmaxb
       return
