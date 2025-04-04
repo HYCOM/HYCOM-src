@@ -292,22 +292,12 @@
       call blkinr(isotop,'isotop','(a6," =",f10.4," m")')
 !
 ! --- isopycnal (MICOM-like) iff nhybrd is 0
-      isopyc = nhybrd .eq. 0
-      hybrid = .not. isopyc
+      hybrid = nhybrd .gt. 0
       if (hybrid .and. nsigma.le.1) then
         nsigma=1
         if     (dp00.lt.0.0) then
           ds0k(1) = dp0k(1)
         endif
-      endif
-      if (isopyc .and. sigver.gt.2) then
-        if (mnproc.eq.1) then
-        write(lp,'(/ a /)')  &
-          'error - MICOM-like requires the 7-term eqn. of state'
-        call flush(lp)
-        endif !1st tile
-        call xcstop('(blkdat)')
-               stop '(blkdat)'
       endif
 !
       if     (nhybrd.gt.kdm) then
@@ -329,10 +319,10 @@
                stop '(blkdat)'
       endif !error
       if     (dp00.ge.0.0) then
-        if (isopyc .and. max(dp00,dp00x).ne.0.0) then
+        if (.not.hybrid .and. max(dp00,dp00x).ne.0.0) then
           if (mnproc.eq.1) then
           write(lp,'(/ a /)')  &
-            'error - must have dp00x==dp00==0.0 for isopycnal case'
+            'error - must have dp00x==dp00==0.0 for non-hybrid case'
           call flush(lp)
           endif !1st tile
           call xcstop('(blkdat)')
@@ -374,7 +364,7 @@
           call xcstop('(blkdat)')
                  stop '(blkdat)'
         endif !error
-        if (ds00.le.0.0 .and. .not.isopyc) then
+        if (ds00.le.0.0 .and. hybrid) then
           if (mnproc.eq.1) then
           write(lp,'(/ a /)')  &
             'error - must have ds00>0.0'
@@ -410,7 +400,7 @@
           call xcstop('(blkdat)')
                  stop '(blkdat)'
         endif !error
-        if (isotop.eq.0.0) then
+        if (isotop.eq.0.0 .and. hybrid) then
           if (mnproc.eq.1) then
           write(lp,'(/ a /)')  &
             'error - isotop cannot be 0.0 (layer 1 never isopycnal)'
@@ -1132,15 +1122,7 @@
         call xcstop('(blkdat)')
                stop '(blkdat)'
       endif
-      if (isopyc .and. temdfc.ne.0.0) then
-        if (mnproc.eq.1) then
-        write(lp,'(/ a /)')  &
-         &'error - isopycnal mode must have temdfc=0.0'
-        call flush(lp)
-        endif !1st tile
-        call xcstop('(blkdat)')
-               stop '(blkdat)'
-      endif
+!
       if (temdfc.lt.0.0 .or. temdfc.gt.1.0) then
         if (mnproc.eq.1) then
         write(lp,'(/ a /)')  &
@@ -1498,7 +1480,27 @@
 !
       mxl_no = mlflag.eq.0
 !
-      if (isopyc .and. .not.(mlflag.eq.0 .or. mlflag.eq.2)) then
+      isopyc = nhybrd.eq.0 .and. .not.mxl_no
+!
+      if (isopyc .and. sigver.gt.2) then
+        if (mnproc.eq.1) then
+        write(lp,'(/ a /)')  &
+          'error - MICOM-like requires the 7-term eqn. of state'
+        call flush(lp)
+        endif !1st tile
+        call xcstop('(blkdat)')
+               stop '(blkdat)'
+      endif
+      if (isopyc .and. temdfc.ne.0.0) then
+        if (mnproc.eq.1) then
+        write(lp,'(/ a /)')  &
+         &'error - isopycnal mode must have temdfc=0.0'
+        call flush(lp)
+        endif !1st tile
+        call xcstop('(blkdat)')
+               stop '(blkdat)'
+      endif
+      if (isopyc .and. .not.(mlflag.eq.2)) then
         if (mnproc.eq.1) then
         write(lp,'(/ a /)')  &
          &'error - isopycnal mode requires KT mixed layer (mlflag=2)'
@@ -3088,3 +3090,4 @@
 !> Feb. 2025 - Added cbtidc for adding tidal velocities to bottom speed
 !> Feb. 2025 - Negative cbar to input tidal amplitude flow speed
 !> Feb. 2025 - printout now ok for kdm<1000 and idm,jdm<100,000
+!> Mar. 2025 - isopyc identifies MICOM mode, .not.hybrid possible without isopyc
