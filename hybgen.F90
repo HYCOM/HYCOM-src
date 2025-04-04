@@ -115,6 +115,7 @@
 !$OMP   END PARALLEL DO
       endif !itracr(801)
 !
+      ktr = itracr(802)
       if     (ktr.ne.0) then
 ! ---   tracer: change in layer temperauture due to hybgen, degC/day
         q = 86400.0/baclin
@@ -3094,3 +3095,4 @@
 !> Sep. 2024 - dx0k-ed layers are never remapped with PCM
 !> Sep. 2024 - added hybthk
 !> Feb. 2025 - printout now ok for kdm<1000 and idm,jdm<100,000
+!> Apr. 2025 - bugfix for trcflg=801 and 802
