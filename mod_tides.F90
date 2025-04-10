@@ -800,7 +800,7 @@
       htide7 = 0.0
       htide8 = 0.0
 !$OMP PARALLEL DO PRIVATE(j,i, &
-!$OMP          htide1,htide2,htide3,htide4,htide5,htide6,htide7,htide8, &
+!$OMP          htide1,htide2,htide3,htide4,htide5,htide6,htide7,htide8) &
 !$OMP          SCHEDULE(STATIC,jblk)
       do j= 1-nbdy,jj+nbdy
         do i= 1-nbdy,ii+nbdy
