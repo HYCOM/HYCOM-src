@@ -4155,6 +4155,10 @@
 !
 ! --- all input fields must be defined at all grid points
 !
+! --- spval  = data void marker, 2^100 or about 1.2676506e30
+      real*4     spval
+      parameter (spval=2.0**100)
+!
       logical   larchm,lmonth
       save      larchm,lmonth
       integer   iarch
@@ -4166,6 +4170,7 @@
       integer   i,ios,j,k
       character preambl(5)*79,cline*80
       real*8    wdaymn(-1:2)
+      real      spval8
 !
 ! --- wn0 negative on first call only.
       if     (wn0.lt.-1.0) then
@@ -4211,6 +4216,14 @@
             rmunvv(i,j) = max(rmunv(i,j),rmunv(i,j-1))
           enddo
         enddo
+!      
+!       land will be spval
+        spval8 = spval
+        tnest(:,:,:,:) = spval8
+        snest(:,:,:,:) = spval8
+        pnest(:,:,:,:) = spval8
+        unest(:,:,:,:) = spval8
+        vnest(:,:,:,:) = spval8
 !
         dnestf = abs(nestfq)
         if     (dnestf.lt.1.0) then
@@ -4360,12 +4373,16 @@
       logical, parameter :: lmask_rdnest  = .false.  !usually .false.
                                                      !mask velocity outliers
 #endif
+!      
+! --- spval  = data void marker, 2^100 or about 1.2676506e30
+      real*4     spval
+      parameter (spval=2.0**100)
 !
       character flnm*22, cline*80, cvarin*6, cfield*8
       integer   i,idmtst,ios,j,jdmtst,k,layer
       integer   iyear,iday,ihour,nucnt,nvcnt
       logical   meanar
-      real      sumn(2)
+      real      dpk,dpkm,sumn(2)
 !
       call forday(dtime, yrflag, iyear,iday,ihour)
 !
@@ -4482,11 +4499,9 @@
           call rd_archive(vnest(1-nbdy,1-nbdy,k,lslot), &
                           cfield,layer, 920)
         endif !k==1:else
-        if     (k.ne.kk) then
-          cfield = 'thknss  '
-          call rd_archive(pnest(1-nbdy,1-nbdy,k+1,lslot), &
-                          cfield,layer, 920)
-        endif
+        cfield = 'thknss  '
+        call rd_archive(pnest(1-nbdy,1-nbdy,k+1,lslot), &
+                        cfield,layer, 920)
         cfield = 'temp    '
         call rd_archive(tnest(1-nbdy,1-nbdy,k,lslot), cfield,layer, 920)
         cfield = 'salin   '
@@ -4499,7 +4514,9 @@
       call zaiocl(920)
 !
       if     (meanar) then
+        vland = spval  !pnest has data void over land
         call xctilr(pnest(1-nbdy,1-nbdy,1,lslot),1,kk, 1,1, halo_ps)
+        vland = 0.0
       endif
 !
       nucnt = 0
@@ -4549,7 +4566,7 @@
           do k= 1,kk
             do i=1,ii
               if     (iu(i,j).eq.1) then
-                if     (min(pnest(i,  j,k,lslot), &
+                if     (min(pnest(i,  j,k,lslot), &  !pnest is thickness
                             pnest(i-1,j,k,lslot) ).lt.tencm) then
                   unest(i,j,k,lslot) = unest(i,j,max(1,k-1),lslot)
                 else
@@ -4557,7 +4574,7 @@
                 endif !thin layer:else
               endif !iu
               if     (iv(i,j).eq.1) then
-                if     (min(pnest(i,j,  k,lslot), &
+                if     (min(pnest(i,j,  k,lslot), &  !pnest is thickness
                             pnest(i,j-1,k,lslot) ).lt.tencm) then
                   vnest(i,j,k,lslot) = vnest(i,j,max(1,k-1),lslot)
                 else
@@ -4567,13 +4584,22 @@
             enddo !i
           enddo !k
         endif !meanar
+      enddo !j
+!
+!$OMP PARALLEL DO PRIVATE(j,i,k,dpk,dpkm) &
+!$OMP          SCHEDULE(STATIC,jblk)
+      do j=1,jj
 !       convert from layer thickness to interface depth (pressure)
         do i=1,ii
-          pnest(i,j,1,lslot) = 0.0
-          do k= 3,kk
-            pnest(i,j,k,lslot) = pnest(i,j,k,  lslot) + &
-                                 pnest(i,j,k-1,lslot)
-          enddo !k
+          if     (ip(i,j).eq.1) then
+            dpk = pnest(i,j,1,lslot)
+            pnest(i,j,1,lslot) = 0.0
+            do k= 2,kk
+              dpkm = dpk
+              dpk  = pnest(i,j,k,lslot)
+              pnest(i,j,k,lslot) = pnest(i,j,k-1,lslot) + dpkm
+            enddo !k
+          endif !ip
         enddo !i
       enddo !j
 !
@@ -4863,3 +4889,5 @@
 !> Feb. 2025 - cbarmin (forfundf) ensures that BBL speed is not zero
 !> Feb. 2025 - printout now ok for kdm<1000 and idm,jdm<100,000
 !> Feb. 2025 - Fixed sshflg=3 bug
+!> Apr. 2025 - reset vland for pnest halo update
+!> Apr. 2025 - read dpnest.k into pnest.k and later convert to interface depth
