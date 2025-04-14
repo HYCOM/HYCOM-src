@@ -812,17 +812,25 @@
 !
 # include "stmt_fns.h"
 !
-      character*80 cformat
-      integer      ipnt,ipnt1,jpnt,jpnt1,k,ktr
-      real         ssha,sshn,sshs,sssc,sstc
-      real         ubpnt,upnt,vbpnt,vpnt
-      real         difsp,sshb,opnt,sssa,sihpnt
-      real*8       sums
+      character*740 cformat
+      character*500 cftr
+      integer       ipnt,ipnt1,jpnt,jpnt1,k,ktr,ndif,ntrc
+      real          ssha,sshn,sshs,sssc,sstc
+      real          ubpnt,upnt,vbpnt,vpnt,amaxtr
+      real          difsp,sshb,opnt,sssa,sihpnt
+      real*8        sums
 #if defined(STOKES)
-      real         ubstk,ustk,ust0,vbstk,vstk,vst0
+      real          ubstk,ustk,ust0,vbstk,vstk,vst0
 #endif
 !
       real, parameter :: difriv = 60.0  !river diffusion, cm**2/s
+!
+      if     (mxlkpp .or. mxlmy .or. mxlgiss) then
+        ndif = 3
+      else
+        ndif = 0
+      endif
+      ntrc = ntracr + mtracr
 !
       ipnt = ipoint - i0
       jpnt = jpoint - j0
@@ -1163,41 +1171,94 @@
             wflfrz(ipnt,jpnt)*svref*8.64E7                       !mm/day
         endif !iceflg
 #if defined(STOKES)
-        if     (ntracr+mtracr.eq.0) then
+        if     (ntrc.eq.0) then
           write(cformat,'(a)')      '(4a)'
         else
-          write(cformat,'(a,i2,a)') '(4a,', ntracr+mtracr, 'a)'
+          write(cformat,'(a,i2,a)') '(4a,', ntrc, '(a,i2.2))'
         endif
-        write (nop,cformat) &
-            '#  k', &
-            '    utot    vtot  p.temp    saln  p.dens', &
-            '    thkns      dpth  viscty  t-diff  s-diff', &
-            '  usdtot  vsdtot', &
-            ('  tracer',ktr=1,ntracr+mtracr)
-        if     (ntracr+mtracr.eq.0) then
+        if     (ndif.eq.3) then
+          write (nop,cformat) &
+              '#  k', &
+              '    utot    vtot  p.temp    saln  p.dens', &
+              '    thkns      dpth  viscty  t-diff  s-diff', &
+              '  usdtot  vsdtot', &
+              ('  tracer',ktr,ktr=1,ntrc)
+        else
+          write (nop,cformat) &
+              '#  k', &
+              '    utot    vtot  p.temp    saln  p.dens', &
+              '    thkns      dpth', &
+              '  usdtot  vsdtot', &
+              ('  trcr',ktr, ktr=1,ntrc)
+        endif
+        if     (ntrc.eq.0) then
           write(cformat,'(a)') &
             '(i4,2f8.2,3f8.4,f9.3,f10.3,3f8.2,2f8.2)'
         else
           write(cformat,'(a,i2,a)') &
-            '(i4,2f8.2,3f8.4,f9.3,f10.3,3f8.2,2f8.2,', ntracr+mtracr, 'f8.3)'
+            '(i4,2f8.2,3f8.4,f9.3,f10.3,3f8.2,2f8.2,', ntrc, 'f8.3)'
         endif
 #else
-        if     (ntracr+mtracr.eq.0) then
+        if     (ntrc.eq.0) then
           write(cformat,'(a)')      '(3a)'
         else
-          write(cformat,'(a,i2,a)') '(3a,', ntracr+mtracr, 'a)'
+          write(cformat,'(a,i2,a)') '(3a,', ntrc, '(a,i2.2))'
         endif
-        write (nop,cformat) &
-            '#  k', &
-            '    utot    vtot  p.temp    saln  p.dens', &
-            '    thkns      dpth  viscty  t-diff  s-diff', &
-            ('  tracer',ktr=1,ntracr+mtracr)
-        if     (ntracr+mtracr.eq.0) then
-          write(cformat,'(a)') &
-            '(i4,2f8.2,3f8.4,f9.3,f10.3,3f8.2)'
+        if     (ndif.eq.3) then
+          write (nop,cformat) &
+              '#  k', &
+              '    utot    vtot  p.temp    saln  p.dens', &
+              '    thkns      dpth  viscty  t-diff  s-diff', &
+              ('  trcr',ktr, ktr=1,ntrc)
         else
-          write(cformat,'(a,i2,a)') &
-            '(i4,2f8.2,3f8.4,f9.3,f10.3,3f8.2,', ntracr+mtracr, 'f8.3)'
+          write (nop,cformat) &
+              '#  k', &
+              '    utot    vtot  p.temp    saln  p.dens', &
+              '    thkns      dpth', &
+              ('  trcr',ktr, ktr=1,ntrc)
+        endif
+        if     (ntrc.eq.0) then
+          if     (ndif.eq.3) then
+            write(cformat,'(a)') &
+              '(i4,2f8.2,3f8.4,f9.3,f10.3,3f8.2)'
+          else
+            write(cformat,'(a)') &
+              '(i4,2f8.2,3f8.4,f9.3,f10.3)'
+          endif
+        else
+          cftr = ' '
+          do ktr= 1,ntrc
+            amaxtr = minval(tracer(ipnt,jpnt,1:kk,n,ktr))
+            if      (amaxtr.lt.0.0) then
+              amaxtr = max( -amaxtr*10.0, &
+               abs(maxval(tracer(ipnt,jpnt,1:kk,n,ktr))))
+            else
+              amaxtr = max( amaxtr, &
+               abs(maxval(tracer(ipnt,jpnt,1:kk,n,ktr))))
+            endif
+            if     (amaxtr.gt.1.e6) then
+              cftr(5*(ktr-1)+1:5*(ktr-1)+5) = '  f8,'
+            elseif (amaxtr.gt.1.e5) then
+              cftr(5*(ktr-1)+1:5*(ktr-1)+5) = 'f8.0,'
+            elseif (amaxtr.gt.1.e4) then
+              cftr(5*(ktr-1)+1:5*(ktr-1)+5) = 'f8.1,'
+            elseif (amaxtr.gt.1.e3) then
+              cftr(5*(ktr-1)+1:5*(ktr-1)+5) = 'f8.2,'
+            elseif (amaxtr.gt.1.e2) then
+              cftr(5*(ktr-1)+1:5*(ktr-1)+5) = 'f8.3,'
+            else
+              cftr(5*(ktr-1)+1:5*(ktr-1)+5) = 'f8.4,'
+            endif
+          enddo !ktr
+          if     (ndif.eq.3) then
+             write(cformat,'(a,a,a)') &
+                  '(i4,2f8.2,3f8.4,f9.3,f10.3,', &
+                  '3f8.2,', cftr(1:5*(ntrc-1)+4), ')'
+          else
+            write(cformat,'(a,a,a)') &
+              '(i4,2f8.2,3f8.4,f9.3,f10.3,', &
+              cftr(1:5*(ntrc-1)+4), ',a)'  !last a not used
+          endif
         endif
 #endif
         do k= 1,kk
@@ -1207,28 +1268,45 @@
           ustk = 0.5*(usd(ipnt,jpnt,k)+usd(ipnt1,jpnt, k))
           vstk = 0.5*(vsd(ipnt,jpnt,k)+vsd(ipnt, jpnt1,k))
 #endif
-          difsp = min(9999.99,difs(ipnt,jpnt,k+1)*1.e4)
-          if     (rivers(ipnt,jpnt,  1).ne.0.0 .and. &
-                       p(ipnt,jpnt,k+1).lt.thkriv   ) then
-            difsp = max(difsp, difriv)
-          endif
-          write (nop,cformat) &
-             k, &
-             max(-999.99,min(999.99,upnt*100.0)),                   & !cm/s
-             max(-999.99,min(999.99,vpnt*100.0)),                   & !cm/s
-             temp(ipnt,jpnt,k,n),                                   & !degC
-             saln(ipnt,jpnt,k,n),                                   & !psu
-             th3d(ipnt,jpnt,k,n)+thbase,                            & !SigmaT
-               dp(ipnt,jpnt,k,n)*qonem,                             & !m
-               (p(ipnt,jpnt,k+1)+p(ipnt,jpnt,k))*0.5*qonem,         & !m
-             min(9999.99,vcty(ipnt,jpnt,k+1)*1.e4),                 & !cm**2/s
-             min(9999.99,dift(ipnt,jpnt,k+1)*1.e4),                 & !cm**2/s
-                         difsp,                                     & !cm**2/s
+          if     (ndif.eq.3) then
+            difsp = min(9999.99,difs(ipnt,jpnt,k+1)*1.e4)
+            if     (rivers(ipnt,jpnt,  1).ne.0.0 .and. &
+                         p(ipnt,jpnt,k+1).lt.thkriv   ) then
+              difsp = max(difsp, difriv)
+            endif
+            write (nop,cformat) &
+               k, &
+               max(-999.99,min(999.99,upnt*100.0)),                   & !cm/s
+               max(-999.99,min(999.99,vpnt*100.0)),                   & !cm/s
+               temp(ipnt,jpnt,k,n),                                   & !degC
+               saln(ipnt,jpnt,k,n),                                   & !psu
+               th3d(ipnt,jpnt,k,n)+thbase,                            & !SigmaT
+                 dp(ipnt,jpnt,k,n)*qonem,                             & !m
+                 (p(ipnt,jpnt,k+1)+p(ipnt,jpnt,k))*0.5*qonem,         & !m
+               min(9999.99,vcty(ipnt,jpnt,k+1)*1.e4),                 & !cm**2/s
+               min(9999.99,dift(ipnt,jpnt,k+1)*1.e4),                 & !cm**2/s
+                           difsp,                                     & !cm**2/s
 #if defined(STOKES)
-             max(-999.99,min(999.99,ustk*100.0)),                   & !cm/s
-             max(-999.99,min(999.99,vstk*100.0)),                   & !cm/s
+               max(-999.99,min(999.99,ustk*100.0)),                   & !cm/s
+               max(-999.99,min(999.99,vstk*100.0)),                   & !cm/s
 #endif
-             (tracer(ipnt,jpnt,k,n,ktr),ktr=1,ntracr+mtracr)          !0-999?
+               (tracer(ipnt,jpnt,k,n,ktr),ktr=1,ntrc)                   !0-999?
+          else
+            write (nop,cformat) &
+               k, &
+               max(-999.99,min(999.99,upnt*100.0)),                   & !cm/s
+               max(-999.99,min(999.99,vpnt*100.0)),                   & !cm/s
+               temp(ipnt,jpnt,k,n),                                   & !degC
+               saln(ipnt,jpnt,k,n),                                   & !psu
+               th3d(ipnt,jpnt,k,n)+thbase,                            & !SigmaT
+                 dp(ipnt,jpnt,k,n)*qonem,                             & !m
+                 (p(ipnt,jpnt,k+1)+p(ipnt,jpnt,k))*0.5*qonem,         & !m
+#if defined(STOKES)
+               max(-999.99,min(999.99,ustk*100.0)),                   & !cm/s
+               max(-999.99,min(999.99,vstk*100.0)),                   & !cm/s
+#endif
+               (tracer(ipnt,jpnt,k,n,ktr),ktr=1,ntrc)                   !0-999?
+          endif !ndif
         enddo !k
       else
         write (lp,*) 'archiv_prof_out called on wrong tile'
@@ -1933,3 +2011,4 @@
 !> Feb. 2025 - Added efold_cb,spdbot,spdtid: strflg=721,722,723
 !> Feb. 2025 - printout now ok for kdm<1000 and idm,jdm<100,000
 !> Mar. 2025 - update archv filename logic
+!> Apr. 2025 - better formatting for tracers
