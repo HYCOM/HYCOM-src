@@ -367,7 +367,7 @@
           call tides_dehtide(1, .false.)  !initialise 49-hour filter
         endif !nudging
 !
-        if     (tiddrg.ne.0) then
+        if     (tidstr.eq.0 .and. tiddrg.ne.0) then
           if     (.not.allocated(uhrly)) then
 ! ---        restart_in did not input [uv]hrly
              allocate(  uhrly(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy,49), &

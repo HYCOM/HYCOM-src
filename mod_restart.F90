@@ -887,7 +887,7 @@
         call tides_dehtide(1, .false.)  !recalculate hntide
       endif !hhrly
 !
-      if (tidflg.gt.0 .and. tiddrg.gt.0) then
+      if (tidflg.gt.0 .and. tidstr.eq.0 .and. tiddrg.gt.0) then
         call zaiowr3(uhrly,   49, iu,.false., xmin,xmax, iunta,.true.)
         call xctilr( uhrly, 1,49, nbdy,nbdy, halo_uv)
         if     (mnproc.eq.1) then

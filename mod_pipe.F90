@@ -1509,7 +1509,7 @@
           call pipe_compare_sym1(wtrflx,ip,txt1)
         endif !surface
         if     (cinfo(1:6).eq.'ENTERm' .and. tidflg.gt.0) then
-          if     (tiddrg.ne.0) then
+          if     (tidstr.eq.0 .and. tiddrg.ne.0) then
             txt1='uhrly( 1)   '
             txt2='vhrly( 1)   '
             call pipe_compare_sym2(uhrly(1-nbdy,1-nbdy, 1),iu,txt1, &
