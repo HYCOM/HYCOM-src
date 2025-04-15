@@ -1509,7 +1509,7 @@
           call pipe_compare_sym1(wtrflx,ip,txt1)
         endif !surface
         if     (cinfo(1:6).eq.'ENTERm' .and. tidflg.gt.0) then
-          if     (tidstr.eq.0) then
+          if     (tiddrg.ne.0) then
             txt1='uhrly( 1)   '
             txt2='vhrly( 1)   '
             call pipe_compare_sym2(uhrly(1-nbdy,1-nbdy, 1),iu,txt1, &
@@ -1522,7 +1522,7 @@
             txt2='vntide      '
             call pipe_compare_sym2(untide,iu,txt1, &
                                    vntide,iv,txt2)
-          else !tidstr.eq.1
+          elseif (tidstr.eq.1) then
             txt1='uvfm2       '
             txt2='vvfm2       '
             call pipe_compare_sym2(uvf(1-nbdy,1-nbdy,1),iu,txt1, &
@@ -1627,3 +1627,4 @@
 !> Sep. 2019 - added oneta0
 !> Dec. 2024 - added checks on tides
 !> Feb. 2025 - printout now ok for kdm<1000 and idm,jdm<100,000
+!> Apr. 2025 - bugfix for tiddrg and tidstr == 0
