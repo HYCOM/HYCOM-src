@@ -80,7 +80,7 @@
           else
             nreg = 0  ! closed/closed
           endif
-        elseif (nreg.ne. 0) then
+        elseif (nreg.ne.0 .and. .not.lfplane) then
           if (mnproc.eq.1) then
             write(lp,'(/a/)')  &
              'closed   domain, but with nreg.ne.0'
@@ -538,3 +538,4 @@
 !> May  2014 - added ipim1,ipip1,ipjm1,ipjp1,ipim1x,ipip1x,ipjm1x,ipjp1x
 !> May  2014 - added allip,alliq,alliu,alliv
 !> Feb. 2025 - printout now ok for kdm<1000 and idm,jdm<100,000
+!> Apr. 2025 - Updated closed domain vs nreg error

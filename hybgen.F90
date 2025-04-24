@@ -103,12 +103,14 @@
         do j=1,jj
           do k=1,kk
             do i=1,ii
+              if (SEA_P) then
 !diag              if (i.eq.itest .and. j.eq.jtest) then
 !diag                write (lp,'(a,i4,1x,3g12.4)') &
 !diag                'vrh =',k,dp(i,j,k,n)*qonem,tracer(i,j,k,n,ktr)*qonem, &
 !diag                       q*(dp(i,j,k,n)-      tracer(i,j,k,n,ktr))
 !diag              endif !debug
-              tracer(i,j,k,n,ktr) = q*(dp(i,j,k,n)-tracer(i,j,k,n,ktr))
+                tracer(i,j,k,n,ktr) = q*(dp(i,j,k,n)-tracer(i,j,k,n,ktr))
+              endif !ip
             enddo !i
           enddo !k
         enddo !j
@@ -124,12 +126,14 @@
         do j=1,jj
           do k=1,kk
             do i=1,ii
+              if (SEA_P) then
 !diag              if (i.eq.itest .and. j.eq.jtest) then
 !diag                write (lp,'(a,i4,1x,3g12.4)') &
 !diag                'vrT =',k,temp(i,j,k,n),tracer(i,j,k,n,ktr)*qonem, &
 !diag                       q*(temp(i,j,k,n)-tracer(i,j,k,n,ktr))
 !diag              endif !debug
-              tracer(i,j,k,n,ktr) = q*(temp(i,j,k,n)-tracer(i,j,k,n,ktr))
+                tracer(i,j,k,n,ktr) = q*(temp(i,j,k,n)-tracer(i,j,k,n,ktr))
+              endif !ip
             enddo !i
           enddo !k
         enddo !j
@@ -145,12 +149,14 @@
         do j=1,jj
           do k=1,kk
             do i=1,ii
+              if (SEA_P) then
 !diag              if (i.eq.itest .and. j.eq.jtest) then
 !diag                write (lp,'(a,i4,1x,3g12.4)') &
 !diag                'vrS =',k,saln(i,j,k,n),tracer(i,j,k,n,ktr), &
 !diag                       q*(saln(i,j,k,n)-tracer(i,j,k,n,ktr))
 !diag              endif !debug
-              tracer(i,j,k,n,ktr) = q*(saln(i,j,k,n)-tracer(i,j,k,n,ktr))
+                tracer(i,j,k,n,ktr) = q*(saln(i,j,k,n)-tracer(i,j,k,n,ktr))
+              endif !ip
             enddo !i
           enddo !k
         enddo !j

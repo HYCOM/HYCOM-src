@@ -977,7 +977,6 @@
           endif !reduce +ve:reduce -ve
         endif !not already balanced
       endif !sssbal
-!###
 !
       if (nstep.eq.nstep1+1 .or. diagno) then
         if (nstep.eq.nstep1+1) then
