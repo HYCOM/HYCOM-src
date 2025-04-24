@@ -1251,7 +1251,7 @@
             endif
           enddo !ktr
           if     (ndif.eq.3) then
-             write(cformat,'(a,a,a)') &
+             write(cformat,'(a,a,a,a)') &
                   '(i4,2f8.2,3f8.4,f9.3,f10.3,', &
                   '3f8.2,', cftr(1:5*(ntrc-1)+4), ')'
           else
@@ -2012,3 +2012,4 @@
 !> Feb. 2025 - printout now ok for kdm<1000 and idm,jdm<100,000
 !> Mar. 2025 - update archv filename logic
 !> Apr. 2025 - better formatting for tracers
+!> Apr. 2025 - bugfix for better formatting for tracers

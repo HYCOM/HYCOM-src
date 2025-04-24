@@ -4500,7 +4500,7 @@
                           cfield,layer, 920)
         endif !k==1:else
         cfield = 'thknss  '
-        call rd_archive(pnest(1-nbdy,1-nbdy,k+1,lslot), &
+        call rd_archive(pnest(1-nbdy,1-nbdy,k,lslot), &
                         cfield,layer, 920)
         cfield = 'temp    '
         call rd_archive(tnest(1-nbdy,1-nbdy,k,lslot), cfield,layer, 920)
@@ -4891,3 +4891,4 @@
 !> Feb. 2025 - Fixed sshflg=3 bug
 !> Apr. 2025 - reset vland for pnest halo update
 !> Apr. 2025 - read dpnest.k into pnest.k and later convert to interface depth
+!> Apr. 2025 - buffix for read dpnest.k into pnest.k
