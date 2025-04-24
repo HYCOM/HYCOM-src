@@ -2613,16 +2613,16 @@
                call xctmr0(48)
                call xctmr1(48)
          elseif (hybrid) then ! mxlpwp has dypflg=2
-               call xctmr0(47)
-            call convch(m,n)
-               call xctmr1(47)
-               call pipe_comparall(m,n, 'convch, step')
            if     (dypflg.eq.1) then  ! KPP-like, tsoff in diapf1
                  call xctmr0(48)
               call diapf1(m,n)
                  call xctmr1(48)
                  call pipe_comparall(m,n, 'diapf1, step')
            elseif (dypflg.eq.2) then  ! explicit, tsoff in diapf2
+                 call xctmr0(47)
+              call convch(m,n)
+                 call xctmr1(47)
+                 call pipe_comparall(m,n, 'convch, step')
                  call xctmr0(48)
               call diapf2(m,n)
                  call xctmr1(48)
@@ -3527,6 +3527,29 @@
             endif !1st tile
           endif !NPZ:NPZD
         enddo !ktr
+!
+#if defined(MOMTUM_CFL) || defined(MOMTUM4_CFL)
+!
+! ---   Only report new CFL maximums
+!
+        do k= 1,kk
+          if     (cflclp(k).gt.cflmax(k)) then
+            cflmax(k) = cflclp(k)  !save new maximum
+            if (mnproc.eq.1) then
+            write(lp, '(i9,a, &
+                         &'' L '',i3,'' maxspd,clip (m/s):'',2f10.4)') &
+                nstep,c_ydh, &
+                k,cflspd(k),cflclp(k)
+            call flush(lp)
+            write(nod,'(i9,a, &
+                         &'' L '',i3,'' maxspd,clip (m/s):'',2f10.4)') &
+                nstep,c_ydh, &
+                k,cflspd(k),cflclp(k)
+            call flush(nod)
+            endif !1st tile
+          endif !report
+        enddo !k
+#endif  /* CFL */
       endif  !diagno ...
 !
 ! --- diagnose meridional overturning and heat flux
@@ -4135,4 +4158,6 @@
 !> Jan. 2025 - call overtn only at the end of one month or shorter runs
 !> Feb. 2025 - tidflg==-1 adds tidal velocities to bottom speed
 !> Feb. 2025 - printout now ok for kdm<1000 and idm,jdm<100,000
-!> Mar. 2025 - Allow .not.hybrid without isopyc
+!> Mar. 2025 - allow .not.hybrid without isopyc
+!> Apr. 2025 - convch only called for dypflg=2
+!> Apr. 2025 - better diagnostics for momtum_cfl and momtum4_cfl

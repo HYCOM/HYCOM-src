@@ -52,21 +52,21 @@
               stress(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy), &
               stresx(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy), &
               stresy(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy), &
-              dpmx(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy), &
+                dpmx(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy), &
               thkbop(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy) )
       call mem_stat_add( 10*(idm+2*nbdy)*(jdm+2*nbdy) )
 #endif
-      stress = 0.0
-      stresx = r_init
-      stresy = r_init
-      dpmx   = r_init
-      thkbop = r_init
+      stress(:,:) = 0.0
+      stresx(:,:) = r_init
+      stresy(:,:) = r_init
+        dpmx(:,:) = r_init
+      thkbop(:,:) = r_init
 ! --- all of these should be zero on land.
-      defor1 = 0.0
-      defor2 = 0.0
-      uflux1 = 0.0
-      vflux1 = 0.0
-      potvor = 0.0
+      defor1(:,:) = 0.0
+      defor2(:,:) = 0.0
+      uflux1(:,:) = 0.0
+      vflux1(:,:) = 0.0
+      potvor(:,:) = 0.0
       return
       end  subroutine momtum_init
 
@@ -1077,9 +1077,8 @@
                        dl2u,dl2uja,dl2ujb,dl2v,dl2via,dl2vib, &
                        pnk0,pnkp,stresl
       real, save, allocatable, dimension(:,:) :: &
+       uvjspd, &
        uvjclp
-      real, save, allocatable, dimension(:) :: &
-       uvkmax
 #else
       real, dimension(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy) :: &
                        vis2u,vis4u,vis2v,vis4v,vort, &
@@ -1093,9 +1092,8 @@
                        pnk0,pnkp,stresl
       save  /momtumr4/
       real, save, dimension(1-nbdy:jdm+nbdy,1:kdm) :: &
+       uvjspd, &
        uvjclp
-      real, save, dimension(1:kdm) :: &
-       uvkmax=clip_min
 #endif
 !
 #if defined(STOKES)
@@ -1126,7 +1124,7 @@
            dmontg,dthstr,dragu,dragv,qdpu,qdpv,dpthin, &
            dpun,uhm,uh0,uhp,dpvn,vhm,vh0,vhp,sum_m,sum_n
       real dp12,dp23,dp123,dp3m1,ql1,ql2,ql3,drgthk,frac
-      real cfl,uvclpm,uvclpn,uvkclp(kdm)
+      real cfl,uvclpm,uvclpn
       integer i,ia,ib,j,ja,jb,k,ka,ktr,l,mbdy,ktop,kmid,kbot,margin
 !
 !     real*8    wtime
@@ -1167,33 +1165,31 @@
                   pnkp(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy), &
                 stresl(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy) )
         call mem_stat_add( 18*(idm+2*nbdy)*(jdm+2*nbdy) )
-                 vis2u = 0.0  !r_init
-                 vis4u = 0.0  !r_init
-                 vis2v = 0.0  !r_init
-                 vis4v = 0.0  !r_init
-                  vort = 0.0  !r_init
-                 wgtia = 0.0  !r_init
-                 wgtib = 0.0  !r_init
-                 wgtja = 0.0  !r_init
-                 wgtjb = 0.0  !r_init
-                  dl2u = 0.0  !r_init
-                dl2uja = 0.0  !r_init
-                dl2ujb = 0.0  !r_init
-                  dl2v = 0.0  !r_init
-                dl2via = 0.0  !r_init
-                dl2vib = 0.0  !r_init
-                  pnk0 = 0.0  !r_init
-                  pnkp = 0.0  !r_init
-                stresl = 0.0  !r_init
+                 vis2u(:,:) = 0.0  !r_init
+                 vis4u(:,:) = 0.0  !r_init
+                 vis2v(:,:) = 0.0  !r_init
+                 vis4v(:,:) = 0.0  !r_init
+                  vort(:,:) = 0.0  !r_init
+                 wgtia(:,:) = 0.0  !r_init
+                 wgtib(:,:) = 0.0  !r_init
+                 wgtja(:,:) = 0.0  !r_init
+                 wgtjb(:,:) = 0.0  !r_init
+                  dl2u(:,:) = 0.0  !r_init
+                dl2uja(:,:) = 0.0  !r_init
+                dl2ujb(:,:) = 0.0  !r_init
+                  dl2v(:,:) = 0.0  !r_init
+                dl2via(:,:) = 0.0  !r_init
+                dl2vib(:,:) = 0.0  !r_init
+                  pnk0(:,:) = 0.0  !r_init
+                  pnkp(:,:) = 0.0  !r_init
+                stresl(:,:) = 0.0  !r_init
         if     (momtum_cfl) then
           allocate( &
+                   uvjspd(1-nbdy:jdm+nbdy,1:kdm), &
                    uvjclp(1-nbdy:jdm+nbdy,1:kdm) )
-          call mem_stat_add( (jdm+2*nbdy)*kdm )
-                   uvjclp = 0.0
-          allocate( &
-                   uvkmax(1:kdm) )
-          call mem_stat_add( kdm )
-                   uvkmax = clip_min
+          call mem_stat_add( 2*(jdm+2*nbdy)*kdm )
+                   uvjspd(:,:) = 0.0
+                   uvjclp(:,:) = 0.0
         endif !cfl
       endif !vis2u
 #if defined(STOKES)
@@ -1202,8 +1198,8 @@
                    usdflux(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy), &
                    vsdflux(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy) )
         call mem_stat_add( 2*(idm+2*nbdy)*(jdm+2*nbdy) )
-                   usdflux = 0.0 !r_init
-                   vsdflux = 0.0 !r_init
+                   usdflux(:,:) = 0.0 !r_init
+                   vsdflux(:,:) = 0.0 !r_init
 !
         allocate( &
                       dvdzu(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy,1:kk), &
@@ -1213,12 +1209,12 @@
                        dzdx(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy,1:kk), &
                        dzdy(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy,1:kk) )
         call mem_stat_add( 6*(idm+2*nbdy)*(jdm+2*nbdy)*kk )
-                      dvdzu = 0.0 !r_init
-                      dudzu = 0.0 !r_init
-                      dvdzv = 0.0 !r_init
-                      dudzv = 0.0 !r_init
-                       dzdx = 0.0 !r_init
-                       dzdy = 0.0 !r_init
+                      dvdzu(:,:,:) = 0.0 !r_init
+                      dudzu(:,:,:) = 0.0 !r_init
+                      dvdzv(:,:,:) = 0.0 !r_init
+                      dudzv(:,:,:) = 0.0 !r_init
+                       dzdx(:,:,:) = 0.0 !r_init
+                       dzdy(:,:,:) = 0.0 !r_init
       endif !usdflux
 #endif /* STOKES */
 #endif /* RELO */
@@ -1242,12 +1238,15 @@
 !
         do j=1-margin,jj+margin
           do i=1-margin,ii+margin
-            vis2u(i,j)=0.0
-            vis4u(i,j)=0.0
-            vis2v(i,j)=0.0
-            vis4v(i,j)=0.0
-            dl2u( i,j)=0.0
-            dl2v( i,j)=0.0
+            pu(i,j,1) = 0.0
+            pv(i,j,1) = 0.0
+!
+            vis2u(i,j) = 0.0
+            vis4u(i,j) = 0.0
+            vis2v(i,j) = 0.0
+            vis4v(i,j) = 0.0
+            dl2u( i,j) = 0.0
+            dl2v( i,j) = 0.0
           enddo !i
         enddo !j
       endif
@@ -1884,14 +1883,14 @@
         jb=j+1
         do i=1-margin,ii+margin
           if (SEA_U) then
-            wgtja(i,j)=max(0.,min(1.,(pu(i,j,k+1)-depthu(i,ja)) &
+            wgtja(i,j)=max(0.0,min(1.0,(pu(i,j,k+1)-depthu(i,ja)) &
                       /max(pu(i,j,k+1)-pu(i,j,k),epsil)))
-            wgtjb(i,j)=max(0.,min(1.,(pu(i,j,k+1)-depthu(i,jb)) &
+            wgtjb(i,j)=max(0.0,min(1.0,(pu(i,j,k+1)-depthu(i,jb)) &
                       /max(pu(i,j,k+1)-pu(i,j,k),epsil)))
-            uja(i,j)=(1.-wgtja(i,j))*utotn(i,ja)+ &
-                     wgtja(i,j)*slip*utotn(i,j)
-            ujb(i,j)=(1.-wgtjb(i,j))*utotn(i,jb)+ &
-                     wgtjb(i,j)*slip*utotn(i,j)
+            uja(i,j)=(1.-wgtja(i,j))     *utotn(i,ja)+ &
+                         wgtja(i,j) *slip*utotn(i,j)
+            ujb(i,j)=(1.-wgtjb(i,j))     *utotn(i,jb)+ &
+                         wgtjb(i,j) *slip*utotn(i,j)
 !
 ! ---       Laplacian of utotn scaled by -0.25*max(scux,scuy)**2
             aspx2 = aspux(i,j)**2
@@ -1906,14 +1905,14 @@
 ! ---       assume margin<nblk
             ia=i-1
             ib=i+1
-            wgtia(i,j)=max(0.,min(1.,(pv(i,j,k+1)-depthv(ia,j)) &
+            wgtia(i,j)=max(0.0,min(1.0,(pv(i,j,k+1)-depthv(ia,j)) &
                       /max(pv(i,j,k+1)-pv(i,j,k),epsil)))
-            wgtib(i,j)=max(0.,min(1.,(pv(i,j,k+1)-depthv(ib,j)) &
+            wgtib(i,j)=max(0.0,min(1.0,(pv(i,j,k+1)-depthv(ib,j)) &
                       /max(pv(i,j,k+1)-pv(i,j,k),epsil)))
-            via(i,j)=(1.-wgtia(i,j))*vtotn(ia,j)+ &
-                      wgtia(i,j)*slip*vtotn(i,j)
-            vib(i,j)=(1.-wgtib(i,j))*vtotn(ib,j)+ &
-                      wgtib(i,j)*slip*vtotn(i,j)
+            via(i,j)=(1.-wgtia(i,j))     *vtotn(ia,j)+ &
+                         wgtia(i,j) *slip*vtotn(i,j)
+            vib(i,j)=(1.-wgtib(i,j))     *vtotn(ib,j)+ &
+                         wgtib(i,j) *slip*vtotn(i,j)
 !
 ! ---       Laplacian of vtotn scaled by -0.25*max(scvx,scvy)**2
             aspx2 = aspvx(i,j)**2
@@ -1948,11 +1947,40 @@
             defor2(i+1,j)=(vtotn(i,j)*(1.-slip)*scvy(i,j))**2* &
                             scq2i(i+1,j)
           endif
-        enddo !i
-      enddo !l
+        enddo !l
+      enddo !j
 !$OMP END PARALLEL DO
 !
 !         wtime2( 6,k) = wtime()
+!
+      if     (lpipe .and. lpipe_momtum) then
+! ---   compare two model runs.
+        write (text,'(a9,i3)') 'depthu k=',k
+        call pipe_compare_sym1( depthu,iu,text)
+        write (text,'(a9,i3)') 'pu     k=',k
+        call pipe_compare_sym1(pu(1-nbdy,1-nbdy,k),  iu,text)
+        write (text,'(a9,i3)') 'pu     k=',k+1
+        call pipe_compare_sym1(pu(1-nbdy,1-nbdy,k+1),iu,text)
+        write (text,'(a9,i3)') ' wgtja k=',k
+        call pipe_compare_sym1(  wgtja,iu,text)
+        write (text,'(a9,i3)') ' wgtjb k=',k
+        call pipe_compare_sym1(  wgtjb,iu,text)
+        write (text,'(a9,i3)') '  dl2u k=',k
+        call pipe_compare_sym1(   dl2u,iu,text)
+!
+        write (text,'(a9,i3)') 'depthv k=',k
+        call pipe_compare_sym1( depthv,iv,text)
+        write (text,'(a9,i3)') 'pv     k=',k
+        call pipe_compare_sym1(pv(1-nbdy,1-nbdy,k),  iv,text)
+        write (text,'(a9,i3)') 'pv     k=',k+1
+        call pipe_compare_sym1(pv(1-nbdy,1-nbdy,k+1),iv,text)
+        write (text,'(a9,i3)') ' wgtia k=',k
+        call pipe_compare_sym1(  wgtia,iv,text)
+        write (text,'(a9,i3)') ' wgtib k=',k
+        call pipe_compare_sym1(  wgtib,iv,text)
+        write (text,'(a9,i3)') '  dl2v k=',k
+        call pipe_compare_sym1(   dl2v,iv,text)
+      endif !lpipe
 !
 ! --- vorticity, pot.vort., defor. at lateral boundary points
 !
@@ -2058,19 +2086,19 @@
         jb=j+1
         do i=1-margin,ii+margin
           if (SEA_U) then
-            dl2uja(i,j)=(1.-wgtja(i,j))*dl2u(i,ja)+ &
-                        wgtja(i,j)*slip*dl2u(i,j)
-            dl2ujb(i,j)=(1.-wgtjb(i,j))*dl2u(i,jb)+ &
-                        wgtjb(i,j)*slip*dl2u(i,j)
+            dl2uja(i,j)=(1.-wgtja(i,j))     *dl2u(i,ja)+ &
+                            wgtja(i,j) *slip*dl2u(i,j)
+            dl2ujb(i,j)=(1.-wgtjb(i,j))     *dl2u(i,jb)+ &
+                            wgtjb(i,j) *slip*dl2u(i,j)
           endif !iu
 !
           if (SEA_V) then
             ia=i-1
             ib=i+1
-            dl2via(i,j)=(1.-wgtia(i,j))*dl2v(ia,j)+ &
-                        wgtia(i,j)*slip*dl2v(i, j)
-            dl2vib(i,j)=(1.-wgtib(i,j))*dl2v(ib,j)+ &
-                        wgtib(i,j)*slip*dl2v(i, j)
+            dl2via(i,j)=(1.-wgtia(i,j))     *dl2v(ia,j)+ &
+                            wgtia(i,j) *slip*dl2v(i, j)
+            dl2vib(i,j)=(1.-wgtib(i,j))     *dl2v(ib,j)+ &
+                            wgtib(i,j) *slip*dl2v(i, j)
           endif !iv
         enddo !i
       enddo !j
@@ -2474,7 +2502,8 @@
         enddo !j
       endif !dispqd_mn
 !
-      if     (lpipe .and. lpipe_momtum .and. k.eq.1) then
+!     if     (lpipe .and. lpipe_momtum .and. k.eq.1) then
+      if     (lpipe .and. lpipe_momtum) then
 ! ---   compare two model runs.
         write (text,'(a9,i3)') 'vtotm  k=',k
         call pipe_compare_sym1(vtotm, iv,text)
@@ -2997,6 +3026,7 @@
 ! --- baroclinic time step and use them to force barotropic flow field.
 !
       if     (momtum_cfl) then
+        uvjspd(:,:) = 0.0
         uvjclp(:,:) = 0.0
       endif
 !
@@ -3006,8 +3036,9 @@
 !$OMP          SCHEDULE(STATIC,jblk)
       do j=1-margin,jj+margin
         do i=1-margin,ii+margin
-! ---     limit is conservative, so clipping occurs before CFL is exceedd
-          cfl = 0.707*0.5*min(scpx(i,j),scpy(i,j))/delt1
+! ---     assume u and v velocities are equal, i.e. an over-estimate
+! ---     delt1 is typically 2*baclin, 0.75 is a fudge factor
+          cfl = 0.75*(scpx(i,j)*scpy(i,j))/(delt1*(scpx(i,j)+scpy(i,j)))
           if (SEA_U) then
             k=1
               u(i,j,k,m) = u(i,j,k,m)/max(dpu(i,j,k,m),dpthin)
@@ -3015,11 +3046,10 @@
               if     (momtum_cfl) then  !this should not be needed
                 uvclpm = abs(u(i,j,k,m))
                 uvclpn = abs(u(i,j,k,n))
+                uvjspd(j,k) = max( uvjspd(j,k), uvclpm,     uvclpn)
+                uvjclp(j,k) = max( uvjclp(j,k), uvclpm-cfl, uvclpn-cfl)
                 u(i,j,k,m) = max( -cfl, min( cfl, u(i,j,k,m) ) )
                 u(i,j,k,n) = max( -cfl, min( cfl, u(i,j,k,n) ) )
-                uvclpm = uvclpm - abs(u(i,j,k,m))
-                uvclpn = uvclpn - abs(u(i,j,k,n))
-                uvjclp(j,k) = max( uvjclp(j,k), uvclpm, uvclpn)
               endif !cfl
               sum_m      = u(i,j,k,m)*    dpu(i,j,k,m)
               sum_n      = u(i,j,k,n)*    dpu(i,j,k,n)
@@ -3035,11 +3065,10 @@
               if     (momtum_cfl) then  !this should not be needed
                 uvclpm = abs(u(i,j,k,m))
                 uvclpn = abs(u(i,j,k,n))
+                uvjspd(j,k) = max( uvjspd(j,k), uvclpm,     uvclpn)
+                uvjclp(j,k) = max( uvjclp(j,k), uvclpm-cfl, uvclpn-cfl)
                 u(i,j,k,m) = max( -cfl, min( cfl, u(i,j,k,m) ) )
                 u(i,j,k,n) = max( -cfl, min( cfl, u(i,j,k,n) ) )
-                uvclpm = uvclpm - abs(u(i,j,k,m))
-                uvclpn = uvclpn - abs(u(i,j,k,n))
-                uvjclp(j,k) = max( uvjclp(j,k), uvclpm, uvclpn)
               endif !cfl
               sum_m      = sum_m + u(i,j,k,m)*dpu(i,j,k,m)
               sum_n      = sum_n + u(i,j,k,n)*dpu(i,j,k,n)
@@ -3062,11 +3091,10 @@
               if     (momtum_cfl) then  !this should not be needed
                 uvclpm = abs(v(i,j,k,m))
                 uvclpn = abs(v(i,j,k,n))
+                uvjspd(j,k) = max( uvjspd(j,k), uvclpm,     uvclpn)
+                uvjclp(j,k) = max( uvjclp(j,k), uvclpm-cfl, uvclpn-cfl)
                 v(i,j,k,m) = max( -cfl, min( cfl, v(i,j,k,m) ) )
                 v(i,j,k,n) = max( -cfl, min( cfl, v(i,j,k,n) ) )
-                uvclpm = uvclpm - abs(v(i,j,k,m))
-                uvclpn = uvclpn - abs(v(i,j,k,n))
-                uvjclp(j,k) = max( uvjclp(j,k), uvclpm, uvclpn)
               endif !cfl
               sum_m      = v(i,j,1,m)*    dpv(i,j,1,m)
               sum_n      = v(i,j,1,n)*    dpv(i,j,1,n)
@@ -3082,11 +3110,10 @@
               if     (momtum_cfl) then  !this should not be needed
                 uvclpm = abs(v(i,j,k,m))
                 uvclpn = abs(v(i,j,k,n))
+                uvjspd(j,k) = max( uvjspd(j,k), uvclpm,     uvclpn)
+                uvjclp(j,k) = max( uvjclp(j,k), uvclpm-cfl, uvclpn-cfl)
                 v(i,j,k,m) = max( -cfl, min( cfl, v(i,j,k,m) ) )
                 v(i,j,k,n) = max( -cfl, min( cfl, v(i,j,k,n) ) )
-                uvclpm = uvclpm - abs(v(i,j,k,m))
-                uvclpn = uvclpn - abs(v(i,j,k,n))
-                uvjclp(j,k) = max( uvjclp(j,k), uvclpm, uvclpn)
               endif !cfl
               sum_m      = sum_m + v(i,j,k,m)*dpv(i,j,k,m)
               sum_n      = sum_n + v(i,j,k,n)*dpv(i,j,k,n)
@@ -3104,30 +3131,19 @@
         enddo !i
       enddo !j - do 30 loop
 !$OMP END PARALLEL DO
+!               
+! --- cfl diagnostics
 !
-! --- check for velocity clipping at cfl limit
-!
-      if     (momtum_cfl .and. mod(nstep,3).eq.0) then  !skip some time steps for efficiency
+      if     (momtum_cfl) then
         do k= 1,kk
-          uvkclp(k) = 0.0
           do j=1,jj
-            uvkclp(k) = max( uvkclp(k), uvjclp(j,k) )
-          enddo !j
+            cflspd(k) = max( cflspd(k), uvjspd(j,k) )
+            cflclp(k) = max( cflclp(k), uvjclp(j,k) )
+          enddo !j       
         enddo !k
-        call xcmaxr(uvkclp(1:kk))
-        do k= 1,kk
-          if     (uvkclp(k).gt.uvkmax(k)) then
-            if     (mnproc.eq.1) then
-              write(lp, &
-                '(i9,a,i4,a,f7.2,a)') &
-                nstep,' k=',k, &
-                ' velocty clipped, max=',uvkclp(k),' m/s'
-            endif !mnproc
-            uvkmax(k) = uvkclp(k)
-          endif
-        enddo !k
-        call xcsync(flush_lp)
-      endif !every 3 time steps
+        call xcmaxr(cflspd(1:kk))
+        call xcmaxr(cflclp(1:kk))
+      endif                
 !
       if     (lpipe .and. lpipe_momtum) then
 ! ---   compare two model runs.
@@ -3141,11 +3157,7 @@
         enddo !k
         write (text,'(a9,i3)') 'vtotn  k=',kk
         call pipe_compare_sym1(vtotn, iv,text)
-      endif
 !
-!
-      if     (lpipe .and. lpipe_momtum) then
-! ---   compare two model runs.
         write (text,'(a9,i3)') 'v.n(3) k=',1
         call pipe_compare_sym1(v(1-nbdy,1-nbdy,1,n),iv,text)
       endif
@@ -3247,6 +3259,9 @@
                        scuyi,scvxi,visc2p,visc2q,visc4p,visc4q, &
                        advu,diffu,advv,diffv, &
                        pnk0,pnkp,stresl
+      real, save, allocatable, dimension(:,:) :: &
+                       uvjspd, &
+                       uvjclp
       real, save, allocatable, dimension(:,:,:) :: &
                        sclu2q,sclv2q
       real, save, allocatable, dimension(:,:,:,:) :: &
@@ -3257,6 +3272,9 @@
                        advu,diffu,advv,diffv, &
                        dl2via,dl2vib,   & !not used
                        pnk0,pnkp,stresl
+      real, save, dimension(1-nbdy:jdm+nbdy,1:kdm) :: &
+                       uvjspd, &
+                       uvjclp
       real, dimension(2,1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy) :: &
                        sclu2q,sclv2q
       common/momtumr4/  &
@@ -3284,7 +3302,7 @@
               dt1inv,phi,plo,pbop,pthkbl,ubot,vbot,pstres, &
               dmontg,dthstr,dragu,dragv,qdpu,qdpv,dpthin, &
               dpun,uhm,uh0,uhp,dpvn,vhm,vh0,vhp,sum_m,sum_n, &
-              visce,viscw,viscn,viscs,cfl
+              visce,viscw,viscn,viscs,cfl,uvclpm,uvclpn
 !
       real    utotja,utotjb,vtotia,vtotib,wia,wib,wja,wjb
       real    defortot
@@ -3327,11 +3345,11 @@
                   dpmx(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy), &
                 thkbop(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy) )
         call mem_stat_add( 6*(idm+2*nbdy)*(jdm+2*nbdy) )
-                stress = r_init
-                stresx = r_init
-                stresy = r_init
-                  dpmx = r_init
-                thkbop = r_init
+                stress(:,:) = r_init
+                stresx(:,:) = r_init
+                stresy(:,:) = r_init
+                  dpmx(:,:) = r_init
+                thkbop(:,:) = r_init
       endif !stress
       if     (.not.allocated(scuyi)) then
         allocate( &
@@ -3349,19 +3367,27 @@
                    pnkp(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy), &
                  stresl(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy) )
         call mem_stat_add( 13*(idm+2*nbdy)*(jdm+2*nbdy) )
-                  scuyi = 0.0  !r_init
-                  scvxi = 0.0  !r_init
-                 visc2p = 0.0  !r_init
-                 visc2q = 0.0  !r_init
-                 visc4p = 0.0  !r_init
-                 visc4q = 0.0  !r_init
-                   advu = 0.0  !r_init
-                  diffu = 0.0  !r_init
-                   advv = 0.0  !r_init
-                  diffv = 0.0  !r_init
-                   pnk0 = 0.0  !r_init
-                   pnkp = 0.0  !r_init
-                 stresl = 0.0  !r_init
+                  scuyi(:,:) = 0.0  !r_init
+                  scvxi(:,:) = 0.0  !r_init
+                 visc2p(:,:) = 0.0  !r_init
+                 visc2q(:,:) = 0.0  !r_init
+                 visc4p(:,:) = 0.0  !r_init
+                 visc4q(:,:) = 0.0  !r_init
+                   advu(:,:) = 0.0  !r_init
+                  diffu(:,:) = 0.0  !r_init
+                   advv(:,:) = 0.0  !r_init
+                  diffv(:,:) = 0.0  !r_init
+                   pnk0(:,:) = 0.0  !r_init
+                   pnkp(:,:) = 0.0  !r_init
+                 stresl(:,:) = 0.0  !r_init
+        if     (momtum4_cfl) then
+          allocate( &
+                   uvjspd(1-nbdy:jdm+nbdy,1:kdm), &
+                   uvjclp(1-nbdy:jdm+nbdy,1:kdm) )
+          call mem_stat_add( 2*(jdm+2*nbdy)*kdm )
+                   uvjspd(:,:) = 0.0
+                   uvjclp(:,:) = 0.0
+        endif !cfl
         allocate( &
                   sclu2q(2,1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy), &
                   sclv2q(2,1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy) )
@@ -3370,8 +3396,8 @@
                   scluad(-2:2,6,1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy), &
                   sclvad(-2:2,6,1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy) )
         call mem_stat_add(60*(idm+2*nbdy)*(jdm+2*nbdy) )
-                  scluad = 0.0
-                  sclvad = 0.0
+                  scluad(:,:,:,:) = 0.0
+                  sclvad(:,:,:,:) = 0.0
       endif !scuyi
 #endif
 !
@@ -5553,19 +5579,29 @@
 ! --- extract barotropic velocities generated during most recent
 ! --- baroclinic time step and use them to force barotropic flow field.
 !
+      if     (momtum4_cfl) then
+        uvjspd(:,:) = 0.0
+        uvjclp(:,:) = 0.0
+      endif
+!
       margin = 0
 !
-!$OMP PARALLEL DO PRIVATE(j,i,k,q,sum_m,sum_n,cfl) &
+!$OMP PARALLEL DO PRIVATE(j,i,k,q,sum_m,sum_n,cfl,uvclpm,uvclpn) &
 !$OMP          SCHEDULE(STATIC,jblk)
       do j=1-margin,jj+margin
         do i=1-margin,ii+margin
-! ---     limit is conservative, so clipping occurs before CFL is exceedd
-          cfl = 0.707*0.5*min(scpx(i,j),scpy(i,j))/delt1
+! ---     assume u and v velocities are equal, i.e. an over-estimate
+! ---     delt1 is typically 2*baclin, 0.75 is a fudge factor
+          cfl = 0.75*(scpx(i,j)*scpy(i,j))/(delt1*(scpx(i,j)+scpy(i,j)))
           if (SEA_U) then
             k=1
               u(i,j,k,m) = u(i,j,k,m)/max(dpu(i,j,k,m),dpthin)
               u(i,j,k,n) = u(i,j,k,n)/max(dpu(i,j,k,n),dpthin)
               if     (momtum4_cfl) then  !this should not be needed
+                uvclpm = abs(u(i,j,k,m))
+                uvclpn = abs(u(i,j,k,n))
+                uvjspd(j,k) = max( uvjspd(j,k), uvclpm,     uvclpn)
+                uvjclp(j,k) = max( uvjclp(j,k), uvclpm-cfl, uvclpn-cfl)
                 u(i,j,k,m) = max( -cfl, min( cfl, u(i,j,k,m) ) )
                 u(i,j,k,n) = max( -cfl, min( cfl, u(i,j,k,n) ) )
               endif
@@ -5581,6 +5617,10 @@
               u(i,j,k,n) = (u(i,j,k,n)*q+u(i,j,k-1,n)*(cutoff-q))* &
                            qcutoff
               if     (momtum4_cfl) then  !this should not be needed
+                uvclpm = abs(u(i,j,k,m))
+                uvclpn = abs(u(i,j,k,n))
+                uvjspd(j,k) = max( uvjspd(j,k), uvclpm,     uvclpn)
+                uvjclp(j,k) = max( uvjclp(j,k), uvclpm-cfl, uvclpn-cfl)
                 u(i,j,k,m) = max( -cfl, min( cfl, u(i,j,k,m) ) )
                 u(i,j,k,n) = max( -cfl, min( cfl, u(i,j,k,n) ) )
               endif
@@ -5603,6 +5643,10 @@
               v(i,j,k,m) = v(i,j,k,m)/max(dpv(i,j,k,m),dpthin)
               v(i,j,k,n) = v(i,j,k,n)/max(dpv(i,j,k,n),dpthin)
               if     (momtum4_cfl) then  !this should not be needed
+                uvclpm = abs(v(i,j,k,m))  
+                uvclpn = abs(v(i,j,k,n))  
+                uvjspd(j,k) = max( uvjspd(j,k), uvclpm,     uvclpn)
+                uvjclp(j,k) = max( uvjclp(j,k), uvclpm-cfl, uvclpn-cfl)
                 v(i,j,k,m) = max( -cfl, min( cfl, v(i,j,k,m) ) )
                 v(i,j,k,n) = max( -cfl, min( cfl, v(i,j,k,n) ) )
               endif
@@ -5618,6 +5662,10 @@
               v(i,j,k,n) = (v(i,j,k,n)*q+v(i,j,k-1,n)*(cutoff-q))* &
                            qcutoff
               if     (momtum4_cfl) then  !this should not be needed
+                uvclpm = abs(v(i,j,k,m))
+                uvclpn = abs(v(i,j,k,n))
+                uvjspd(j,k) = max( uvjspd(j,k), uvclpm,     uvclpn)
+                uvjclp(j,k) = max( uvjclp(j,k), uvclpm-cfl, uvclpn-cfl)
                 v(i,j,k,m) = max( -cfl, min( cfl, v(i,j,k,m) ) )
                 v(i,j,k,n) = max( -cfl, min( cfl, v(i,j,k,n) ) )
               endif
@@ -5637,6 +5685,19 @@
         enddo !i
       enddo !j - do 30 loop
 !$OMP END PARALLEL DO
+!
+! --- cfl diagnostics    
+!
+      if     (momtum4_cfl) then
+        do k= 1,kk
+          do j=1,jj
+            cflspd(k) = max( cflspd(k), uvjspd(j,k) )
+            cflclp(k) = max( cflclp(k), uvjclp(j,k) )
+          enddo !j
+        enddo !k         
+        call xcmaxr(cflspd(1:kk))
+        call xcmaxr(cflclp(1:kk))
+      endif     
 !
       if     (lpipe .and. lpipe_momtum) then
 ! ---   compare two model runs.
@@ -5796,3 +5857,5 @@
 !> Feb. 2025 - if cbar is negative, cbarp represents tidal amplitude
 !> Feb. 2025 - optionally add observed tidal velocities to bottom speed
 !> Feb. 2025 - printout now ok for kdm<1000 and idm,jdm<100,000
+!> Apr. 2025 - better diagnostics for momtum_cfl and momtum4_cfl
+!> Apr. 2025 - new calculation of advective cfl limit

@@ -277,7 +277,7 @@
        umix,  vmix       ! mixed layer velocity
 
 #if defined(RELO)
-      real, save, allocatable, dimension(:) ::  &
+      real, save, allocatable, dimension(:) ::  &  !allocated in blkdat
 #else
       real, save, dimension(kdm) ::  &
 #endif
@@ -654,6 +654,15 @@
                       lc0,lc1,lc2,lc3,  & ! clim. indexes
                       ln0,ln1,          & ! nest  indexes
                       lb0,lb1             ! baro. indexes
+!     
+#if defined(RELO)
+      real, save, allocatable, dimension(:) ::  &
+#else
+      real, save, dimension(kdm) ::  &
+#endif
+        cflmax, & ! per layer maximum reported speed
+        cflspd, & ! per layer maximum observed speed
+        cflclp    ! per layer maximum clipped  speed
 !
 ! --- 'sigma ' = isopyncnal layer target densities (sigma units)
 ! --- 'thbase' = reference density (sigma units)
@@ -791,7 +800,7 @@
 ! --- 'epmass' = E-P mass exchange flag (0=no,1=yes,2=river)
 !
 #if defined(RELO)
-      real, save, allocatable, dimension(:) ::  &
+      real, save, allocatable, dimension(:) ::  & !allocated in blkdat
 #else
       real, save, dimension(kdm) ::  &
 #endif
@@ -974,6 +983,17 @@
 ! --- Allocate saved arrays
 !
       call set_r_init
+!     
+#if defined(RELO)    
+      allocate( &    
+                cflmax(kdm), &
+                cflspd(kdm), &
+                cflclp(kdm) )
+      call mem_stat_add( 3*kdm )
+#endif               
+                cflmax(:) = 0.0
+                cflspd(:) = 0.0
+                cflclp(:) = 0.0
 !
 #if defined(RELO)
       call gindex_allocate   !from mod_dimensions
@@ -1925,3 +1945,4 @@
 !> Jan. 2025 - converted displd_mn and dispqd_mn to surface tracers
 !> Jan. 2025 - removed tidepg_mn
 !> Jan. 2025 - moved salfac to mod_tides
+!> Apr. 2025 - added cflmax, cflspd and cflclp
