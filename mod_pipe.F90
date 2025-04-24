@@ -549,15 +549,17 @@
         endif !1st tile
         call xcsync(no_flush) ! wait for 1st tile
       endif !lpipeio
-!     if     (ldebugpnt) then
-!       if     (i0.lt.ittest .and. i0+ii.ge.ittest .and.
-!    &          j0.lt.jttest .and. j0+jj.ge.jttest      ) then
-!         write (lp,'(a,2i6,2x,a,a,1pg24.10)')
-!    &      'i,j=',itest+i0,jtest+j0,
-!    &      what,': ',
-!    &      field(itest,jtest)
-!       endif
-!     endif
+!
+      if     (ldebugpnt) then
+        if     (i0.lt.ittest .and. i0+ii.ge.ittest .and. &
+                j0.lt.jttest .and. j0+jj.ge.jttest      ) then
+          write (lp,'(a,2i6,2x,a,a,1pg24.10)') &
+            'i,j=',itest+i0,jtest+j0, &
+            what,': ', &
+            field(itest,jtest)
+          call flush(lp)
+        endif
+      endif
       return
       end subroutine pipe_compare
 #endif /* OCEANS2:else */
@@ -999,6 +1001,8 @@
                    tmean1,smean1,rmean1
       data         tmean0,smean0,rmean0 / 3*0.0d0 /
 !
+      call xcsync(flush_lp)
+!
 !diag if     (mnproc.eq.1) then
 !diag write(lp,'(a,i10)') cinfo,nstep
 !diag call flush(lp)
@@ -1050,6 +1054,7 @@
           call xcstop('(pipe_comparall: debug ambiguity)')
                  stop '(pipe_comparall: debug ambiguity)'
         endif
+        call xcsync(flush_lp)
         if     (i0.lt.ittest .and. i0+ii.ge.ittest .and. &
                 j0.lt.jttest .and. j0+jj.ge.jttest      ) then
         if     (ldebugmas) then
@@ -1459,8 +1464,9 @@
         if     (mnproc.eq.1) then
         write (lpunit,'(a,i10,a)') cinfo,nstep,' -- OK'
         endif
-        call xcsync(flush_lp)
       endif !ltracer
+!
+      call xcsync(flush_lp)
 !
       if     (lpipeio .and. nstep.lt.nstep_start) then
         return !do nothing
@@ -1592,10 +1598,11 @@
           write (lpunit,'(a,i10,a)') cinfo,nstep,' -- OK'
           endif
         endif
-        call xcsync(flush_lp)
 !
         call pipe_fatal_on
       endif !lpipe
+!
+      call xcsync(flush_lp)
 !
       return
       end subroutine pipe_comparall
@@ -1628,3 +1635,4 @@
 !> Dec. 2024 - added checks on tides
 !> Feb. 2025 - printout now ok for kdm<1000 and idm,jdm<100,000
 !> Apr. 2025 - bugfix for tiddrg and tidstr == 0
+!> Apr. 2025 - PIPE_DEBUG produces printout for individual pipe_compare* calls
