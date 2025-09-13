@@ -522,6 +522,7 @@
       endif
 !
       do
+        cfield = 'ANYFIELD'
         call rd_archive(ubinc, cfield,layer, 925)
         if     (cfield.eq.'covice  ' .or. cfield.eq.'u_btrop ') then
           exit
@@ -535,6 +536,7 @@
 !
 ! ---   directly insert covice and thkice.
 !
+        cfield = 'ANYFIELD'
         call rd_archive(util5, cfield,layer, 925)  !thkice
         if     (mnproc.eq.1) then
         write(lp,'(2a)') "surface: ",cfield
@@ -555,6 +557,7 @@
         if     (mnproc.eq.1) then  ! .b file from 1st tile only
           read (uoff+925,*)
         endif
+        cfield = 'ANYFIELD'
         call rd_archive(ubinc, cfield,layer, 925)
         if     (mnproc.eq.1) then
         write(lp,'(2a)') "surface: ",cfield
@@ -564,6 +567,7 @@
       else
         incice = -1  !have not input covice, might direct insert si_c
       endif
+      cfield = 'ANYFIELD'
       call rd_archive(vbinc, cfield,layer, 925)
       if     (mnproc.eq.1) then
       write(lp,'(2a)') "surface: ",cfield
@@ -579,6 +583,7 @@
 !
       nskip = 0
       do k=1,kk
+        cfield = 'ANYFIELD'
         call rd_archive(uinc(1-nbdy,1-nbdy,k), cfield,layer, 925)
         if     (cfield.ne.'u-vel.  ' .and. k.ne.2) then
           if     (mnproc.eq.1) then
@@ -595,6 +600,7 @@
           write(lp,'(2a)') "counting tracers: ",cfield
           endif
           do nskip= 2,99
+            cfield = 'ANYFIELD'
             call rd_archive(uinc(1-nbdy,1-nbdy,k), cfield,layer, 925)
             if     (mnproc.eq.1) then
             write(lp,'(2a)') "counting tracers: ",cfield
@@ -606,6 +612,7 @@
           nskip = nskip - 1
           write(lp,'(a,i3)') "nskip =",nskip
         endif
+        cfield = 'ANYFIELD'
         call rd_archive(vinc(1-nbdy,1-nbdy,k), cfield,layer, 925)
         if     (cfield.ne.'v-vel.  ') then
           if     (mnproc.eq.1) then
@@ -618,6 +625,7 @@
 !          if     (mnproc.eq.1) then
 !            write (lp,*) 'read v-vel archive file'
 !          endif
+        cfield = 'ANYFIELD'
         call rd_archive(dpinc(1-nbdy,1-nbdy,k), cfield,layer, 925)
         if     (cfield.ne.'thknss  ') then
           if     (mnproc.eq.1) then
@@ -630,6 +638,7 @@
 !          if     (mnproc.eq.1) then
 !            write (lp,*) 'read dpinc archive file'
 !          endif
+        cfield = 'ANYFIELD'
         call rd_archive(tinc(1-nbdy,1-nbdy,k), cfield,layer, 925)
         if     (cfield.ne.'temp    ') then
           if     (mnproc.eq.1) then
@@ -639,6 +648,7 @@
           call xcstop('(incupd_read_full)')
                  stop '(incupd_read_full)'
         endif
+        cfield = 'ANYFIELD'
         call rd_archive(sinc(1-nbdy,1-nbdy,k), cfield,layer, 925)
         if     (cfield.ne.'salin   ') then
           if     (mnproc.eq.1) then
@@ -831,6 +841,8 @@
       character ptxt*12,utxt*12,vtxt*12
       integer   i,idmtst,ios,j,jdmtst,k,l,layer,nskip
       integer   iyear,iday,ihour
+      logical   nodens
+
       real      tincstp
 !     real      sumdpi
 !
@@ -988,6 +1000,7 @@
         call xcstop('(incupd_read_diff)')
                stop '(incupd_read_diff)'
       endif
+      nodens = layer.ne.0  !TSIS or hycom_diff archive type
 !
 ! assumes that there is a new incremental updating file once a day
 ! for "incupf" days, see blkdat.input
@@ -1002,14 +1015,24 @@
       endif !1st tile
       call xcsync(flush_lp)
 !
-      do i= 2,12
-        if     (mnproc.eq.1) then  ! .b file from 1st tile only
-          read (uoff+925,*)
-        endif
-        call zaiosk(925)
-      enddo
+      if     (.not. nodens) then
+        do i= 2,12
+          if     (mnproc.eq.1) then  ! .b file from 1st tile only
+            read (uoff+925,*)
+          endif
+          call zaiosk(925)
+        enddo
+      else
+        do i= 2,6
+          if     (mnproc.eq.1) then  ! .b file from 1st tile only
+            read (uoff+925,*)
+          endif
+          call zaiosk(925)
+        enddo
+      endif
 !
       do
+        cfield = 'ANYFIELD'
         call rd_archive(ubinc, cfield,layer, 925)
         if     (cfield.eq.'covice  ' .or. cfield.eq.'u_btrop ') then
           exit
@@ -1021,6 +1044,7 @@
       call xcsync(flush_lp)
       if     (cfield.eq.'covice  ') then
         covinc(:,:) = ubinc(:,:)
+        cfield = 'ANYFIELD'
         call rd_archive(thkinc, cfield,layer, 925)  !thkice
         if     (mnproc.eq.1) then
         write(lp,'(2a)') "surface: ",cfield
@@ -1030,6 +1054,7 @@
         if     (mnproc.eq.1) then  ! .b file from 1st tile only
           read (uoff+925,*)
         endif
+        cfield = 'ANYFIELD'
         call rd_archive(ubinc, cfield,layer, 925)
         if     (mnproc.eq.1) then
         write(lp,'(2a)') "surface: ",cfield
@@ -1039,16 +1064,19 @@
       else
         incice = -1  !have not input covice, might direct insert si_c
       endif
+      cfield = 'ANYFIELD'
       call rd_archive(vbinc, cfield,layer, 925)
       if     (mnproc.eq.1) then
       write(lp,'(2a)') "surface: ",cfield
       endif
       call xcsync(flush_lp)
-! --- kebtrop
-      if     (mnproc.eq.1) then  ! .b file from 1st tile only
-        read (uoff+925,*)
+      if     (.not. nodens) then
+! ---   kebtrop
+        if     (mnproc.eq.1) then  ! .b file from 1st tile only
+          read (uoff+925,*)
+        endif
+        call zaiosk(925)
       endif
-      call zaiosk(925)
 !
            if     (mnproc.eq.1) then
            write (lp,*) 'start 3-D archive file read'
@@ -1059,6 +1087,7 @@
 !
       nskip = 0
       do k=1,kk
+        cfield = 'ANYFIELD'
         call rd_archive(uinc(1-nbdy,1-nbdy,k), cfield,layer, 925)
         if     (cfield.ne.'u-vel.  ' .and. k.ne.2) then
           if     (mnproc.eq.1) then
@@ -1075,6 +1104,7 @@
           write(lp,'(2a)') "counting tracers: ",cfield
           endif
           do nskip= 2,99
+            cfield = 'ANYFIELD'
             call rd_archive(uinc(1-nbdy,1-nbdy,k), cfield,layer, 925)
             if     (mnproc.eq.1) then
             write(lp,'(2a)') "counting tracers: ",cfield
@@ -1086,6 +1116,7 @@
           nskip = nskip - 1
           write(lp,'(a,i3)') "nskip =",nskip
         endif
+        cfield = 'ANYFIELD'
         call rd_archive(vinc(1-nbdy,1-nbdy,k), cfield,layer, 925)
         if     (cfield.ne.'v-vel.  ') then
           if     (mnproc.eq.1) then
@@ -1098,17 +1129,20 @@
 !          if     (mnproc.eq.1) then
 !            write (lp,*) 'read v-vel archive file'
 !          endif
-! ---   skip k.e.
-        if     (mnproc.eq.1) then  ! .b file from 1st tile only
-          read (uoff+925,*)
+        if     (.not. nodens) then
+! ---     skip k.e.
+          if     (mnproc.eq.1) then  ! .b file from 1st tile only
+            read (uoff+925,*)
+          endif
+          call zaiosk(925)
+! ---     skip mnthknss
+          if     (mnproc.eq.1) then  ! .b file from 1st tile only
+            read (uoff+925,*)
+          endif
+          call zaiosk(925)
         endif
-        call zaiosk(925)
-! ---   skip mnthknss
-        if     (mnproc.eq.1) then  ! .b file from 1st tile only
-          read (uoff+925,*)
-        endif
-        call zaiosk(925)
 !
+        cfield = 'ANYFIELD'
         call rd_archive(dpinc(1-nbdy,1-nbdy,k), cfield,layer, 925)
         if     (cfield.ne.'thknss  ') then
           if     (mnproc.eq.1) then
@@ -1121,6 +1155,7 @@
 !          if     (mnproc.eq.1) then
 !            write (lp,*) 'read dpinc archive file'
 !          endif
+        cfield = 'ANYFIELD'
         call rd_archive(tinc(1-nbdy,1-nbdy,k), cfield,layer, 925)
         if     (cfield.ne.'temp    ') then
           if     (mnproc.eq.1) then
@@ -1130,6 +1165,7 @@
           call xcstop('(incupd_read_diff)')
                  stop '(incupd_read_diff)'
         endif
+        cfield = 'ANYFIELD'
         call rd_archive(sinc(1-nbdy,1-nbdy,k), cfield,layer, 925)
         if     (cfield.ne.'salin   ') then
           if     (mnproc.eq.1) then
@@ -1139,11 +1175,13 @@
           call xcstop('(incupd_read_diff)')
                  stop '(incupd_read_diff)'
         endif
-! ---   skip density
-        if     (mnproc.eq.1) then  ! .b file from 1st tile only
-          read (uoff+925,*)
+        if     (.not. nodens) then
+! ---     skip density
+          if     (mnproc.eq.1) then  ! .b file from 1st tile only
+            read (uoff+925,*)
+          endif
+          call zaiosk(925)
         endif
-        call zaiosk(925)
 !
 ! ---   skip (nskip) tracers
 !
@@ -1451,3 +1489,5 @@
 !> Sep  2017 - added subroutine stfupd
 !> Apr  2020 - utotij bugfix in subroutine stfupd
 !> Apr  2020 - allow for extra surface fields in incupd archive input
+!> Sep  2025 - rd_archive calls are to the 'ANYFIELD' version
+!> Sep  2025 - allow for TSIS difference archives

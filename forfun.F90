@@ -4661,6 +4661,8 @@
                 field
 !
 ! --- read the archive array field named cfield from unit iunit.
+! --- if cfield is 'ANYFIELD' then the next record is returned
+! --- and cfield contains its name on exit.
 !
       integer   irec,i,ios,nnstep
       real      hmina,hminb,hmaxa,hmaxb,timein,thet
@@ -4682,9 +4684,12 @@
 !       write(lp,'(3a)') cfield," --- ",cline
 !       endif !1st tile
 !
-        if     (cline(1:8).ne.cfield) then
+        if     (cfield.ne.'ANYFIELD' .and. cfield.ne.cline(1:8)) then
           call zaiosk(iunit)
         else
+          if     (cfield.eq.'ANYFIELD') then
+            cfield = cline(1:8)
+          endif
           i = index(cline,'=')
           read(cline(i+1:),*) nnstep,timein,layer,thet,hminb,hmaxb
           if     (hminb.eq.hmaxb) then  !constant field
@@ -4892,3 +4897,4 @@
 !> Apr. 2025 - reset vland for pnest halo update
 !> Apr. 2025 - read dpnest.k into pnest.k and later convert to interface depth
 !> Apr. 2025 - buffix for read dpnest.k into pnest.k
+!> Sep. 2025 - rd_archive has two modes based on input cfield
