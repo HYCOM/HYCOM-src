@@ -11,7 +11,7 @@
                                 ldebugiso,ldebugsum,ldebugmas, &
                                 ldebugssh, &
                                 lmaster,lpipeio,lshift,lslave, &
-                                lsym,lnan, &
+                                lcheck,lsym,lnan, &
                                 ltracer,ltracernan,ltracermax, &
                                 lpipe_fatal,lpipe_anyfailed, &
                                 lnan_anyfailed
@@ -47,6 +47,7 @@
 !
 ! ---   if the file 'PIPE_MASTER' exists then this is the master,
 ! ---   if the file 'PIPE_SLAVE'  exists then this is the slave,
+! ---   if the file 'PIPE_CHECK'  exists then this is master and slave,
 ! ---   if the file 'PIPE_SYM'    exists then this is master and slave,
 ! ---   if the file 'PIPE_NAN'    exists then this is master and slave,
 ! ---   if the file 'PIPE_TRACER' exists then this is master and slave,
@@ -58,6 +59,11 @@
 ! ---   before sending them to the master.  it is an error for
 ! ---   'PIPE_SHIFT' to exist (a) on the master and (b) when not
 ! ---   making a comparison.
+!
+! ---   if the file 'PIPE_CHECK' exists, there is no slave and the
+! ---   master writes out a checksum for each field referenced.
+! ---   it is an error for 'PIPE_CHECK' to exist when making a 
+! ---   master/slave comparison.
 !
 ! ---   if the file 'PIPE_SYM' exists, there is no slave and the
 ! ---   master compares its own fields for various symmetries.
@@ -115,6 +121,11 @@
 ! ---   to check whether data stored in all major arrays are identical or
 ! ---   symmetric.
 !
+! --- printout from MASTER goes to PIPE_base.out.
+! --- printout from SLAVE  goes to PIPE_test.out.
+! --- printout from SYM    goes to PIPE_base.out.
+! --- printout from CHECK  goes to PIPE_check.out.
+!
       subroutine pipe_fatal_on
       implicit none
       lpipe_fatal = .true.
@@ -143,6 +154,7 @@
       lslave  = nocean.eq.2
 !
       lshift     = .false.
+      lcheck     = .false.
       lsym       = .false.
       lnan       = .false.
       ltracer    = .false.
@@ -157,6 +169,7 @@
       inquire(file=trim(flnminp)//'PIPE_MASTER',    exist=lmaster)
       inquire(file=trim(flnminp)//'PIPE_SLAVE',     exist=lslave)
       inquire(file=trim(flnminp)//'PIPE_SHIFT',     exist=lshift)
+      inquire(file=trim(flnminp)//'PIPE_CHECK',     exist=lcheck)
       inquire(file=trim(flnminp)//'PIPE_SYM',       exist=lsym)
       inquire(file=trim(flnminp)//'PIPE_NAN',       exist=lnan)
       inquire(file=trim(flnminp)//'PIPE_TRACER',    exist=ltracer)
@@ -184,6 +197,18 @@
         call xchalt('pipe_init: (master/slave ambiguity)')
                stop 'pipe_init: (master/slave ambiguity)'
       endif
+      if     (lcheck .and. (lmaster .or. lslave)) then
+        call xchalt('pipe_init: (check/master/slave ambiguity)')
+               stop 'pipe_init: (check/master/slave ambiguity)'
+      endif
+      if     (lcheck .and. lsym) then
+        call xchalt('pipe_init: (check/sym ambiguity)')
+               stop 'pipe_init: (check/sym ambiguity)'
+      endif
+      if     (lcheck .and. lnan) then
+        call xchalt('pipe_init: (check/nan ambiguity)')
+               stop 'pipe_init: (check/nan ambiguity)'
+      endif
       if     (lsym .and. (lmaster .or. lslave)) then
         call xchalt('pipe_init: (sym/master/slave ambiguity)')
                stop 'pipe_init: (sym/master/slave ambiguity)'
@@ -196,7 +221,8 @@
         call xchalt('pipe_init: (nan/master/slave ambiguity)')
                stop 'pipe_init: (nan/master/slave ambiguity)'
       endif
-      lpipe   = lmaster .or. lslave .or. lsym .or. lnan .or. ldebug
+      lpipe   = lmaster .or. lslave .or. &
+                lcheck .or. lsym .or. lnan .or. ldebug
       lpipeio = lmaster .or. lslave
       if     (lshift .and. .not.lslave) then
         call xchalt('pipe_init: (shift ambiguity)')
@@ -356,6 +382,15 @@
           endif
           call xcstop('(pipe_init)')
                  stop '(pipe_init)'
+        endif
+        call xcsync(flush_lp)
+      endif ! sym
+!
+      if     (lcheck) then
+        if     (mnproc.eq.1) then
+        lpunit=19
+        open (unit=lpunit,file=trim(flnminp)//'PIPE_check.out', &
+              status='unknown')
         endif
         call xcsync(flush_lp)
       endif ! sym
@@ -565,6 +600,7 @@
 #endif /* OCEANS2:else */
 
       subroutine pipe_compare_sym1(field,mask,what)
+      use, intrinsic :: iso_fortran_env, only : int32
       implicit none
 !
       real,    dimension (1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy), &
@@ -583,6 +619,15 @@
       integer      i,io,j,jo
       logical      fail
       real         fnan  !target for huge
+!
+      integer(int32) :: hash
+      integer(int32) :: ikey(2),ik(2)
+!
+      integer(int32), parameter :: c1 = int(z'cc9e2d51', kind=int32)
+      integer(int32), parameter :: c2 = int(z'1b873593', kind=int32)
+      integer(int32), parameter :: c3 = int(z'e6546b64', kind=int32)
+      integer(int32), parameter :: c4 = int(z'85ebca6b', kind=int32)
+      integer(int32), parameter :: c5 = int(z'c2b2ae35', kind=int32)
 !
       if     (lpipeio .or. ldebug) then
         call pipe_compare(field,mask,what)
@@ -676,7 +721,41 @@
           enddo !i
         enddo !j
         call xcsync(flush_lp)
-      endif !lpipeio:sym:nan
+      elseif (lcheck) then
+        do j=1,jj
+          do i=1,ii
+            amask(i,j) = mask(i,j)
+          enddo
+        enddo
+        call xcaget(tmask,  amask, 1)
+        call xcaget(field1, field, 1)
+        if     (mnproc.eq.1) then
+!         The 32-bit MurmurHash3 algorithm is used, based on MOM6 version.
+          hash = 0
+          do j=1,jtdm
+          do i=1,itdm
+            if (tmask(i,j).gt.0.0) then
+              ik(:) = transfer(field1(i,j), ikey(:))
+              ik(1) = ik(1) * c1
+              ik(1) = ishftc(ik(1), 15)
+              ik(1) = ik(1) * c2
+              hash = ieor(hash, ik(1))
+              hash = ishftc(hash, 13)
+              hash = 5 * hash + c3
+              ik(2) = ik(2) * c1
+              ik(2) = ishftc(ik(2), 15)
+              ik(2) = ik(2) * c2
+              hash = ieor(hash, ik(2))
+              hash = ishftc(hash, 13)
+              hash = 5 * hash + c3
+            endif !mask
+          enddo !i
+          enddo !j
+          write (lpunit,'(a,a,i11.10)') what,' checksum = ',hash
+          call flush(lpunit)
+        endif !1st tile
+        call xcsync(no_flush) ! wait for 1st tile
+      endif !lpipeio:sym:nan:check
       return
       end subroutine pipe_compare_sym1
 
@@ -1636,3 +1715,4 @@
 !> Feb. 2025 - printout now ok for kdm<1000 and idm,jdm<100,000
 !> Apr. 2025 - bugfix for tiddrg and tidstr == 0
 !> Apr. 2025 - PIPE_DEBUG produces printout for individual pipe_compare* calls
+!> Sep. 2025 - added PIPE_CHECK     for checksum printout
