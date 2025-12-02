@@ -455,12 +455,12 @@
                      r*(c113+      c015*t)  )     !linear    coefficient
       sofsig_c(r,t)=(  (c101+(c102+c004*t)*t) - &
                      r*(c111+(c112+c014*t)*t)  )  !constant  coefficient
-      sofsig(r,s)=max(sofmin, &
-                      ( -sofsig_b(r,s) &
+      sofsig(r,t)=max(sofmin, &
+                      ( -sofsig_b(r,t) &
                         +sqrt(max(sqrmin, &
-                                      sofsig_b(r,s)**2 - &
-                                  4.0*sofsig_a(r,s)*sofsig_c(r,s))) ) / &
-                      (2.0*sofsig_a(r,s)) )
+                                      sofsig_b(r,t)**2 - &
+                                  4.0*sofsig_a(r,t)*sofsig_c(r,t))) ) / &
+                      (2.0*sofsig_a(r,t)) )
 !
 ! --- locally referenced sigma, using the 18-term equation of state.
 ! --- t: potential temperature; s: psu; prs: pressure
