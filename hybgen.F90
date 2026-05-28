@@ -320,7 +320,7 @@
       logical, parameter :: ldenfix=.true.    !set by a CPP macro
                                               !use density for fixlay
 #else
-      logical, parameter :: ldenfix=.false    !usually .false.
+      logical, parameter :: ldenfix=.false.   !usually .false.
                                               !use density for fixlay
 #endif
 
