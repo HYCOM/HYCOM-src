@@ -316,6 +316,14 @@
 ! --- hybrid grid generator, single j-row (part A).
 ! --- --------------------------------------------
 !
+#if defined(HYBGEN_DENFIX)
+      logical, parameter :: ldenfix=.true.    !set by a CPP macro
+                                              !use density for fixlay
+#else
+      logical, parameter :: ldenfix=.false    !usually .false.
+                                              !use density for fixlay
+#endif
+
       logical, parameter :: lunmix=.true.     !unmix a too light deepest layer
       logical, parameter :: lconserve=.false. !explicitly conserve each column
       integer, parameter :: ndebug_tracer=0   !tracer to debug, usually 0 (off)
@@ -338,9 +346,9 @@
       logical ltop                    !modify top layer
       real    p_hat,p_hat0,p_hat2,p_hat3,hybrlx, &
               delt,deltm,dels,delsm,q,qdep,qtr,qts,thkbop, &
-              zthk,dpthin, &
-              dp_top,dp_cen,dp_bot,dp_far,dp_inc
-      integer i,k,ka,kp,ktr,fixall,fixlay,nums1d
+              zthk,dpthin,zk,zm,zp,z0, &
+              dp_top,dp_cen,dp_bot,dp_far,dp_inc,denfix
+      integer i,k,ka,kp,ktr,fixall,fixlay,l,lf,nums1d
       character*12 cinfo
 !
       double precision, parameter ::   zp5=0.5    !for sign function
@@ -485,26 +493,84 @@
 !diag        call flush(lp)
 !diag      endif !debug
 !
-      fixall = fixlay
-      do k= fixall+1,nhybrd
+      if     (ldenfix) then
+        lf     = 1
+        fixall = fixlay
+        do k= fixall+1,nhybrd
+          denfix = th3d(i,j,nhybrd,n)
+          do l= lf,nhybrd
+            zk = dp0cum(k+1)
+            if     (p(i,j,l)  .le.zk .and. &
+                    p(i,j,l+1).ge.zk      ) then
+!             linear interpolation between layer centers
+              z0 = 0.5*(p(i,j,l)+p(i,j,l+1))
+              if     (zk.le.z0) then
+!               z(k) is in the upper half of the layer
+                if     (l.eq.1) then
+                  denfix = th3d(i,j,1,n)
+                else
+                  zm = 0.5*(p(i,j,l-1)+p(i,j,l))
+                  q  = (z0 - zk)/(z0 - zm)
+                  denfix = q*th3d(i,j,l-1,n)  + (1.0-q)*th3d(i,j,l,n)
+                endif
+              else
+!               z(k) is in the lower half of the layer
+                if     (p(i,j,l+1).eq.p(i,j,nhybrd+1)) then
+                  denfix = th3d(i,j,nhybrd,n)
+                else
+                  zp = 0.5*(p(i,j,l+1)+p(i,j,l+2))
+                  q  = (zk - z0)/(zp - z0)
+                  denfix = q*th3d(i,j,l+1,n)  + (1.0-q)*th3d(i,j,l,n)
+                endif
+              endif  !upper:lower half
+              lf = l
+              exit
+            endif !found layer
+          enddo !l
 !diag        if (i.eq.itest .and. j.eq.jtest) then
-!diag          write (lp,'(i6,1x,2f9.3)') &
-!diag            k,p(i,j,k+1)*qonem,dp0cum(k+1)*qonem
+!diag          write (lp,'(i6,1x,2f9.3,i6,1x,f9.4)') &
+!diag            k,p(i,j,k+1)*qonem,dp0cum(k+1)*qonem &
+!diag            lf,denfix
 !diag          call flush(lp)
 !diag        endif !debug
-        if     (p(i,j,k+1).gt.dp0cum(k+1)+0.1*dp0ij(k)) then
-          if     (fixlay.gt.fixall) then
-! ---       should the previous layer remain fixed?
-            if     (p(i,j,k).gt.dp0cum(k)) then
-              fixlay = fixlay-1
+          if     (p(i,j,k+1).gt.dp0cum(k+1)+0.1*dp0ij(k) .and. &
+                  theta(i,j,k).gt.denfix) then
+            if     (fixlay.gt.fixall) then
+! ---         should the previous layer remain fixed?
+              if     (p(i,j,k).gt.dp0cum(k)) then
+                fixlay = fixlay-1
+              endif
             endif
+            exit  !layers k to nhybrd might be isopycnal
           endif
-          exit  !layers k to nhybrd might be isopycnal
-        endif
-! ---   sometimes fixed coordinate layer
-        qhrlx(k) = 1.0  !no relaxation in fixed layers
-        fixlay   = fixlay+1
-      enddo !k
+! ---     sometimes fixed coordinate layer
+          qhrlx(k) = 1.0  !no relaxation in fixed layers
+          fixlay   = fixlay+1
+        enddo !k
+      else !.not.ldenfix
+        lf     = 1
+        fixall = fixlay
+        do k= fixlay+1,nhybrd
+!diag        if (i.eq.itest .and. j.eq.jtest) then
+!diag          write (lp,'(i6,1x,2f9.3,i6,1x,f9.4)') &
+!diag            k,p(i,j,k+1)*qonem,dp0cum(k+1)*qonem &
+!diag            lf,denfix
+!diag          call flush(lp)
+!diag        endif !debug
+          if     (p(i,j,k+1).gt.dp0cum(k+1)+0.1*dp0ij(k)) then
+            if     (fixlay.gt.fixall) then
+! ---         should the previous layer remain fixed?
+              if     (p(i,j,k).gt.dp0cum(k)) then
+                fixlay = fixlay-1
+              endif
+            endif
+            exit  !layers k to nhybrd might be isopycnal
+          endif
+! ---     sometimes fixed coordinate layer
+          qhrlx(k) = 1.0  !no relaxation in fixed layers
+          fixlay   = fixlay+1
+        enddo !k
+      endif !ldenfix:else
 !diag      if (i.eq.itest .and. j.eq.jtest) then
 !diag        write(lp,'(a,i3)') &
 !diag              'hybgen,        fixed coordinate layers: 1 to ', &
@@ -3102,3 +3168,4 @@
 !> Sep. 2024 - added hybthk
 !> Feb. 2025 - printout now ok for kdm<1000 and idm,jdm<100,000
 !> Apr. 2025 - bugfix for trcflg=801 and 802
+!> Mar. 2026 - use density in calculation of fixlay, ldenfix in a CPP macro

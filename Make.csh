@@ -95,9 +95,11 @@ setenv OCN_KAPP ""
 # -DRDNEST_MASK    : mask velocity outliers
 # -DLATBDT_NPLINE3 : update pline every 3 time steps
 # -DMASSLESS_1MM   : lowest substantial mass-containing layer > 1mm thick
+# -DHYBGEN_DENFIX  : use density in calculation of fixed layers
 #setenv OCN_MISC ""
+#setenv OCN_MISC "-DMASSLESS_1MM"
 #setenv OCN_MISC "-DMASSLESS_1MM -DRDNEST_MASK -DLATBDT_NPLINE3"
-setenv OCN_MISC "-DMASSLESS_1MM"
+setenv OCN_MISC "-DMASSLESS_1MM -DHYBGEN_DENFIX -DRDNEST_MASK -DLATBDT_NPLINE3"
 
 # CPP_EXTRAS
 setenv CPP_EXTRAS "${OCN_SIG} ${OCN_EOS} ${OCN_GLB} ${OCN_KAPP} ${OCN_MISC}"
