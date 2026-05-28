@@ -346,7 +346,7 @@
       logical ltop                    !modify top layer
       real    p_hat,p_hat0,p_hat2,p_hat3,hybrlx, &
               delt,deltm,dels,delsm,q,qdep,qtr,qts,thkbop, &
-              zthk,dpthin,zk,zm,zp,z0, &
+              zthk,dpthin,dpthck,zk,zm,zp,z0, &
               dp_top,dp_cen,dp_bot,dp_far,dp_inc,denfix
       integer i,k,ka,kp,ktr,fixall,fixlay,l,lf,nums1d
       character*12 cinfo
@@ -813,9 +813,11 @@
       k  = kp  !at least 2
       ka = max(k-2,1)  !k might be 2
 !
+      dpthck = dx0k(k-1)*0.95  !layer above likely limited by dx0k
       if     (lunmix        .and.  & !usually .true.
               k.gt.fixlay+1 .and. qdep.eq.1.0 .and.   & !layer not fixed depth
               p(i,j,k)-p(i,j,k-1).ge.dpthin   .and.   & !layer above not too thin
+              p(i,j,k)-p(i,j,k-1).lt.dpthck   .and.   & !layer above not from dx0k
                theta(i,j,k)-epsil.gt.th3d(i,j,k,  n) .and. &
                theta(i,j,k-1)    .lt.th3d(i,j,k,  n) .and. &
            abs(theta(i,j,k-1)-       th3d(i,j,k-1,n)).lt.hybiso .and. &
@@ -3169,3 +3171,4 @@
 !> Feb. 2025 - printout now ok for kdm<1000 and idm,jdm<100,000
 !> Apr. 2025 - bugfix for trcflg=801 and 802
 !> Mar. 2026 - use density in calculation of fixlay, ldenfix in a CPP macro
+!> Mar. 2026 - don't unmix from layers limited by dx0k
