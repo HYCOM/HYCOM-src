@@ -897,9 +897,15 @@
               q =min(q, thkbot)  !in the nominal bottom boundary layer
             endif
             rigr=max(0.0,dbloc(k)*q/(shsq(k)+epsil))
+! ---       Large et. al. (1994)
             ratio=min(rigr*qrinfy,1.0)
             fri=(1.0-ratio*ratio)
             fri=fri*fri*fri
+            if     (rigr.lt.rcnvec) then
+! ---         Enhance mixing when at or close to unstable
+! ---         Following Ivey (2021), which suggests rcnvec=0.15
+              fri = fri*exp(-10.0*rigr)*qcnvec
+            endif
             vcty(i,j,k)=min(difm0*fri+dflmiw+dflbot(k),difmax)
             difs(i,j,k)=min(difs0*fri+dflsiw+dflbot(k),difmax)
           else
@@ -3868,3 +3874,4 @@
 !> July 2023 - detrain negative near-surface salinitites
 !> May  2024 - added epmass=2 for river only mass exchange
 !> Feb. 2025 - printout now ok for kdm<1000 and idm,jdm<100,000
+!> Mar. 2026 - added rcnvec, enhanced gradient richardson number for shear inst.

@@ -559,6 +559,8 @@
       ,cmonob          & ! KPP:    scale factor for Monin-Obukov length
       ,cekman          & ! KPP:    scale factor for Ekman depth
       ,qrinfy          & ! KPP:    1/max grad.rich.no. for shear instability
+      ,rcnvec          & ! KPP:    grad.rich.no. for enhanced shear instability
+      ,qcnvec          & ! KPP:    1/exp(-10.0*rcnvec)
       ,difm0           & ! KPP:    max viscosity    due to shear instability
       ,difs0           & ! KPP:    max diffusivity  due to shear instability
       ,difmiw          & ! KPP/MY: background/internal wave viscosity   (m^2/s)
@@ -1946,3 +1948,4 @@
 !> Jan. 2025 - removed tidepg_mn
 !> Jan. 2025 - moved salfac to mod_tides
 !> Apr. 2025 - added cflmax, cflspd and cflclp
+!> Mar. 2026 - added rcnvec

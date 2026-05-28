@@ -1429,7 +1429,9 @@
 ! --- 'diapyc' = KT/PWP:  diapycnal diffusivity x buoyancy freq. (m**2/s**2)
 ! --- 'rigr'   = PWP:     critical gradient richardson number
 ! --- 'ribc'   = PWP:     critical bulk     richardson number
-! --- 'rinfty' = KPP:     maximum  gradient richardson number (shear inst.)
+! --- 'rinfty' = KPP:     maximum  gradient richardson number for shear inst.
+! --- 'rcnvec' = KPP:     enhanced gradient richardson number for shear inst.
+! ---                      (0.0 for off, and to recover original behaviour)
 ! --- 'ricr'   = KPP:     critical bulk     richardson number
 ! --- 'bldmin' = KPP:     minimum surface boundary layer thickness (m)
 ! --- 'bldmax' = KPROF:   maximum surface boundary layer thickness (m)
@@ -1606,6 +1608,8 @@
       call blkinr(ribc  ,'ribc  ','(a6," =",f10.4," ")')
       call blkinr(qrinfy,'rinfty','(a6," =",f10.4," ")')
       qrinfy = 1.0/qrinfy
+      call blkinr(rcnvec,'rcnvec','(a6," =",f10.4," ")')
+      qcnvec = 1.0/exp(-10.0*rcnvec)
       call blkinr(ricr  ,'ricr  ','(a6," =",f10.4," ")')
 !
       if (mxlpwp .and. dypflg.ne.2) then
@@ -3091,3 +3095,4 @@
 !> Feb. 2025 - Negative cbar to input tidal amplitude flow speed
 !> Feb. 2025 - printout now ok for kdm<1000 and idm,jdm<100,000
 !> Mar. 2025 - isopyc identifies MICOM mode, .not.hybrid possible without isopyc
+!> Mar. 2026 - added rcnvec, enhanced gradient richardson number for shear inst.
